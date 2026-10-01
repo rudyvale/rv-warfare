@@ -1,0 +1,85 @@
+name: Publish release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag matching src/release.json, for example v1.1.0
+        required: true
+        type: string
+      base_tag:
+        description: Published release containing the verified payload and runtime
+        required: true
+        type: string
+permissions:
+  contents: write
+concurrency:
+  group: release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.tag }}
+      BASE_TAG: ${{ inputs.base_tag }}
+      VM_SKIP_UPDATE_CHECK: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate version and protect published releases
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_TAG -notmatch '^v\d+\.\d+\.\d+$' -or $env:BASE_TAG -notmatch '^v\d+\.\d+\.\d+$') { throw 'Invalid tag' }
+          $version = (Get-Content src/release.json -Raw | ConvertFrom-Json).version
+          if ($env:RELEASE_TAG -ne "v$version") { throw 'Tag and source version differ' }
+          $existing = gh release view $env:RELEASE_TAG --json isDraft 2>$null
+          if ($LASTEXITCODE -eq 0) { throw 'Release already exists; use a new version' }
+          $global:LASTEXITCODE = 0
+      - name: Check source
+        shell: powershell
+        run: |
+          & ./qa/test_updates.ps1
+          & ./qa/test_connection.ps1
+          & ./qa/test_gui.ps1
+          python -X utf8 qa/test_connection_launch.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_host_races.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 host/warfare-launcher.py --check
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Get verified base and build
+        shell: pwsh
+        run: |
+          gh release download $env:BASE_TAG --pattern VM-Setup.zip --dir base
+          if ($LASTEXITCODE) { throw 'Base download failed' }
+          Expand-Archive base/VM-Setup.zip -DestinationPath base/extracted
+          python tools/build_release.py --base base/extracted/VM-Setup --output dist
+          if ($LASTEXITCODE) { throw 'Build failed' }
+          python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG
+          if ($LASTEXITCODE) { throw 'Artifact verification failed' }
+      - name: Stage complete release
+        shell: pwsh
+        run: |
+          gh release create $env:RELEASE_TAG dist/VM-Setup.zip dist/VM-Host-Tools.zip dist/SHA256SUMS.txt --verify-tag --draft --title "VM Warfare $env:RELEASE_TAG" --notes-file CHANGELOG.md
+          if ($LASTEXITCODE) { throw 'Draft release failed' }
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          if ($release.assets.Count -ne 3) { throw 'Incomplete release' }
+          foreach ($line in (Get-Content dist/SHA256SUMS.txt)) {
+            $parts = $line -split '  ', 2
+            $asset = @($release.assets | Where-Object name -eq $parts[1])
+            if ($asset.Count -ne 1 -or $asset[0].digest -ne "sha256:$($parts[0])" -or $asset[0].state -ne 'uploaded') { throw 'Uploaded asset checksum mismatch' }
+          }
+      - name: Publish and verify public state
+        shell: pwsh
+        run: |
+          gh release edit $env:RELEASE_TAG --draft=false --latest
+          if ($LASTEXITCODE) { throw 'Publish failed' }
+          python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG --remote
+          if ($LASTEXITCODE) { throw 'Public release verification failed' }

@@ -1,0 +1,23 @@
+name: Ошибка / Bug
+description: Проблема установки, запуска или обновления
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Версия VM и Windows
+      placeholder: VM 1.0.0, Windows 11
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Что произошло
+      description: Шаги, ожидаемый результат и фактическое поведение.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Сообщение ошибки
+      description: Вставьте нужный фрагмент журнала, убрав токены, личные адреса и данные аккаунтов.
+      render: text

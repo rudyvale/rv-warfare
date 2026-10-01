@@ -1,0 +1,38 @@
+name: Windows checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  launcher:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    env:
+      VM_SKIP_UPDATE_CHECK: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Update safety and connection parsing
+        shell: powershell
+        run: |
+          & ./qa/test_updates.ps1
+          & ./qa/test_connection.ps1
+      - name: Launcher interface
+        shell: powershell
+        run: '& ./qa/test_gui.ps1'
+      - name: Launch flow and protocol
+        run: |
+          python -X utf8 qa/test_connection_launch.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_launcher.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -m compileall -q host tools
+          python -X utf8 qa/test_host.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_host_races.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 host/warfare-launcher.py --check
