@@ -8,14 +8,18 @@ import time
 import zipfile
 import argparse
 
+root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser()
 parser.add_argument('--client',action='store_true')
+parser.add_argument('--game',type=Path,default=Path(os.environ.get('RV_GAME_ROOT',str(Path(os.environ.get('LOCALAPPDATA',Path.home()))/'Warfare-1.12.2'))))
+parser.add_argument('--compiler',type=Path,default=Path(os.environ.get('RV_ECJ_JAR',str(root/'.local/tools/ecj-4.6.1.jar'))))
+parser.add_argument('--server-base',type=Path,default=Path(os.environ.get('RV_SERVER_BASE',str(root/'.local/server-base'))))
+parser.add_argument('--audio',type=Path,default=Path(os.environ.get('RV_COMBAT_AUDIO',str(root/'.local/controls/audio/Warfare-Combat-Audio.zip'))))
 options=parser.parse_args()
 
-root=Path(__file__).resolve().parents[1]
 work=root/'.local/controls'
-game=Path(os.environ['LOCALAPPDATA'])/'Warfare-1.12.2'
-original=Path.home()/'OneDrive/Рабочий стол/RLCraft Server'
+game=options.game
+original=options.server_base
 server=work/'server'
 server.mkdir(exist_ok=True)
 test_world=(server/'ControlsTest').resolve()
@@ -48,7 +52,7 @@ compile_cp=os.pathsep.join([str(mod),*(str(p) for p in libraries)])
 sources=[root/'qa/VMControlsRuntime.java',root/'qa/VMControlsClientRuntime.java']
 acceptance=root/'qa/RVCombatAcceptance.java'
 if acceptance.exists():sources.append(acceptance)
-subprocess.run([str(java),'-jar',str(Path.home()/'Documents/Codex/2026-10-01/new-chat-2/work/ecj-4.6.1.jar'),'-1.8','-encoding','UTF-8','-nowarn','-cp',compile_cp,'-d',str(classes),*map(str,sources)],check=True)
+subprocess.run([str(java),'-jar',str(options.compiler),'-1.8','-encoding','UTF-8','-nowarn','-cp',compile_cp,'-d',str(classes),*map(str,sources)],check=True)
 cp=os.pathsep.join([str(game/'runtime/lib/ext/nashorn.jar'),str(asm)])
 subprocess.run([str(java),'-cp',cp,'jdk.nashorn.tools.Shell',str(root/'qa/patch-controls-test.js'),'--',str(mod),str(classes)],check=True)
 with zipfile.ZipFile(mod) as z,zipfile.ZipFile(server/'mods/mcheli-controls-test.jar','w',zipfile.ZIP_DEFLATED) as out:
@@ -99,7 +103,7 @@ with log.open('w',encoding='utf-8') as stream:
             shutil.copy2(server/'mods/mcheli-controls-test.jar',client/'mods/mcheli-controls-test.jar')
             shutil.copytree(game/'config',client/'config',dirs_exist_ok=True)
             (client/'resourcepacks').mkdir(exist_ok=True)
-            audio=Path.home()/'Documents/Codex/2026-10-01/new-chat-4/work/gameplay-update/audio/Warfare-Combat-Audio.zip'
+            audio=options.audio
             shutil.copy2(audio,client/'resourcepacks'/audio.name)
             ui_pack=game/'resourcepacks/Warfare-UI-fixes.zip'
             if ui_pack.exists():shutil.copy2(ui_pack,client/'resourcepacks'/ui_pack.name)

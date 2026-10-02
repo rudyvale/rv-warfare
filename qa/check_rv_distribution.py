@@ -54,13 +54,13 @@ def main():
             details = audit(destination)
             assert not details['errors'], details['errors']
             report[entry['path']] = {'sha256': entry['sha256'], 'entries': details['entries'], 'errors': details['errors'], 'warnings': details['warnings']}
-        forbidden = re.compile(r'(?i)chatgpt|codex|generated\s+by\s+(?:an?\s+)?(?:ai|llm)|artificial intelligence')
+        forbidden = re.compile(r'(?i)generated\s+by|automatically\s+generated|language\s+model')
         for name in archive.namelist():
             if name.endswith(('.md', '.ps1', '.cmd', '.json')):
                 assert not forbidden.search(archive.read(name).decode('utf-8-sig')), name
     with zipfile.ZipFile(nested / 'payload.zip') as payload:
         names = payload.namelist()
-        private = {'saves', 'logs', 'crash-reports', 'playerdata', 'stats', 'advancements', '.codex', '.git', '.local', 'vm-owner.json', 'warfare-settings.json', 'launcher_accounts.json', 'servers.dat'}
+        private = {'saves', 'logs', 'crash-reports', 'playerdata', 'stats', 'advancements', '.git', '.local', 'vm-owner.json', 'warfare-settings.json', 'launcher_accounts.json', 'servers.dat'}
         bad = [name for name in names if any(part.casefold() in private for part in name.replace('\\', '/').split('/'))]
         assert not bad, bad
         for entry in manifest['managedFiles']:

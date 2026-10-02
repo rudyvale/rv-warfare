@@ -9,11 +9,11 @@ import zipfile
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
-parser.add_argument('--game', type=Path, default=Path(os.environ['LOCALAPPDATA'])/'Warfare-1.12.2')
+parser.add_argument('--game', type=Path, default=Path(os.environ.get('RV_GAME_ROOT',str(Path(os.environ.get('LOCALAPPDATA',Path.home()))/'Warfare-1.12.2'))))
 parser.add_argument('--base-jar', type=Path, required=True)
 parser.add_argument('--owner-source', type=Path)
 parser.add_argument('--output', type=Path, default=root/'.local/controls')
-parser.add_argument('--compiler', type=Path, default=Path.home()/'Documents/Codex/2026-10-01/new-chat-2/work/ecj-4.6.1.jar')
+parser.add_argument('--compiler', type=Path, default=Path(os.environ.get('RV_ECJ_JAR',str(root/'.local/tools/ecj-4.6.1.jar'))))
 args = parser.parse_args()
 output = args.output.resolve()
 output.mkdir(parents=True, exist_ok=True)

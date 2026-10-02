@@ -54,4 +54,6 @@ The packager requires the exact managed file list and hashes from the tracked ma
 
 These are modification materials, not complete upstream checkouts. Rebuilding mods requires the matching upstream sources, Forge dependencies, compiler and prepared classes. Individual Java snapshots are not a standalone Gradle project.
 
+The controller and prop build tools accept explicit game, compiler and server-base paths. Their local defaults can also be set through `RV_GAME_ROOT`, `RV_ECJ_JAR`, `RV_SERVER_BASE` and `RV_COMBAT_AUDIO`. Build dependencies and temporary artifacts stay in the ignored `.local` cache; no developer-specific paths are required.
+
 The client archive can be assembled from the published binary base and this repository. Byte-for-byte reproducibility of recompiled third-party mods is not claimed.

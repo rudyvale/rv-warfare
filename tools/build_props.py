@@ -9,10 +9,11 @@ import zipfile
 
 root=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser()
+parser.add_argument('--game',type=Path,default=Path(os.environ.get('RV_GAME_ROOT',str(Path(os.environ.get('LOCALAPPDATA',Path.home()))/'Warfare-1.12.2'))))
 parser.add_argument('--base-jar',type=Path,required=True)
 parser.add_argument('--output',type=Path,default=root/'.local/controls')
 args=parser.parse_args()
-game=Path(os.environ['LOCALAPPDATA'])/'Warfare-1.12.2'
+game=args.game
 output=args.output.resolve();output.mkdir(parents=True,exist_ok=True)
 asm=next((game/'libraries').rglob('asm-debug-all-5.2.jar'))
 cp=os.pathsep.join([str(game/'runtime/lib/ext/nashorn.jar'),str(asm)])
