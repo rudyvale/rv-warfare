@@ -72,7 +72,7 @@ class ReleaseSourceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='rv-publisher-private-') as temporary:
             output = Path(temporary)
             lines = []
-            for name in ('RV-Setup.zip', 'RV-Host-Tools.zip'):
+            for name in ('RV-Setup.zip', 'RV-Host-Tools.zip', 'RV-Third-Party-Sources.zip'):
                 data = name.encode()
                 (output / name).write_bytes(data)
                 lines.append(hashlib.sha256(data).hexdigest() + '  ' + name)
