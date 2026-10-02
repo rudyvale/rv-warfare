@@ -42,6 +42,8 @@ See [UPDATES.md](UPDATES.md) for publishing and remote verification.
 
 ## Mod changes
 
+The packager requires the exact managed file list and hashes from the tracked manifest, plus the runtime archive hash. Only `READ-ME.md` may change during guide replacement. A previous gameplay base cannot be used for a new gameplay release. Update the tracked manifest only from the frozen, independently verified integration candidate.
+
 `patches/java` contains source snapshots used while modifying MC Heli CE and Techguns, including `WarfareFpv` and `WarfareQuickUav`. `patches/controls` contains controller changes. `patches/build` holds audio, patch and world preparation tools.
 
 These are modification materials, not complete upstream checkouts. Rebuilding mods requires the matching upstream sources, Forge dependencies, compiler and prepared classes. Individual Java snapshots are not a standalone Gradle project.

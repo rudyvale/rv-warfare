@@ -22,6 +22,11 @@ tag = 'v' + metadata['version']
 directory = args.directory.resolve()
 subprocess.run(['python', str(root / 'tools/verify_release.py'), '--directory', str(directory), '--tag', tag], check=True)
 commit = subprocess.check_output(['git', 'rev-parse', tag + '^{commit}'], cwd=root, text=True).strip()
+if subprocess.run(['git', 'diff', '--quiet', tag, '--'], cwd=root).returncode:
+    raise SystemExit('Working sources differ from the release tag. Commit and verify the complete candidate first.')
+untracked = subprocess.check_output(['git', 'ls-files', '--others', '--exclude-standard'], cwd=root, text=True).strip()
+if untracked:
+    raise SystemExit('Untracked source files remain. Commit intended sources and keep temporary release notes under .local.')
 remote = subprocess.check_output(['git', 'ls-remote', 'origin', 'refs/tags/' + tag, 'refs/tags/' + tag + '^{}'], cwd=root, text=True)
 if commit not in [line.split()[0] for line in remote.splitlines()]:
     raise SystemExit('Push the release tag before publishing')
@@ -51,6 +56,8 @@ release = api('GET', prefix + '/releases/tags/' + tag, allow_missing=True)
 if release is None:
     release = api('POST', prefix + '/releases', {'tag_name': tag, 'target_commitish': commit, 'name': 'RV Warfare ' + metadata['version'], 'body': args.notes.read_text(encoding='utf-8'), 'draft': True, 'prerelease': False})
 assets = [line.split('  ', 1)[1] for line in (directory / 'SHA256SUMS.txt').read_text().splitlines()] + ['SHA256SUMS.txt']
+if any(asset['name'] not in assets for asset in release['assets']):
+    raise SystemExit('Draft contains unexpected assets; review it before publishing')
 for name in assets:
     file = directory / name
     data = file.read_bytes()
@@ -68,6 +75,9 @@ for name in assets:
     if asset.get('digest') != digest or asset['size'] != len(data) or asset['state'] != 'uploaded':
         raise SystemExit('Release checksum mismatch: ' + name)
     print('Verified uploaded asset:', name, flush=True)
+release = api('GET', prefix + '/releases/' + str(release['id']))
+if len(release['assets']) != len(assets) or {asset['name'] for asset in release['assets']} != set(assets):
+    raise SystemExit('Release asset list differs from verified local files')
 if args.publish and release['draft']:
     release = api('PATCH', prefix + '/releases/' + str(release['id']), {'draft': False, 'make_latest': 'true'})
 if not release['draft']:

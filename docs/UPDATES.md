@@ -36,7 +36,7 @@ For a new local binary base, build the archives, push the matching tag, then run
 python tools/publish_release.py --directory dist --notes release-notes.md --publish
 ```
 
-Without `--publish`, the tool leaves a verified draft. It uses `GH_TOKEN`, `GITHUB_TOKEN` or the Git Credential Manager login, without writing tokens to files. Retrying resumes only when existing assets have matching checksums. `tools/verify_release.py --directory dist --remote` verifies the public release and latest pointer.
+Without `--publish`, the tool leaves a verified draft. It requires committed sources matching the pushed release tag. Keep temporary release notes under `.local`. It uses `GH_TOKEN`, `GITHUB_TOKEN` or the Git Credential Manager login, without writing tokens to files. Retrying resumes only when existing assets have matching checksums. `tools/verify_release.py --directory dist --tag vX.Y.Z --remote` verifies the public release and latest pointer.
 
 The **Publish release** workflow rebuilds launcher and source updates from an existing verified release using `tag` and `base_tag`. Gameplay changes need a newly integrated and tested binary base, followed by the local publishing command above. The workflow does not compile third-party mods from upstream sources. The optional world is generated separately from its source generator.
 

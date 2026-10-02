@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import shutil
 import zipfile
+from release_contract import validate_base
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
@@ -17,6 +18,7 @@ if args.defaults and not args.private:
     parser.error('--defaults is only allowed with --private')
 if args.private and not args.defaults:
     parser.error('--private requires an explicit --defaults file')
+manifest = validate_base(args.base, root / 'pack/package-manifest.json')
 output = (args.output or root / ('dist-private' if args.private else 'dist')).resolve()
 package = output / 'RV-Setup'
 package.mkdir(parents=True, exist_ok=True)
@@ -34,15 +36,6 @@ for name in ['READ-ME.md']:
 shutil.copyfile(args.base / 'installer-files.json', package / 'installer-files.json')
 shutil.copyfile(args.defaults if args.private else root / 'pack/server-defaults.json', package / 'server-defaults.json')
 shutil.copyfile(root / 'assets/code.ico', package / 'code.ico')
-manifest = json.loads((args.base / 'package-manifest.json').read_text(encoding='utf-8-sig'))
-if sorted(entry['path'] for entry in manifest['archives']) != ['payload.zip', 'runtime.zip']:
-    raise SystemExit('Unexpected base archives')
-for entry in manifest['archives']:
-    path = package / entry['path']
-    with path.open('rb') as stream:
-        actual = hashlib.file_digest(stream, 'sha256').hexdigest()
-    if actual != entry['sha256']:
-        raise SystemExit('Base archive checksum mismatch: ' + entry['path'])
 manifest['version'] = json.loads((root / 'src/release.json').read_text())['version']
 guide = (root / 'pack/READ-ME.md').read_bytes()
 rewritten = package / 'payload-new.zip'

@@ -20,7 +20,7 @@ function Resolve-Inside([string]$Root, [string]$Relative) {
     return $absolute
 }
 $settingsPath = Join-Path $InstallRoot 'warfare-settings.json'
-$previousSettings = if (Test-Path -LiteralPath $settingsPath) { Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json } else { $null }
+$previousSettings = if (Test-Path -LiteralPath $settingsPath) { Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 if (-not $Language) {
     if ($previousSettings) { $Language = $previousSettings.language } else {
         $choice = Read-Host 'Language / Язык: 1 = Русский, 2 = English [1]'
@@ -35,8 +35,8 @@ if (-not $Nickname) {
     }
 }
 if ($Nickname -notmatch '^[A-Za-z0-9_]{3,16}$') { throw 'Nickname must contain 3–16 letters, numbers or _.' }
-$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($InstallRoot) }
-if ($activeGame) { throw 'Close Warfare before installing an update / Закрой Warfare перед обновлением.' }
+$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($InstallRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
+if ($activeGame) { throw 'Close RV before installing an update / Закрой RV перед обновлением.' }
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 $installLock = $null
 try { $installLock = [IO.File]::Open((Join-Path $InstallRoot '.install.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw 'Installation is already running / Установка уже запущена.' }
@@ -45,7 +45,7 @@ $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $stage = Join-Path $InstallRoot ('.update-' + $stamp)
 $backup = Join-Path $InstallRoot ('backups\' + $stamp)
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
-$manifest = Get-Content -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Raw | ConvertFrom-Json
+$manifest = Get-Content -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($entry in $manifest.archives) {
     $path = Resolve-Inside $packageRoot $entry.path
     if ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.sha256) { throw ('Package checksum mismatch: ' + $entry.path) }
@@ -58,7 +58,7 @@ foreach ($entry in $manifest.managedFiles) {
     Resolve-Inside $InstallRoot $entry.path | Out-Null
     if ((Get-FileHash -LiteralPath (Join-Path $stage $entry.path) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $entry.sha256) { throw ('File checksum mismatch: ' + $entry.path) }
 }
-$downloads = Get-Content -LiteralPath (Join-Path $packageRoot 'installer-files.json') -Raw | ConvertFrom-Json
+$downloads = Get-Content -LiteralPath (Join-Path $packageRoot 'installer-files.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $pending = [Collections.Generic.Queue[object]]::new()
 $completed = 0
 foreach ($file in $downloads.files) {
@@ -175,7 +175,7 @@ function Backup-File([string]$Path, [string]$Relative, [switch]$Remove) {
     if ($Remove -and $exists) { Remove-Item -LiteralPath $absolute }
 }
 $oldManifestPath = Join-Path $InstallRoot 'installed-manifest.json'
-$oldManifest = if (Test-Path -LiteralPath $oldManifestPath) { Get-Content -LiteralPath $oldManifestPath -Raw | ConvertFrom-Json } else { $null }
+$oldManifest = if (Test-Path -LiteralPath $oldManifestPath) { Get-Content -LiteralPath $oldManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $currentModNames = @($manifest.managedFiles | Where-Object { $_.path -like 'mods/*' } | ForEach-Object { Split-Path -Leaf $_.path })
 try {
 if (Test-Path -LiteralPath (Join-Path $InstallRoot 'mods')) {

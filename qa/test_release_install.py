@@ -24,7 +24,7 @@ def install(label, expected=0):
     results.append({'test': label, 'seconds': round(time.monotonic() - start, 2), 'exitCode': result.returncode})
 
 install('fresh-public-install')
-for name in ['Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'release.json', 'code.ico', 'Warfare-Launcher.ps1', 'Play-Warfare.ps1']:
+for name in ['Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'release.json', 'code.ico', 'Warfare-Launcher.ps1', 'Play-Warfare.ps1', 'Warfare-Connection.ps1', 'Configure-Controller.ps1']:
     assert (root / name).read_bytes() == (package / name).read_bytes(), name
 settings_path = root / 'warfare-settings.json'
 settings = json.loads(settings_path.read_text(encoding='utf-8-sig'))

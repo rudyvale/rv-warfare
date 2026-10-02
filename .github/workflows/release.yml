@@ -48,6 +48,8 @@ jobs:
           & ./qa/test_gui.ps1
           python -X utf8 qa/test_connection_launch.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_contract.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host_races.py
