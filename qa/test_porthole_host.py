@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import time
@@ -94,9 +95,12 @@ class HostReadinessTests(unittest.TestCase):
     def test_replaced_same_length_log_does_not_reuse_old_readiness(self):
         self.assertTrue(self.read()['ready'])
         path = self.root / 'porthole-events.jsonl'
-        size = path.stat().st_size
+        original = path.stat()
+        size = original.st_size
         replaced = (json.dumps({'event': 'error', 'message': 'Steam offline'}) + '\n').encode()
         path.write_bytes(replaced + b' ' * (size - len(replaced)))
+        os.utime(path, ns=(original.st_atime_ns, original.st_mtime_ns + 1_000_000_000))
+        self.assertNotEqual(path.stat().st_mtime_ns, original.st_mtime_ns)
         self.assertEqual(status.read_status(self.root, lambda pid: self.identity)['reason'], 'steam_offline')
 
     def test_partial_event_and_large_backlog_never_claim_ready_early(self):
