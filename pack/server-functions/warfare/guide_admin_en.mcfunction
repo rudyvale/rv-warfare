@@ -1,0 +1,1 @@
+execute @s[tag=v_owner] ~ ~ ~ tellraw @s {"text": "WorldEdit: //wand gives the selection tool; left/right click select two corners. //pos1 and //pos2 select your current position; //set, //copy, //paste and //undo edit the selection. /gamemode 1: creative; /gamemode 0: survival; /tp: teleport. The server verifies owner permissions on connection.", "color": "white"}

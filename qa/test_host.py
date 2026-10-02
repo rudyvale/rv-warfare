@@ -53,13 +53,18 @@ class RuntimeTests(unittest.TestCase):
         self.assertEqual(runtime.read_json(self.root / 'server-state.json')['state'], 'running')
 
     def test_stop_returns_after_server_exits(self):
-        runtime.write_json(self.root / 'server-state.json', {'state': 'running', 'pid': 55})
+        runtime.write_json(self.root / 'server-state.json', {'state': 'running', 'pid': 55, 'updated': 11})
         calls = []
         def probe(pid):
             calls.append(pid)
             return {'executable': 'java.exe', 'startedAt': 10} if len(calls) < 3 else None
         runtime.request_stop(self.root, timeout=2, probe=probe)
         self.assertEqual((self.root / 'commands.txt').read_text(), 'stop\n')
+
+    def test_legacy_state_rejects_pid_reused_after_last_update(self):
+        runtime.write_json(self.root / 'server-state.json', {'state': 'running', 'ready': True, 'pid': 55, 'updated': 11})
+        probe = lambda pid: {'executable': 'java.exe', 'startedAt': 20}
+        self.assertFalse(runtime.server_status(self.root, probe)['ready'])
 
     def test_porthole_log_is_incremental_and_resets_on_truncation(self):
         runtime.write_json(self.root / 'porthole-state.json', {'pid': 9, 'state': 'running', 'startedAt': 10, 'port': 25565})
@@ -151,6 +156,36 @@ class InterfaceTests(unittest.TestCase):
         with patch.object(ui.subprocess, 'run', side_effect=AssertionError('network')):
             ui.Launcher.check_updates(self.app)
             self.pump()
+
+    def test_controller_uses_host_game_profile_only(self):
+        captured = []
+        self.app.script = lambda name, timeout=180, arguments=(): captured.append((name, arguments))
+        self.app.configure_controller()
+        self.pump()
+        self.assertEqual(captured, [('Configure-Controller.ps1', ['-InstallRoot', str(Path(os.environ['APPDATA']) / '.minecraft/versions/Warfare-1.12.2')])])
+        self.assertEqual(self.app.status_key, 'controller_open')
+
+    def test_retry_tunnel_never_starts_server_or_game(self):
+        self.app.server = {'state': 'running', 'ready': True}
+        self.app.render()
+        self.assertEqual(self.app.start_button.cget('text'), self.app.t('start'))
+        self.assertEqual(self.app.start_button.cget('state'), 'disabled')
+        self.app.retry_button.invoke()
+        self.pump()
+        self.assertEqual(self.invoked, ['Start-Porthole.ps1'])
+
+    def test_settings_persist_language_and_update_preference(self):
+        runtime.write_json(self.root / 'launcher-settings.json', {'custom': 'kept'})
+        runtime.write_json(self.root / '.updates/preferences.json', {'custom': 'kept', 'autoCheck': True})
+        self.app.show_settings()
+        dialog = self.app.dialog
+        dialog.grid_slaves(row=1)[0].set('English')
+        dialog.grid_slaves(row=5)[0].invoke()
+        dialog.grid_slaves(row=7)[0].invoke()
+        self.assertEqual(self.app.language, 'en')
+        self.assertFalse(self.app.auto_check)
+        self.assertEqual(runtime.read_json(self.root / '.updates/preferences.json'), {'custom': 'kept', 'autoCheck': False})
+        self.assertEqual(runtime.read_json(self.root / 'launcher-settings.json')['custom'], 'kept')
 
     def test_layout_and_translations(self):
         self.window.deiconify()

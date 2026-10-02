@@ -33,11 +33,11 @@ Do not replace an already published version with different bytes. Corrections ne
 For a new local binary base, build the archives, push the matching tag, then run:
 
 ```powershell
-python tools/publish_release.py --directory dist --notes release-notes.md --publish
+python tools/publish_release.py --directory dist --notes .local/release-notes.md --publish
 ```
 
 Without `--publish`, the tool leaves a verified draft. It requires committed sources matching the pushed release tag. Keep temporary release notes under `.local`. It uses `GH_TOKEN`, `GITHUB_TOKEN` or the Git Credential Manager login, without writing tokens to files. Retrying resumes only when existing assets have matching checksums. `tools/verify_release.py --directory dist --tag vX.Y.Z --remote` verifies the public release and latest pointer.
 
-The **Publish release** workflow rebuilds launcher and source updates from an existing verified release using `tag` and `base_tag`. Gameplay changes need a newly integrated and tested binary base, followed by the local publishing command above. The workflow does not compile third-party mods from upstream sources. The optional world is generated separately from its source generator.
+The **Publish release** workflow rebuilds launcher and source updates from an existing verified release using `tag` and `base_tag`. Gameplay changes need a newly integrated and tested binary base, followed by the local publishing command above. The workflow does not compile third-party mods from upstream sources. It generates a clean world, integrates the tracked menus and player book, validates them and includes the world archive in the release.
 
 For isolated tests, set `VM_SKIP_UPDATE_CHECK=1` in the test process. The legacy environment variable and internal `Get-Vm*` helper names remain for compatibility; ordinary shortcuts do not disable checks.

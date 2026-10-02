@@ -67,7 +67,8 @@ def server_status(folder=ROOT, probe=None):
         identity = probe(int(state.get('pid', 0))) if state.get('pid') else None
         if identity and Path(identity['executable']).name.lower() in ('java.exe', 'javaw.exe'):
             started = state.get('processStartedAt')
-            if started is None or abs(float(started) - identity['startedAt']) < 2:
+            valid_legacy = started is None and identity['startedAt'] <= float(state.get('updated', 0)) + 2
+            if valid_legacy or (started is not None and abs(float(started) - identity['startedAt']) < 2):
                 return state
         if state.get('state') == 'starting' and time.time() - float(state.get('updated', 0)) < 20:
             return state
@@ -99,7 +100,7 @@ def java_arguments(folder, settings, total=None):
         if fallback.is_file():
             java = fallback
     if not java.is_file():
-        raise FileNotFoundError('Java 8 is missing. Install VM first or set VM_JAVA.')
+        raise FileNotFoundError('Java 8 is missing. Install RV first or set VM_JAVA.')
     jar = folder / 'forge-1.12.2-14.23.5.2860.jar'
     if not jar.is_file():
         raise FileNotFoundError('Forge server is missing in ' + str(folder))

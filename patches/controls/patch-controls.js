@@ -9,7 +9,22 @@ function returns(m,opcode,cls,name,desc,args){var count=0;for(var node=m.instruc
 function intercept(m,cls,name,desc,args){var code=new IL(),end=new LN();loads(code,args);invoke(code,cls,name,desc);code.add(new JI(153,end));code.add(new IN(177));code.add(end);code.add(new FN(3,0,null,0,null));m.instructions.insert(code);changes.push(m.name+':'+name);}
 function find(node,name,desc){for(var i=0;i<node.methods.size();i++){var m=node.methods.get(i);if(String(m.name)===name&&(!desc||String(m.desc)===desc))return m;}throw new Error('Missing '+node.name+'.'+name+' '+desc);}
 function patch(path,edit){var name=prefix+path,entry=jar.getJarEntry(name+'.class');if(entry===null)throw new Error('Missing '+name);var reader=new CR(jar.getInputStream(entry)),node=new CN();reader.accept(node,0);edit(node);var writer=new CW(reader,1);node.accept(writer);var output=Paths.get(argumentsOutput,name+'.class');Files.createDirectories(output.getParent());Files.write(output,writer.toByteArray());}
-var argumentsOutput=String(arguments[1]);
+var argumentsOutput=String(arguments[1]),includeOwner=String(arguments[2])==='owner';
+if(includeOwner)patch('MCH_EventHook',function(n){
+    var m=find(n,'entitySpawn','(Lnet/minecraftforge/event/entity/EntityJoinWorldEvent;)V'),code=new IL();
+    code.add(new VI(25,1));code.add(new MI(184,prefix+'uav/WarfareOwnerAuth','onJoin','(Ljava/lang/Object;)V',false));m.instructions.insert(code);changes.push('entitySpawn:ownerAuth');
+});
+patch('MCH_MOD',function(n){
+    var found=false;
+    for(var i=0;i<n.visibleAnnotations.size();i++){
+        var a=n.visibleAnnotations.get(i);
+        if(String(a.desc)==='Lnet/minecraftforge/fml/common/Mod;'){
+            for(var j=a.values.size()-2;j>=0;j-=2)if(String(a.values.get(j))==='version'||String(a.values.get(j))==='acceptableRemoteVersions'){a.values.remove(j+1);a.values.remove(j);}
+            a.values.add('version');a.values.add('1.5.1-rv-controls1');a.values.add('acceptableRemoteVersions');a.values.add('[1.5.1-rv-controls1]');found=true;
+        }
+    }
+    if(!found)throw new Error('Missing Forge mod declaration');changes.push('modProtocolVersion');
+});
 patch('event/MouseInputHandler',function(n){
     hook(find(n,'handleRenderTickPre'),'VMPilot','frame','()V',[]);
     returns(find(n,'updateMouseDelta'),177,'VMPilot','mouse','(Ljava/lang/Object;)V',[[25,0]]);
@@ -23,6 +38,7 @@ patch('aircraft/MCH_EntityAircraft',function(n){
     intercept(find(n,'setAngles'),'VMPilot','angles','(Ljava/lang/Object;Ljava/lang/Object;ZFFFFFFF)Z',[[25,0],[25,1],[21,2],[23,3],[23,4],[23,5],[23,6],[23,7],[23,8],[23,9]]);
     intercept(find(n,'updateRecoil'),'VMCombat','suppressRecoil','(Ljava/lang/Object;)Z',[[25,0]]);
     hook(find(n,'spawnParticleMuzzleFlash'),'VMCombat','muzzle','(Ljava/lang/Object;Ljava/lang/Object;DDD)V',[[25,0],[25,2],[24,3],[24,5],[24,7]]);
+    hook(find(n,'func_70097_a','(Lnet/minecraft/util/DamageSource;F)Z'),'VMCombat','damageFeedback','(Ljava/lang/Object;Ljava/lang/Object;F)V',[[25,0],[25,1],[23,2]]);
 });
 patch('aircraft/MCH_AircraftClientTickHandler',function(n){
     var m=find(n,'commonPlayerControl');
@@ -37,10 +53,33 @@ patch('networking/data/DataPlayerControlAircraft',function(n){
     returns(find(n,'serialize'),177,'VMFlight','write','(Ljava/lang/Object;Ljava/lang/Object;)V',[[25,0],[25,1]]);
 });
 patch('networking/packet/control/PacketPlayerControlBase',function(n){returns(find(n,'handlePilotControls'),177,'VMFlight','receive','(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)V',[[25,1],[25,2],[25,3]]);});
-patch('uav/WarfareFpv',function(n){returns(find(n,'control'),172,'VMFlight','afterControl','(ZLjava/lang/Object;)Z',[[25,0]]);returns(find(n,'resetControl'),177,'VMFlight','reset','(Ljava/lang/Object;)V',[[25,0]]);});
-patch('sound/MCH_SoundEvents',function(n){intercept(find(n,'playSound','(Lnet/minecraft/world/World;DDDLnet/minecraft/util/ResourceLocation;FF)V'),'VMCombat','soundAt','(Ljava/lang/Object;DDDLjava/lang/Object;FF)Z',[[25,0],[24,1],[24,3],[24,5],[25,7],[23,8],[23,9]]);});
+patch('uav/WarfareFpv',function(n){returns(find(n,'control'),172,'VMFlight','afterControl','(ZLjava/lang/Object;)Z',[[25,0]]);returns(find(n,'resetControl'),177,'VMFlight','reset','(Ljava/lang/Object;)V',[[25,0]]);
+    var m=find(n,'motion'),code=new IL(),end=new LN();code.add(new VI(25,0));invoke(code,'VMImpact','droneMotion','(Ljava/lang/Object;)Z');code.add(new JI(153,end));code.add(new IN(4));code.add(new IN(172));code.add(end);code.add(new FN(3,0,null,0,null));m.instructions.insert(code);changes.push('motion:impactFuse');
+});
+patch('sound/MCH_SoundEvents',function(n){hook(find(n,'onSoundEventRegisterEvent'),'VMCombat','registerSounds','()V',[]);intercept(find(n,'playSound','(Lnet/minecraft/world/World;DDDLnet/minecraft/util/ResourceLocation;FF)V'),'VMCombat','soundAt','(Ljava/lang/Object;DDDLjava/lang/Object;FF)Z',[[25,0],[24,1],[24,3],[24,5],[25,7],[23,8],[23,9]]);});
+patch('sound/SoundPatcherUtil',function(n){
+    var m=find(n,'patchSoundJsons'),count=0;
+    for(var x=m.instructions.getFirst();x!==null;){var next=x.getNext();if(x.getOpcode()===18&&String(x.cst)==='patched_marker'){
+        var load=x.getPrevious(),add=x.getNext();if(load.getOpcode()!==25||add.getOpcode()!==182||String(add.name)!=='add')throw new Error('Sound marker layout mismatch');
+        next=add.getNext();m.instructions.remove(load);m.instructions.remove(x);m.instructions.remove(add);count++;
+    }x=next;}
+    if(count!==1)throw new Error('Sound marker count '+count);hook(m,'VMCombat','repairSoundMarkers','(Ljava/lang/Object;)V',[[25,0]]);
+});
 patch('weapon/MCH_WeaponBase',function(n){intercept(find(n,'playSound','(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/ResourceLocation;)V'),'VMCombat','weaponSound','(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z',[[25,0],[25,1],[25,2]]);});
 patch('weapon/MCH_WeaponInfo',function(n){returns(find(n,'onPostReload'),177,'VMCombat','tune','(Ljava/lang/Object;)V',[[25,0]]);});
 patch('weapon/MCH_EntityBaseBullet',function(n){returns(find(n,'func_70071_h_'),177,'VMCombat','trail','(Ljava/lang/Object;)V',[[25,0]]);hook(find(n,'onImpact'),'VMCombat','impact','(Ljava/lang/Object;Ljava/lang/Object;)V',[[25,0],[25,1]]);});
 patch('helper/client/MCH_CameraManager',function(n){returns(find(n,'onCameraSetupEvent'),177,'VMCombat','camera','(Ljava/lang/Object;)V',[[25,0]]);});
-jar.close();if(changes.length!==19)throw new Error('Unexpected hook count '+changes.length+' '+JSON.stringify(changes));print(JSON.stringify(changes));
+var Remap=Java.type('org.objectweb.asm.commons.RemappingClassAdapter'),Mapper=Java.type('org.objectweb.asm.commons.SimpleRemapper'),replaced=0,entries=jar.entries();
+while(entries.hasMoreElements()){
+    var entry=entries.nextElement(),name=String(entry.getName());
+    if(name.indexOf(prefix+'weapon/')!==0||!name.endsWith('.class'))continue;
+    var reader=new CR(jar.getInputStream(entry));
+    var raw=new java.lang.String(reader.b,'ISO-8859-1');
+    if(raw.indexOf('net/minecraft/util/math/Vec2f')<0)continue;
+    var path=Paths.get(argumentsOutput,name);
+    if(Files.exists(path))reader=new CR(Files.readAllBytes(path));
+    var writer=new CW(reader,0);reader.accept(new Remap(writer,new Mapper('net/minecraft/util/math/Vec2f',vm+'VMVec2f')),8);
+    Files.createDirectories(path.getParent());Files.write(path,writer.toByteArray());replaced++;
+}
+if(replaced!==9)throw new Error('Shot rotation remap mismatch '+replaced);changes.push('serverSafeShotRotation:'+replaced);
+jar.close();if(changes.length!==(includeOwner?26:25))throw new Error('Unexpected hook count '+changes.length+' '+JSON.stringify(changes));print(JSON.stringify(changes));

@@ -11,6 +11,8 @@ public final class VMPilot {
     private static Object currentAircraft;
     private static double mousePitch, mouseRoll;
     private static long lastMouse;
+    private static Object attitudeAircraft,attitude;
+    private static double lastYaw,lastPitch,lastRoll;
     private static Object minecraft() throws Exception { return VMReflect.call(Class.forName("net.minecraft.client.Minecraft"),"func_71410_x"); }
     private static boolean focus() throws Exception {
         Object mc=minecraft();
@@ -23,7 +25,7 @@ public final class VMPilot {
             f8=pressed;
             input.poll(focus());
             boolean mode=input.down("mode");
-            if(mode&&!previousMode){input.profile.setProperty("flight",input.acro()?"angle":"acro"); input.save();}
+            if(mode&&!previousMode){input.profile.setProperty("flight",input.acro()?"angle":"acro");boolean armed=input.armed;input.save();input.armed=armed;}
             previousMode=mode;
         } catch(Exception | LinkageError e){VMReflect.error("controller frame",e);}
     }
@@ -55,7 +57,8 @@ public final class VMPilot {
     }
     public static boolean packet(boolean original,Object aircraft,Object data,boolean pilot) {
         try {
-            if(!input.enabled() || !pilot || !VMFlight.drone(aircraft)) return original || input.enabled();
+            if(!input.enabled())return VMFlight.release(aircraft)||original;
+            if(!pilot || !VMFlight.drone(aircraft)) return original || input.enabled();
             double desired=0;
             if(input.connected&&input.armed&&focus()) {
                 desired=input.gamepad()? VMControlMath.clamp(VMReflect.num(VMReflect.call(aircraft,"getCurrentThrottle"))+input.values[3]*.022,0,1):input.values[3];
@@ -100,16 +103,21 @@ public final class VMPilot {
             double rate=controller?VMControlMath.clamp(input.setting("rate",110),45,240):75;
             double newYaw=oldYaw+yaw*rate*dt,newPitch,newRoll;
             if(fpv&&input.acro()) {
-                Object q=Class.forName("org.joml.Quaternionf").newInstance(); float rad=(float)(Math.PI/180);
-                VMReflect.call(q,"rotateZ",(float)(-roll*rate*dt)*rad); VMReflect.call(q,"rotateX",(float)(pitch*rate*dt)*rad); VMReflect.call(q,"rotateY",(float)(yaw*rate*dt)*rad);
-                VMReflect.call(q,"rotateZ",(float)oldRoll*rad); VMReflect.call(q,"rotateX",(float)oldPitch*rad); VMReflect.call(q,"rotateY",(float)oldYaw*rad);
-                float[] rotation=VMControlMath.euler(VMReflect.num(VMReflect.get(q,"x")),VMReflect.num(VMReflect.get(q,"y")),VMReflect.num(VMReflect.get(q,"z")),VMReflect.num(VMReflect.get(q,"w")));
+                float rad=(float)(Math.PI/180);
+                if(attitude==null || attitudeAircraft!=aircraft || Math.abs(oldYaw-lastYaw)+Math.abs(oldPitch-lastPitch)+Math.abs(oldRoll-lastRoll)>.1) {
+                    attitude=Class.forName("org.joml.Quaternionf").newInstance();attitudeAircraft=aircraft;
+                    VMReflect.call(attitude,"rotateY",(float)-oldYaw*rad);VMReflect.call(attitude,"rotateX",(float)oldPitch*rad);VMReflect.call(attitude,"rotateZ",(float)oldRoll*rad);
+                }
+                VMReflect.call(attitude,"rotateY",(float)(-yaw*rate*dt)*rad);VMReflect.call(attitude,"rotateX",(float)(pitch*rate*dt)*rad);VMReflect.call(attitude,"rotateZ",(float)(-roll*rate*dt)*rad);VMReflect.call(attitude,"normalize");
+                float[] rotation=VMControlMath.worldEuler(VMReflect.num(VMReflect.get(attitude,"x")),VMReflect.num(VMReflect.get(attitude,"y")),VMReflect.num(VMReflect.get(attitude,"z")),VMReflect.num(VMReflect.get(attitude,"w")));
                 newPitch=rotation[0];newYaw=rotation[1];newRoll=rotation[2];
             }else {
+                attitude=null;
                 double max=fpv?35:25;
                 newPitch=VMControlMath.angle(oldPitch,pitch*max,dt,rate);newRoll=VMControlMath.angle(oldRoll,-roll*max,dt,rate);
             }
-            if((Boolean)VMReflect.get(aircraft,"field_70122_E")){newPitch=oldPitch;newRoll=oldRoll;}
+            if((Boolean)VMReflect.get(aircraft,"field_70122_E")){newPitch=oldPitch;newRoll=oldRoll;attitude=null;}
+            lastYaw=newYaw;lastPitch=newPitch;lastRoll=newRoll;
             VMReflect.call(aircraft,"setRotYaw",(float)newYaw);VMReflect.call(aircraft,"setRotPitch",(float)newPitch);VMReflect.call(aircraft,"setRotRoll",(float)newRoll);
             VMReflect.call(aircraft,"resyncOrientationFromEuler");
             VMReflect.set(aircraft,"prevRotationRoll",(float)newRoll);VMReflect.set(aircraft,"field_70127_C",(float)newPitch);VMReflect.set(aircraft,"field_70126_B",(float)newYaw);

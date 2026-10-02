@@ -21,7 +21,8 @@ public final class VMFlight {
     public static void local(Object aircraft, double value) {
         targets.put(aircraft, new double[]{VMControlMath.clamp(value,0,1),System.nanoTime()/1e9});
     }
-    public static void reset(Object aircraft) { targets.remove(aircraft); }
+    public static void reset(Object aircraft) { targets.remove(aircraft);VMImpact.reset(aircraft); }
+    public static boolean release(Object aircraft) { return targets.remove(aircraft)!=null; }
     public static double throttle(Object aircraft, double original) {
         double[] target=targets.get(aircraft);
         if(target==null) return original;

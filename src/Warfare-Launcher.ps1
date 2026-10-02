@@ -70,7 +70,11 @@ function Quote-Argument([string]$Value) {
     return '"' + [regex]::Replace([regex]::Replace($Value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
 }
 function Has-Package {
-    return ($script:packageRoot -and (Test-Path -LiteralPath (Join-Path $script:packageRoot 'Install-Warfare.ps1')) -and (Test-Path -LiteralPath (Join-Path $script:packageRoot 'payload.zip')))
+    if (-not $script:packageRoot) { return $false }
+    foreach ($name in @('Install-Warfare.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','payload.zip','runtime.zip','package-manifest.json','installer-files.json')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $script:packageRoot $name) -PathType Leaf)) { return $false }
+    }
+    return $true
 }
 $form = [Windows.Forms.Form]::new()
 $form.Text = 'RV'
@@ -270,7 +274,7 @@ function Start-Install {
         $picker.Filter = 'RV installer|Install-Warfare.ps1'
         try { if ($picker.ShowDialog($form) -ne 'OK') { return }; $script:packageRoot = Split-Path -Parent $picker.FileName } finally { $picker.Dispose() }
     }
-    if (-not (Has-Package)) { throw (L 'Распакуй весь архив установщика в одну папку.' 'Extract the entire installer archive into one folder.') }
+    if (-not (Has-Package)) { throw (L 'Нужен полный актуальный установщик RV. Распакуй новый архив целиком.' 'Use the complete current RV installer. Extract the entire new archive.') }
     Assert-VmUpgrade $script:packageRoot $InstallRoot
     $status.Text = L 'Установка…' 'Installing…'
     Start-Worker 'install' (Join-Path $script:packageRoot 'Install-Warfare.ps1') @('-Language',$script:language,'-Nickname',$nickname.Text.Trim(),'-InstallRoot',$InstallRoot,'-NoLaunch','-NoSteam')

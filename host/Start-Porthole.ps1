@@ -32,7 +32,7 @@ if (Test-Path -LiteralPath $stateFile) {
 if (-not $existing) {
     $env:SteamAppId = '4963920'
     $env:SteamGameId = '4963920'
-    $process = Start-Process -FilePath $executable -ArgumentList 'expose','tcp/127.0.0.1:25565','--visibility','friends','--max-peers','8','--game-name','VM','--json' -WindowStyle Hidden -WorkingDirectory $root -RedirectStandardOutput $eventsFile -RedirectStandardError (Join-Path $root 'porthole-errors.log') -PassThru
+    $process = Start-Process -FilePath $executable -ArgumentList 'expose','tcp/127.0.0.1:25565','--visibility','friends','--max-peers','8','--game-name','RV','--json' -WindowStyle Hidden -WorkingDirectory $root -RedirectStandardOutput $eventsFile -RedirectStandardError (Join-Path $root 'porthole-errors.log') -PassThru
     $existing = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $process.Id)
 }
 if (-not $existing) { throw 'Porthole failed to start.' }

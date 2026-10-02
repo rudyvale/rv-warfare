@@ -1,0 +1,12 @@
+scoreboard players add @s wlang 0
+scoreboard players add @s kills 0
+scoreboard players add @s w_supply 0
+scoreboard players add @s w_drone 0
+scoreboard players add @s w_ammo 0
+scoreboard players add @s w_class 0
+scoreboard players add @s w_probe 0
+scoreboard players add @s w_used 0
+scoreboard players add @s w_free 0
+scoreboard players add @s w_given 0
+scoreboard players add @s w_admin 0
+scoreboard players tag @s add w_ui2

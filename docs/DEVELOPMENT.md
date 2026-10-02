@@ -26,13 +26,19 @@ Extract a published **RV-Setup.zip** into a separate directory. Its `payload.zip
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/build_icon.ps1
 python tools/build_world_template.py
 python qa/test_world_template.py --full
-python tools/build_release.py --base C:/Build/RV-Setup --output dist --world-template dist/RV-World-Template.zip
+python -m pip install -r requirements-world.txt
+python tools/build_player_guide.py
+python tools/build_server_gameplay.py --output .local/server-gameplay --book .local/player-guide/warfare
+python qa/test_player_guide.py --functions .local/server-gameplay/warfare
+python tools/stage_world_template.py --template .local/world-template/Battlefield-Extended --functions .local/server-gameplay/warfare --output .local/release-world
+python tools/package_world_template.py --stage .local/release-world --output .local/RV-World-Template.zip
+python tools/build_release.py --base C:/Build/RV-Setup --output dist --world-template .local/RV-World-Template.zip
 python tools/verify_release.py --directory dist
 python qa/validate_package.py dist/RV-Setup.zip
 python qa/test_release_install.py --package dist/RV-Setup
 ```
 
-The world generator refuses to overwrite existing output. Use a fresh checkout for a clean build. Omit `--world-template` when intentionally building without the optional map.
+The world generator and integrated world packager refuse to overwrite existing output. Use a fresh checkout for a clean build. World integration is tested with Python 3.14, nbtlib 2.0.4 and NumPy 2.5.3; the pinned dependencies are separate from the launcher. The generic functions in `pack/server-functions/warfare` contain no owner policy or player records. Omit `--world-template` when intentionally building without the optional map.
 
 The release contains **RV-Setup.zip**, **RV-Host-Tools.zip**, **SHA256SUMS.txt** and the optional world template. Public packages have an empty server destination. Existing user settings are preserved during installation.
 

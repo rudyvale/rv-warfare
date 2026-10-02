@@ -36,7 +36,9 @@
     "keys": "F11 — полный экран   ·   Esc — выйти из полного экрана",
     "language": "Язык",
     "saved": "Настройки сохранены.",
-    "version": "Версия"
+    "version": "Версия",
+    "controller": "Настроить контроллер",
+    "controller_open": "Калибровка открыта. В игре её можно вызвать клавишей F8."
   },
   "en": {
     "play": "PLAY",
@@ -75,6 +77,8 @@
     "keys": "F11 — full screen   ·   Esc — leave full screen",
     "language": "Language",
     "saved": "Settings saved.",
-    "version": "Version"
+    "version": "Version",
+    "controller": "Configure controller",
+    "controller_open": "Calibration opened. You can also press F8 in the game."
   }
 }

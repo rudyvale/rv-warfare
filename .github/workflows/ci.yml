@@ -40,4 +40,33 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host_races.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_host_close.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 host/warfare-launcher.py --check
+  world:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install -r requirements-world.txt
+      - name: Generate and check clean world
+        run: |
+          python -X utf8 tools/build_world_template.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_world_template.py --full --rebuild
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 tools/build_player_guide.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 tools/build_server_gameplay.py --output .local/server-gameplay --book .local/player-guide/warfare
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_player_guide.py --functions .local/server-gameplay/warfare
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 tools/stage_world_template.py --template .local/world-template/Battlefield-Extended --functions .local/server-gameplay/warfare --output .local/release-world
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 tools/package_world_template.py --stage .local/release-world --output .local/RV-World-Template.zip
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_world_package.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }

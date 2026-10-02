@@ -64,7 +64,7 @@ with archive_path.open('rb') as stream:
 checksums = digest + '  RV-Setup.zip\n'
 host_path = output / 'RV-Host-Tools.zip'
 with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
-    for name in ['README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1']:
+    for name in ['README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']:
         archive.write(root / 'host' / name, name)
     for name in ['Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Configure-Controller.ps1', 'release.json']:
         archive.write(root / 'src' / name, name)

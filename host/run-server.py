@@ -70,6 +70,10 @@ def run(root):
                         if 'Preparing spawn area' in line:
                             state['phase'] = 'world'
                         if 'Done (' in line and state['state'] != 'stopping':
+                            if not state.get('bootQueued'):
+                                with commands_path.open('a', encoding='utf-8') as queue:
+                                    queue.write('function warfare:boot\n')
+                                state['bootQueued'] = True
                             state.update(state='running', ready=True, phase='ready', startup_seconds=round(time.monotonic() - started, 2))
                             save()
                         joined = re.search(r'\]: (\w{1,16})\[/.*logged in with entity id', line)

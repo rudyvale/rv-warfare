@@ -15,7 +15,7 @@ import webbrowser
 from host_runtime import memory_limit, porthole, read_json, server_status, write_json
 
 ROOT = Path(__file__).resolve().parent
-RELEASE_URL = 'https://github.com/rudyvale/vm-warfare/releases/latest'
+RELEASE_URL = 'https://github.com/rudyvale/rv-warfare/releases/latest'
 TEXTS = {
     'ru': {
         'play': 'ИГРАТЬ', 'start': 'ЗАПУСТИТЬ СЕРВЕР', 'stop': 'ОТКЛЮЧИТЬ СЕРВЕР',
@@ -38,6 +38,7 @@ TEXTS = {
         'fps': 'Мало FPS? Отключи шейдеры и поставь дальность 6–8 чанков.',
         'keys': 'F11 — полный экран   ·   Esc — выйти из полного экрана',
         'language': 'Язык', 'saved': 'Настройки сохранены.', 'version': 'Версия',
+        'controller': 'Настроить контроллер', 'controller_open': 'Калибровка открыта. В игре её можно вызвать клавишей F8.',
     },
     'en': {
         'play': 'PLAY', 'start': 'START SERVER', 'stop': 'STOP SERVER',
@@ -60,6 +61,7 @@ TEXTS = {
         'fps': 'Low FPS? Disable shaders and use a render distance of 6–8 chunks.',
         'keys': 'F11 — full screen   ·   Esc — leave full screen',
         'language': 'Language', 'saved': 'Settings saved.', 'version': 'Version',
+        'controller': 'Configure controller', 'controller_open': 'Calibration opened. You can also press F8 in the game.',
     },
 }
 
@@ -81,13 +83,14 @@ class Launcher:
         self.connection = {}
         self.server_job = None
         self.client_job = False
+        self.controller_job = False
         self.client_running = False
         self.update_available = False
         self.status_key = 'intro'
         self.preferences = read_json(self.folder / '.updates/preferences.json')
         self.auto_check = self.preferences.get('autoCheck') is not False
         self.update_lock = threading.Lock()
-        self.window.title('VM')
+        self.window.title('RV')
         self.window.configure(bg='#0d1319')
         scale = max(1, float(self.window.tk.call('tk', 'scaling')) / (96 / 72))
         self.window.geometry(f'{int(1180 * scale)}x{int(760 * scale)}')
@@ -118,7 +121,7 @@ class Launcher:
         self.window.rowconfigure(1, weight=1)
         self.header = tk.Frame(self.window, bg='#0d1319', padx=36, pady=14)
         self.header.grid(row=0, column=0, sticky='ew')
-        tk.Label(self.header, text='</>  VM', bg='#0d1319', fg='#96f1cd', font=('Segoe UI', 20, 'bold')).pack(side='left')
+        tk.Label(self.header, text='</>  RV', bg='#0d1319', fg='#96f1cd', font=('Segoe UI', 20, 'bold')).pack(side='left')
         self.settings_button = self.button(self.header, self.show_settings)
         self.settings_button.configure(pady=10, font=('Segoe UI', 11))
         self.settings_button.pack(side='right')
@@ -130,7 +133,7 @@ class Launcher:
         self.main.columnconfigure(0, weight=1)
         self.main.rowconfigure(0, weight=1)
         self.main.rowconfigure(9, weight=1)
-        self.title = tk.Label(self.main, text='WARFARE', bg='#0d1319', fg='#f0f5f2', font=('Segoe UI', 36, 'bold'), anchor='w')
+        self.title = tk.Label(self.main, text='RV', bg='#0d1319', fg='#f0f5f2', font=('Segoe UI', 36, 'bold'), anchor='w')
         self.title.grid(row=1, column=0, sticky='w', pady=(0, 8))
         self.server_label = tk.Label(self.main, bg='#0d1319', fg='#a6b7bc', font=('Segoe UI', 16), anchor='w')
         self.server_label.grid(row=2, column=0, sticky='ew', pady=(0, 14))
@@ -157,6 +160,8 @@ class Launcher:
         self.copy_button = self.button(self.network_row, self.copy_code)
         self.copy_button.configure(pady=8, font=('Segoe UI', 10))
         self.copy_button.pack(side='right')
+        self.retry_button = self.button(self.network_row, lambda: self.run_action('tunnel'))
+        self.retry_button.configure(pady=8, font=('Segoe UI', 10))
         self.footer = tk.Frame(self.window, bg='#0d1319', padx=36, pady=18)
         self.footer.grid(row=2, column=0, sticky='ew')
         self.footer.columnconfigure(0, weight=1)
@@ -168,7 +173,7 @@ class Launcher:
         self.main.bind('<Configure>', lambda event: self.status.configure(wraplength=max(500, event.width - 104)))
 
     def translate(self):
-        for button, key in [(self.play_button, 'play'), (self.settings_button, 'settings'), (self.copy_button, 'copy'), (self.stop_button, 'stop'), (self.log_button, 'logs')]:
+        for button, key in [(self.play_button, 'play'), (self.settings_button, 'settings'), (self.copy_button, 'copy'), (self.stop_button, 'stop'), (self.log_button, 'logs'), (self.retry_button, 'retry')]:
             button.configure(text=self.t(key))
         self.hint.configure(text=self.t('close_note') + '\n' + self.t('keys'))
         self.render()
@@ -180,13 +185,20 @@ class Launcher:
         label = 'ready' if ready else {'starting': 'loading', 'stopping': 'saving', 'failed': 'failed'}.get(state, 'off')
         self.server_label.configure(text='●  ' + self.t(label), fg='#96f1cd' if ready else '#a6b7bc')
         self.play_button.configure(state='normal' if ready and not self.client_job and not self.client_running and self.server_job != 'stop' else 'disabled')
-        can_start = not self.server_job and state not in ('starting', 'stopping') and (not ready or not self.connection.get('ready'))
-        self.start_button.configure(text=self.t('retry' if ready else 'start'), state='normal' if can_start else 'disabled')
+        can_start = not self.server_job and state not in ('starting', 'stopping') and not ready
+        self.start_button.configure(text=self.t('start'), state='normal' if can_start else 'disabled')
         can_stop = self.server_job != 'stop' and (state in ('starting', 'running') or self.connection.get('ready'))
         self.stop_button.configure(state='normal' if can_stop else 'disabled')
         code = self.connection.get('code') if self.connection.get('ready') else ''
         self.network_label.configure(text=self.t('network') + ': ' + (code or self.t('network_loading' if self.server_job == 'tunnel' else 'network_off')))
         self.copy_button.configure(state='normal' if code else 'disabled')
+        if ready and not code:
+            self.copy_button.pack_forget()
+            self.retry_button.pack(side='right')
+            self.retry_button.configure(state='normal' if not self.server_job else 'disabled')
+        else:
+            self.retry_button.pack_forget()
+            self.copy_button.pack(side='right')
         self.github_button.configure(text=self.t('update' if self.update_available else 'github'))
         status_key = self.status_key
         if status_key == 'intro':
@@ -239,8 +251,27 @@ class Launcher:
             except OSError:
                 self.status_key = 'error'
                 self.render()
-        self.button(dialog, save, primary=True).grid(row=6, column=0, sticky='ew', pady=(22, 0))
-        dialog.grid_slaves(row=6)[0].configure(text=self.t('save'))
+        def controller():
+            dialog.destroy()
+            self.configure_controller()
+        controller_button = self.button(dialog, controller)
+        controller_button.configure(text=self.t('controller'), state='disabled' if self.controller_job else 'normal')
+        controller_button.grid(row=6, column=0, sticky='ew', pady=(16, 0))
+        self.button(dialog, save, primary=True).grid(row=7, column=0, sticky='ew', pady=(12, 0))
+        dialog.grid_slaves(row=7)[0].configure(text=self.t('save'))
+
+    def configure_controller(self):
+        if self.controller_job:
+            return
+        self.controller_job = True
+        def work():
+            try:
+                game = Path(os.environ['APPDATA']) / '.minecraft/versions/Warfare-1.12.2'
+                self.script('Configure-Controller.ps1', timeout=30, arguments=['-InstallRoot', str(game)])
+                self.events.put(('controller', 'controller_open'))
+            except Exception:
+                self.events.put(('controller', 'error'))
+        threading.Thread(target=work, daemon=True).start()
 
     def copy_code(self):
         if self.connection.get('ready') and self.connection.get('code'):
@@ -276,11 +307,11 @@ class Launcher:
     def shell(self):
         return str(Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe')
 
-    def script(self, name, timeout=180):
+    def script(self, name, timeout=180, arguments=()):
         with (self.folder / 'launcher.log').open('a', encoding='utf-8') as log:
             log.write(time.strftime('\n%Y-%m-%d %H:%M:%S ') + name + '\n')
             log.flush()
-            result = subprocess.run([self.shell(), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(self.folder / name)], cwd=self.folder, stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW, timeout=timeout)
+            result = subprocess.run([self.shell(), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(self.folder / name)] + list(arguments), cwd=self.folder, stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW, timeout=timeout)
         if result.returncode:
             raise RuntimeError(name)
 
@@ -300,9 +331,11 @@ class Launcher:
         else:
             if self.server_job or self.server.get('state') in ('starting', 'stopping'):
                 return
+            if action == 'tunnel' and not self.server.get('ready'):
+                return
             self.cancel_start = threading.Event()
             self.server_generation += 1
-            self.server_job = 'start'
+            self.server_job = action
             self.status_key = 'wait'
         if action in ('play', 'start'):
             self.check_updates()
@@ -317,7 +350,7 @@ class Launcher:
                     with self.server_operation_lock:
                         self.script('Stop-All.ps1')
                 else:
-                    if not server_status(self.folder).get('ready'):
+                    if action == 'start' and not server_status(self.folder).get('ready'):
                         with self.server_operation_lock:
                             if cancel.is_set():
                                 return
@@ -344,10 +377,13 @@ class Launcher:
                     except Exception:
                         self.events.put(('done', (action, 'tunnel_error', generation)))
                         return
-                self.events.put(('done', (action, {'play': 'launched', 'stop': 'stopped', 'start': 'online'}[action], generation)))
+                self.events.put(('done', (action, {'play': 'launched', 'stop': 'stopped', 'start': 'online', 'tunnel': 'online'}[action], generation)))
             except Exception as error:
-                with (self.folder / 'launcher.log').open('a', encoding='utf-8') as log:
-                    log.write(str(error) + '\n')
+                try:
+                    with (self.folder / 'launcher.log').open('a', encoding='utf-8') as log:
+                        log.write(str(error) + '\n')
+                except OSError:
+                    pass
                 self.events.put(('done', (action, 'error', generation)))
         threading.Thread(target=work, daemon=True).start()
 
@@ -379,6 +415,9 @@ class Launcher:
                 event, value = self.events.get_nowait()
                 if event == 'snapshot':
                     self.server, self.connection, self.client_running, self.update_available = value
+                elif event == 'controller':
+                    self.controller_job = False
+                    self.status_key = value
                 elif event == 'phase' and value[0] == self.server_generation and self.server_job == 'start':
                     self.server_job = value[1]
                 elif event == 'done':
@@ -396,11 +435,16 @@ class Launcher:
         self.poll_id = self.window.after(80, self.poll)
 
     def close(self):
+        if self.closed.is_set():
+            return
         self.closed.set()
         self.window.after_cancel(self.poll_id)
         if self.progress_active:
             self.progress.stop()
         self.window.destroy()
+        for name, value in list(vars(self).items()):
+            if isinstance(value, (tk.Misc, tk.Variable)):
+                setattr(self, name, None)
 
 
 def main():

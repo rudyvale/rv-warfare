@@ -27,16 +27,15 @@ public final class VMControlMath {
         if (difference < -180) difference += 360;
         return current + clamp(difference * 5, -rate, rate) * clamp(dt, 0, 0.05);
     }
-    public static float[] euler(double x,double y,double z,double w) {
+    public static float[] worldEuler(double x,double y,double z,double w) {
         double norm=Math.sqrt(x*x+y*y+z*z+w*w);
         if(!Double.isFinite(norm)||norm<1e-12)return new float[]{0,0,0};
         x/=norm;y/=norm;z/=norm;w/=norm;
-        double m00=1-2*y*y-2*z*z,m01=2*x*y-2*w*z,m02=2*z*x+2*w*y;
-        double m11=1-2*z*z-2*x*x,m20=2*z*x-2*w*y,m21=2*y*z+2*w*x,m22=1-2*x*x-2*y*y;
-        double b=-Math.asin(clamp(m21,-1,1)),cos=Math.cos(b),a,c;
-        if(Math.abs(cos)>=1e-5){c=Math.atan2(m20,m22);a=Math.asin(clamp(m01/cos,-1,1));}
-        else{c=Math.atan2(-m02,m00);a=0;}
-        a=Math.toDegrees(a);if(m11<0)a=180-a;
-        return new float[]{(float)-Math.toDegrees(b),(float)-Math.toDegrees(c),(float)-a};
+        double m00=1-2*y*y-2*z*z,m02=2*z*x+2*w*y,m10=2*x*y+2*w*z;
+        double m11=1-2*z*z-2*x*x,m12=2*y*z-2*w*x,m20=2*z*x-2*w*y,m22=1-2*x*x-2*y*y;
+        double pitch=Math.asin(clamp(-m12,-1,1)),yaw,roll;
+        if(Math.abs(Math.cos(pitch))>1e-6){yaw=Math.atan2(m02,m22);roll=Math.atan2(m10,m11);}
+        else{yaw=Math.atan2(-m20,m00);roll=0;}
+        return new float[]{(float)Math.toDegrees(pitch),(float)-Math.toDegrees(yaw),(float)Math.toDegrees(roll)};
     }
 }

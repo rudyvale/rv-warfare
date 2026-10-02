@@ -30,7 +30,9 @@ jobs:
           ref: ${{ inputs.tag }}
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.14'
+      - name: Install world build dependencies
+        run: python -m pip install -r requirements-world.txt
       - name: Validate version and protect published releases
         shell: pwsh
         run: |
@@ -56,15 +58,34 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host_races.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_host_close.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 host/warfare-launcher.py --check
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: Build clean world, menus and player book
+        shell: pwsh
+        run: |
+          python -X utf8 tools/build_world_template.py
+          if ($LASTEXITCODE) { throw 'World generation failed' }
+          python -X utf8 qa/test_world_template.py --full
+          if ($LASTEXITCODE) { throw 'World validation failed' }
+          python -X utf8 tools/build_player_guide.py
+          if ($LASTEXITCODE) { throw 'Book generation failed' }
+          python -X utf8 tools/build_server_gameplay.py --output .local/server-gameplay --book .local/player-guide/warfare
+          if ($LASTEXITCODE) { throw 'Menu generation failed' }
+          python -X utf8 qa/test_player_guide.py --functions .local/server-gameplay/warfare
+          if ($LASTEXITCODE) { throw 'Book validation failed' }
+          python -X utf8 tools/stage_world_template.py --template .local/world-template/Battlefield-Extended --functions .local/server-gameplay/warfare --output .local/release-world
+          if ($LASTEXITCODE) { throw 'World integration failed' }
+          python -X utf8 tools/package_world_template.py --stage .local/release-world --output .local/RV-World-Template.zip
+          if ($LASTEXITCODE) { throw 'World packaging failed' }
       - name: Get verified base and build
         shell: pwsh
         run: |
           gh release download $env:BASE_TAG --pattern RV-Setup.zip --dir base
           if ($LASTEXITCODE) { throw 'Base download failed' }
           Expand-Archive base/RV-Setup.zip -DestinationPath base/extracted
-          python tools/build_release.py --base base/extracted/RV-Setup --output dist
+          python tools/build_release.py --base base/extracted/RV-Setup --output dist --world-template .local/RV-World-Template.zip
           if ($LASTEXITCODE) { throw 'Build failed' }
           python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG
           if ($LASTEXITCODE) { throw 'Artifact verification failed' }

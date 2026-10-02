@@ -1,6 +1,7 @@
 package com.norwood.mcheli.vm;
 
 import java.util.*;
+import com.google.gson.JsonObject;
 
 public final class VMCombat {
     private static final Map<Object,double[]> kicks=Collections.synchronizedMap(new WeakHashMap<Object,double[]>());
@@ -12,6 +13,17 @@ public final class VMCombat {
     private static Object sound(Object name) throws Exception { return VMReflect.call(Class.forName("com.norwood.mcheli.sound.MCH_SoundEvents"),"getSound",name); }
     private static Object player() throws Exception { return VMReflect.get(VMReflect.call(Class.forName("net.minecraft.client.Minecraft"),"func_71410_x"),"field_71439_g"); }
     private static Object ridden(Object player) throws Exception {return VMReflect.call(Class.forName("com.norwood.mcheli.aircraft.MCH_EntityAircraft"),"getAircraft_RiddenOrControl",player);}
+    public static void registerSounds() {
+        try {
+            Object registry=VMReflect.get(Class.forName("com.norwood.mcheli.sound.SoundRegistry"),"INSTANCE");
+            Set<Object> names=(Set<Object>)VMReflect.get(registry,"soundSet");
+            for(String name:new String[]{"aps_shoot","wrench1","wrench2","wrench3","mchce_patched"})names.add(location("mcheli:"+name));
+        }catch(Exception e){throw new IllegalStateException("RV sound registry",e);}
+    }
+    public static void repairSoundMarkers(Object records){
+        try{for(Object record:(List<?>)records){JsonObject object=(JsonObject)VMReflect.get(record,"object");if(object.has("mchce_patched")&&object.get("mchce_patched").toString().contains("patched_marker"))object.remove("mchce_patched");}}
+        catch(Exception e){throw new IllegalStateException("RV sound metadata",e);}
+    }
     public static boolean soundAt(Object world,double x,double y,double z,Object name,float volume,float pitch) {
         try {
             if(name==null)return false;
@@ -57,6 +69,22 @@ public final class VMCombat {
     public static boolean suppressRecoil(Object aircraft) {
         String name=aircraft.getClass().getName();
         return name.contains("MCH_EntityHeli")||name.contains("MCH_EntityTank");
+    }
+    public static void damageFeedback(Object aircraft,Object source,float amount) {
+        try {
+            if(amount<=0||VMReflect.remote(aircraft)||!source.getClass().getName().startsWith("techguns."))return;
+            Object projectile=VMReflect.call(source,"func_76364_f"),world=VMReflect.get(aircraft,"field_70170_p");
+            double x=VMReflect.num(VMReflect.get(aircraft,"field_70165_t")),y=VMReflect.num(VMReflect.get(aircraft,"field_70163_u"))+1,z=VMReflect.num(VMReflect.get(aircraft,"field_70161_v"));
+            if(projectile!=null){
+                Class<?> vector=Class.forName("net.minecraft.util.math.Vec3d");
+                double px=VMReflect.num(VMReflect.get(projectile,"field_70165_t")),py=VMReflect.num(VMReflect.get(projectile,"field_70163_u")),pz=VMReflect.num(VMReflect.get(projectile,"field_70161_v"));
+                Object start=vector.getConstructor(double.class,double.class,double.class).newInstance(px,py,pz);
+                Object end=vector.getConstructor(double.class,double.class,double.class).newInstance(px+VMReflect.num(VMReflect.get(projectile,"field_70159_w")),py+VMReflect.num(VMReflect.get(projectile,"field_70181_x")),pz+VMReflect.num(VMReflect.get(projectile,"field_70179_y")));
+                Object hit=VMReflect.call(VMReflect.call(aircraft,"func_174813_aQ"),"func_72327_a",start,end);
+                if(hit!=null){Object vec=VMReflect.get(hit,"field_72307_f");x=VMReflect.num(VMReflect.get(vec,"field_72450_a"));y=VMReflect.num(VMReflect.get(vec,"field_72448_b"));z=VMReflect.num(VMReflect.get(vec,"field_72449_c"));}
+            }
+            particles(world,"FIREWORKS_SPARK",x,y,z,6,.15,.1);soundAt(world,x,y,z,location("mcheli:hit"),1F,.95F);
+        }catch(Exception|LinkageError e){VMReflect.error("armour impact feedback",e);}
     }
     public static void muzzle(Object aircraft,Object info,double x,double y,double z) {
         try {

@@ -33,10 +33,18 @@ public final class VMControlsTest {
         for(String axis:new String[]{"rotateX","rotateY","rotateZ"}){
             Object q=Class.forName("org.joml.Quaternionf").newInstance();boolean finite=true;
             float[] angles=null;
-            for(int i=0;i<720;i++){VMReflect.call(q,axis,(float)Math.toRadians(.5));angles=VMControlMath.euler(VMReflect.num(VMReflect.get(q,"x")),VMReflect.num(VMReflect.get(q,"y")),VMReflect.num(VMReflect.get(q,"z")),VMReflect.num(VMReflect.get(q,"w")));for(float a:angles)finite&=Float.isFinite(a);}
+            for(int i=0;i<720;i++){VMReflect.call(q,axis,(float)Math.toRadians(.5));angles=VMControlMath.worldEuler(VMReflect.num(VMReflect.get(q,"x")),VMReflect.num(VMReflect.get(q,"y")),VMReflect.num(VMReflect.get(q,"z")),VMReflect.num(VMReflect.get(q,"w")));for(float a:angles)finite&=Float.isFinite(a);}
             check(finite,"actual JOML full flip stays finite: "+axis);
             check(Math.abs(Math.sin(Math.toRadians(angles[0])))+Math.abs(Math.sin(Math.toRadians(angles[1])))+Math.abs(Math.sin(Math.toRadians(angles[2])))<.001,"full flip returns to start: "+axis);
         }
+        double worst=0;int attitudes=0;
+        for(double p:new double[]{-90,-89.9999,-89,-45,0,45,89,89.9999,90})for(int y=-180;y<=180;y+=15)for(int r=-180;r<=180;r+=15){
+            Object q=worldQuaternion(y,p,r);float[] a=VMControlMath.worldEuler(VMReflect.num(VMReflect.get(q,"x")),VMReflect.num(VMReflect.get(q,"y")),VMReflect.num(VMReflect.get(q,"z")),VMReflect.num(VMReflect.get(q,"w")));
+            Object rebuilt=worldQuaternion(a[1],a[0],a[2]);double dot=0,n1=0,n2=0;
+            for(String f:new String[]{"x","y","z","w"}){double v=VMReflect.num(VMReflect.get(q,f)),w=VMReflect.num(VMReflect.get(rebuilt,f));dot+=v*w;n1+=v*v;n2+=w*w;}
+            double difference=Math.toDegrees(2*Math.acos(Math.min(1,Math.abs(dot)/Math.sqrt(n1*n2))));worst=Math.max(worst,difference);attitudes++;
+        }
+        check(Double.isFinite(worst)&&worst<.05,"world quaternion roundtrip: "+attitudes+" poses, max error "+worst+" deg");
         final float[] raw={0,0,0,1};final boolean[] alive={true};final Component[] c=components(raw);
         Controller fake=(Controller)Proxy.newProxyInstance(VMControlsTest.class.getClassLoader(),new Class<?>[]{Controller.class},(p,m,a)->{
             switch(m.getName()){case "getName":return "Test radio";case "getType":return Controller.Type.STICK;case "getComponents":return c;case "poll":return alive[0];case "toString":return "Test radio";default:return null;}
@@ -61,5 +69,8 @@ public final class VMControlsTest {
         VMReflect.set(data,"vmThrottle",Float.NaN);
         check(VMControlMath.clamp(Double.POSITIVE_INFINITY,0,1)==0,"invalid throttle fails closed");
         System.out.println("VM controls: "+passed+" checks passed");
+    }
+    private static Object worldQuaternion(double yaw,double pitch,double roll)throws Exception{
+        Object q=Class.forName("org.joml.Quaternionf").newInstance();VMReflect.call(q,"rotateY",(float)Math.toRadians(-yaw));VMReflect.call(q,"rotateX",(float)Math.toRadians(pitch));VMReflect.call(q,"rotateZ",(float)Math.toRadians(roll));return q;
     }
 }

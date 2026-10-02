@@ -1,12 +1,17 @@
 ﻿$env:VM_SKIP_UPDATE_CHECK='1'
 $ErrorActionPreference='Stop'
 $workspace=Split-Path -Parent $PSScriptRoot
-$InstallRoot=Join-Path $PSScriptRoot 'GUI test кириллица'
-$PackageRoot=Join-Path $PSScriptRoot 'Package test кириллица'
+$testRoot=Join-Path $PSScriptRoot ('gui-acceptance-'+[Guid]::NewGuid().ToString('N'))
+$InstallRoot=Join-Path $testRoot 'Игра'
+$testPackageRoot=Join-Path $testRoot 'Установщик'
+$PackageRoot=$testPackageRoot
 New-Item -ItemType Directory -Path $InstallRoot,$PackageRoot -Force | Out-Null
 foreach ($path in @((Join-Path $InstallRoot 'release.json'),(Join-Path $PackageRoot 'release.json'),(Join-Path $InstallRoot '.updates\status.json'))) { if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force } }
 Set-Content -LiteralPath (Join-Path $PackageRoot 'payload.zip') -Value 'fixture' -Encoding ASCII
 Set-Content -LiteralPath (Join-Path $PackageRoot 'package-manifest.json') -Value '{"fixture":1}' -Encoding ASCII
+foreach($fixtureName in @('Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','runtime.zip','installer-files.json')){
+    Set-Content -LiteralPath (Join-Path $PackageRoot $fixtureName) -Value 'fixture' -Encoding ASCII
+}
 $routingSource=[IO.File]::ReadAllText((Join-Path $workspace 'src\Warfare-Launcher.ps1'))
 $routingStart=$routingSource.IndexOf('if (-not $InstallRoot)')
 $routingEnd=$routingSource.IndexOf('if (-not $PackageRoot')
@@ -65,6 +70,15 @@ try {
     }
     $script:language='ru'; Refresh-Text
     'RV branding and ru/en responsive bounds without overlap: PASS'
+    $legacyPackage=Join-Path $testRoot 'Legacy package'
+    New-Item -ItemType Directory -Path $legacyPackage -Force | Out-Null
+    foreach($fixtureName in @('Install-Warfare.ps1','payload.zip')){Set-Content -LiteralPath (Join-Path $legacyPackage $fixtureName) -Value 'fixture' -Encoding ASCII}
+    $script:packageRoot=$legacyPackage
+    if(Has-Package){throw 'Legacy package accepted'}
+    $script:packageRoot=$testPackageRoot
+    Write-VmJson (Join-Path $testPackageRoot 'release.json') @{version='0.0.0'}
+    if(-not(Has-Package)){throw 'Complete package rejected'}
+    'legacy package cannot overwrite the current client: PASS'
     $nickname.Text='User_123'
     Click $install
     if(-not $script:busy -or $primary.Enabled){throw 'Install did not disable duplicate action'}
@@ -157,6 +171,7 @@ try {
     if($status.Text -ne 'Обновлений нет.' -or -not $primary.Enabled -or -not $script:ready){throw 'Up-to-date result changed ready state'}
     'manual check with no updates keeps game ready: PASS'
     Remove-Item -LiteralPath (Join-Path $PackageRoot 'release.json'),(Join-Path $InstallRoot 'release.json')
+    Write-VmJson (Join-Path $testPackageRoot 'release.json') @{version='0.0.0'}
     'background release state reaches the update button: PASS'
     $languageBox.SelectedIndex=1
     if($primary.Text -cne 'PLAY' -or $repair.Text -ne 'Check files' -or $updateAction.Text -ne 'Update'){throw 'Language selector did not refresh controls'}
@@ -182,5 +197,5 @@ try {
     Start-Install; Drain
     if($script:ready -or $script:busy -or $primary.Enabled -or -not $install.Enabled){throw 'Failed install exposed ready state'}
     'failure does not report success: PASS'
-    '16 GUI integration tests passed'
+    '17 GUI integration tests passed'
 } finally { $timer.Dispose(); $form.Dispose() }

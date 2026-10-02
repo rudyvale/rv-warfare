@@ -1,0 +1,1 @@
+tellraw @s {"text": "Extract RV-Setup.zip, open Install.cmd, then Play. Everyone uses the same RV pack version. Keep Steam running and enter the current host code in the connection window. If the code changes, update it there. Porthole connects players through the shared session. Each player needs a different nickname.", "color": "white"}

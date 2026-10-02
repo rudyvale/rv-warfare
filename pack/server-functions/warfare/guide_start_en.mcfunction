@@ -1,0 +1,1 @@
+tellraw @s {"text": "Open RV and click Play. The host uses the separate Start server button. Stop server saves the world before closing. In the client window choose a nickname and enter the host code or use a saved connection. Steam and Porthole must be running.", "color": "white"}

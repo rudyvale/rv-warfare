@@ -12,7 +12,7 @@ import net.java.games.input.Component;
 public final class VMCalibration {
     public static volatile boolean showing;
     private final VMController input = new VMController();
-    private final JFrame frame = new JFrame("VM · Контроллер и полёт");
+    private final JFrame frame = new JFrame("RV · Контроллер и полёт");
     private final JComboBox<String> devices = new JComboBox<String>();
     private final JComboBox<String> kind = new JComboBox<String>(new String[]{"Пульт / RadioMaster / OpenTX / EdgeTX", "Геймпад / PlayStation / Xbox"});
     private final JComboBox<String> flight = new JComboBox<String>(new String[]{"Стабилизация — отпускание стика выравнивает FPV", "Acro — свободное вращение FPV"});
