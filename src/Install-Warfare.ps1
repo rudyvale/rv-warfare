@@ -5,10 +5,13 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $packageRoot = $PSScriptRoot
 . (Join-Path $packageRoot 'Warfare-Connection.ps1')
+. (Join-Path $packageRoot 'Warfare-Performance.ps1')
 $defaultsPath = Join-Path $packageRoot 'server-defaults.json'
 $connectionDefaults = if (Test-Path -LiteralPath $defaultsPath) { Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 if (-not $InstallRoot) { $InstallRoot = Join-Path $env:LOCALAPPDATA 'Warfare-1.12.2' }
 $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
+$clientPreferencesExisted = Test-Path -LiteralPath (Join-Path $InstallRoot 'config\rv-client.properties')
+$initialPerformance = -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'options.txt')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'config\rv-client.properties')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'optionsshaders.txt'))
 if ($InstallRoot.TrimEnd('\') -eq [IO.Path]::GetFullPath($packageRoot).TrimEnd('\')) { throw 'Choose an installation directory outside the package folder.' }
 . (Join-Path $packageRoot 'Warfare-Updates.ps1')
 Start-VmUpdateCheck $InstallRoot $packageRoot
@@ -189,7 +192,7 @@ if (Test-Path -LiteralPath (Join-Path $InstallRoot 'mods')) {
 foreach ($entry in $manifest.managedFiles) {
     $target = Join-Path $InstallRoot $entry.path
     $source = Join-Path $stage $entry.path
-    if ($entry.existingOnly -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'mcheli_addons\default\pack.mcmeta'))) { continue }
+    if ($entry.existingOnly -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'mcheli_addons\default') -PathType Container)) { continue }
     if ($entry.path -like 'config/*' -and (Test-Path -LiteralPath $target)) { continue }
     if ((Test-Path -LiteralPath $target) -and (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -eq $entry.sha256) { continue }
     Backup-File $target $entry.path
@@ -221,7 +224,7 @@ if (-not (Test-Path -LiteralPath $optionsPath)) {
     Copy-Item -LiteralPath (Join-Path $stage ('PRESETS\options-' + $Language + '.txt')) -Destination $optionsPath
 }
 $options = [IO.File]::ReadAllText($optionsPath)
-$resourceMatch = [regex]::Match($options, '(?m)^resourcePacks:(.*)$')
+$resourceMatch = [regex]::Match($options, '(?m)^resourcePacks:([^\r\n]*)')
 $resources = @()
 if ($resourceMatch.Success) {
     $decodedResources = ConvertFrom-Json -InputObject $resourceMatch.Groups[1].Value.Trim()
@@ -232,11 +235,21 @@ if ($resourceMatch.Success) {
 }
 $resources = @($resources | Where-Object { $_ -notin @('Warfare-UI-fixes.zip','Warfare-Combat-Audio.zip') }) + @('Warfare-UI-fixes.zip','Warfare-Combat-Audio.zip')
 $resourceLine = 'resourcePacks:' + (ConvertTo-Json -InputObject @($resources) -Compress)
-if ($resourceMatch.Success) { $options = [regex]::Replace($options, '(?m)^resourcePacks:.*$', $resourceLine) } else { $options += "`n$resourceLine`n" }
+if ($resourceMatch.Success) { $options = [regex]::Replace($options, '(?m)^resourcePacks:[^\r\n]*', $resourceLine) } else { $options += "`n$resourceLine`n" }
 [IO.File]::WriteAllText($optionsPath, $options, [Text.UTF8Encoding]::new($false))
 if (-not (Test-Path -LiteralPath (Join-Path $InstallRoot 'optionsshaders.txt'))) {
     Backup-File (Join-Path $InstallRoot 'optionsshaders.txt') 'optionsshaders.txt'
     Copy-Item -LiteralPath (Join-Path $stage 'PRESETS\optionsshaders.txt') -Destination (Join-Path $InstallRoot 'optionsshaders.txt')
+}
+if ($initialPerformance) {
+    Backup-File (Join-Path $InstallRoot 'config\rv-client.properties') 'config/rv-client.properties'
+    $initialProfile = Get-WarfareInitialProfile
+    Set-WarfarePerformanceProfile -Root $InstallRoot -Profile $initialProfile -Language $Language -ApplyGraphics -Installer
+    if ($initialProfile -eq 'low') { Say 'Профиль: слабый ПК. Его можно изменить в настройках.' 'Profile: Low. You can change it in Settings.' }
+    else { Say 'Профиль: баланс. Его можно изменить в настройках.' 'Profile: Balanced. You can change it in Settings.' }
+} elseif (-not $clientPreferencesExisted) {
+    Backup-File (Join-Path $InstallRoot 'config\rv-client.properties') 'config/rv-client.properties'
+    Set-WarfarePerformanceProfile -Root $InstallRoot -Language $Language -LanguageOnly -Installer
 }
 $settings = if ($previousSettings) { $previousSettings } else { [PSCustomObject]@{} }
 $connection = Get-WarfareConnection -Settings $settings -Defaults $connectionDefaults
@@ -245,7 +258,7 @@ $settings | Add-Member -MemberType NoteProperty -Name language -Value $Language 
 $settings | Add-Member -MemberType NoteProperty -Name nickname -Value $Nickname -Force
 Backup-File $settingsPath 'warfare-settings.json'
 [IO.File]::WriteAllText($settingsPath, ($settings | ConvertTo-Json -Depth 32), [Text.UTF8Encoding]::new($false))
-foreach ($name in @('Play-Warfare.ps1','Play.cmd','installer-files.json','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico')) {
+foreach ($name in @('Play-Warfare.ps1','Play.cmd','installer-files.json','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico')) {
     Backup-File (Join-Path $InstallRoot $name) $name
     Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
 }

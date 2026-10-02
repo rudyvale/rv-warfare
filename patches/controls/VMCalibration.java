@@ -17,13 +17,17 @@ public final class VMCalibration {
     private final JComboBox<String> kind = new JComboBox<String>(new String[]{"Пульт / RadioMaster / OpenTX / EdgeTX", "Геймпад / PlayStation / Xbox"});
     private final JComboBox<String> flight = new JComboBox<String>(new String[]{"Стабилизация — отпускание стика выравнивает FPV", "Acro — свободное вращение FPV"});
     private final JCheckBox enabled = new JCheckBox("Управлять с контроллера");
+    private final JComboBox<String> keyboardFlight=new JComboBox<String>(new String[]{"Easy: мышь — обзор, WASD — движение, Space / Ctrl — высота", "Профессиональный: мышь — наклон, W / S — газ, A / D — рыскание"});
+    private Path wizardReport;
+    private String wizardOutcome="cancelled";
     private final JComboBox<String>[] axes = new JComboBox[4];
     private final JCheckBox[] inverse = new JCheckBox[4];
     private final JProgressBar[] meters = new JProgressBar[4];
-    private final JComboBox<String>[] bindings = new JComboBox[6];
+    private final JComboBox<String>[] bindings = new JComboBox[VMController.BUTTONS.length];
     private final JLabel status = new JLabel("Подключи устройство по USB в режиме Joystick.");
     private final JButton calibrate = new JButton("1. Запомнить центр");
     private final JSlider deadzone = new JSlider(0, 30, 4), expo = new JSlider(0, 80, 35), rate = new JSlider(45, 240, 110);
+    private final JSlider smoothing=new JSlider(5,200,70),throttleSmoothing=new JSlider(5,200,70),throttleExpo=new JSlider(0,70,0),angleLimit=new JSlider(15,60,35),cameraRoll=new JSlider(0,100,55),throttleRate=new JSlider(10,120,44);
     private final double[] lows = new double[4], highs = new double[4], centers = new double[4];
     private final ArrayList<String> axisIds = new ArrayList<String>(), buttonIds = new ArrayList<String>();
     private int stage;
@@ -63,21 +67,32 @@ public final class VMCalibration {
         steps.add(new JLabel("3. Проведи каждым стиком по полному диапазону → «Завершить диапазоны»."));
         steps.add(new JLabel("4. Проверь инверсию: газ вверх — индикатор растёт. Нажми «Сохранить»."));
         steps.add(calibrate); axisPanel.add(steps, BorderLayout.CENTER); tabs.addTab("Оси и калибровка", axisPanel);
-        JPanel buttons = new JPanel(new GridLayout(7, 2, 10, 12));
-        String[] actionNames = {"Огонь (удерживать)", "Точный прицел (удерживать)", "Следующее оружие", "Тормоз", "Выйти из техники", "Стабилизация / Acro"};
-        for (int i = 0; i < 6; i++) { buttons.add(new JLabel(actionNames[i])); bindings[i] = new JComboBox<String>(); buttons.add(bindings[i]); }
+        JPanel buttons = new JPanel(new GridLayout(VMController.BUTTONS.length+1, 2, 10, 12));
+        String[] actionNames = {"Огонь (удерживать)", "Точный прицел (удерживать)", "Следующее оружие", "Тормоз", "Выйти из техники", "Стабилизация / Acro", "Перезарядка", "Режим оружия", "Увеличение / оптика"};
+        for (int i = 0; i < bindings.length; i++) { buttons.add(new JLabel(actionNames[i])); bindings[i] = new JComboBox<String>(); buttons.add(bindings[i]); }
         buttons.add(new JLabel("Номер нажатого входа:")); JLabel pressed = new JLabel("—"); buttons.add(pressed); tabs.addTab("Кнопки и переключатели", buttons);
-        JPanel tuning = new JPanel(new GridLayout(0, 1, 4, 4)); tuning.add(flight);
+        JPanel tuning = new JPanel(new GridLayout(0, 1, 4, 4));
+        JPanel presets=new JPanel(new FlowLayout(FlowLayout.LEFT));
+        for(int i=0;i<3;i++){final int preset=i;JButton button=new JButton(new String[]{"Спокойный полёт","Отзывчивый","Acro / Freestyle"}[i]);button.addActionListener(e -> preset(preset));presets.add(button);}
+        tuning.add(new JLabel("Клавиатура и мышь (когда контроллер выключен)"));tuning.add(keyboardFlight);tuning.add(presets);tuning.add(flight);
         tuning.add(new JLabel("Мёртвая зона (%) — убирает дрожание в центре")); tune(deadzone, 5); tuning.add(deadzone);
         tuning.add(new JLabel("Экспонента (%) — мягче около центра, полный ход сохраняется")); tune(expo, 20); tuning.add(expo);
         tuning.add(new JLabel("Максимальная скорость поворота (градусов/с)")); tune(rate, 45); tuning.add(rate);
+        tuning.add(new JLabel("Сглаживание поворота (мс) — больше значит мягче"));tune(smoothing,50);tuning.add(smoothing);
+        tuning.add(new JLabel("Сглаживание газа (мс)"));tune(throttleSmoothing,50);tuning.add(throttleSmoothing);
+        tuning.add(new JLabel("Экспонента газа пульта (%) — точнее около половины газа"));tune(throttleExpo,20);tuning.add(throttleExpo);
+        tuning.add(new JLabel("Максимальный наклон в Angle (градусы)"));tune(angleLimit,15);tuning.add(angleLimit);
+        tuning.add(new JLabel("Крен камеры в Angle (%)"));tune(cameraRoll,25);tuning.add(cameraRoll);
+        tuning.add(new JLabel("Геймпад: скорость изменения газа (%/с)"));tune(throttleRate,30);tuning.add(throttleRate);
         tuning.add(new JLabel("Газ пульта абсолютный. На геймпаде центр удерживает газ, вверх/вниз меняют его."));
         tuning.add(new JLabel("F8 — это окно в игре. При потере фокуса/USB газ сбрасывается."));
-        tabs.addTab("Плавность", tuning); body.add(tabs, BorderLayout.CENTER);
+        tabs.addTab("Плавность", new JScrollPane(tuning)); body.add(tabs, BorderLayout.CENTER);
         JPanel bottom = new JPanel(new BorderLayout(8, 8)); status.setBorder(new EmptyBorder(5, 0, 5, 0)); bottom.add(status, BorderLayout.NORTH);
         JButton save = new JButton("Сохранить и закрыть"); save.setPreferredSize(new Dimension(250, 38)); bottom.add(save, BorderLayout.EAST); body.add(bottom, BorderLayout.SOUTH);
         enabled.setSelected(input.enabled()); kind.setSelectedIndex(input.gamepad() ? 1 : 0); flight.setSelectedIndex(input.acro() ? 1 : 0);
+        keyboardFlight.setSelectedIndex(input.profile.getProperty("keyboardFlight","easy").equals("advanced")?1:0);
         deadzone.setValue((int)(input.setting("deadzone", .04) * 100)); expo.setValue((int)(input.setting("expo", .35) * 100)); rate.setValue((int)input.setting("rate", 110));
+        smoothing.setValue((int)(input.setting("smoothing",.07)*1000));throttleSmoothing.setValue((int)(input.setting("throttleSmoothing",.07)*1000));throttleExpo.setValue((int)(input.setting("throttleExpo",0)*100));angleLimit.setValue((int)input.setting("angleLimit",35));cameraRoll.setValue((int)(input.setting("cameraRoll",.55)*100));throttleRate.setValue((int)(input.setting("throttleRate",.44)*100));
         scan.addActionListener(e -> rescan()); devices.addActionListener(e -> selectDevice());
         calibrate.addActionListener(e -> calibrate()); save.addActionListener(e -> save());
         javax.swing.Timer timer = new javax.swing.Timer(30, e -> {
@@ -93,10 +108,16 @@ public final class VMCalibration {
                 meters[i].setValue((int)(VMControlMath.clamp(out, -1, 1)*500+500)); meters[i].setString(String.format(Locale.ROOT, "%+.2f", out));
             }
         }); timer.start();
-        frame.addWindowListener(new WindowAdapter(){ public void windowClosed(WindowEvent e) { timer.stop(); showing = false; } });
+        frame.addWindowListener(new WindowAdapter(){ public void windowClosed(WindowEvent e) { timer.stop(); showing = false;if(wizardReport!=null){try{VMController saved=new VMController();saved.setRoot(root);saved.report(wizardReport,wizardOutcome);}catch(Exception error){VMReflect.error("wizard report",error);System.exit(1);}} } });
         rescan(); frame.pack(); frame.setSize(900, 710); frame.setLocationRelativeTo(null);
     }
     private void tune(JSlider slider, int spacing) { slider.setMajorTickSpacing(spacing); slider.setPaintTicks(true); slider.setPaintLabels(true); }
+    private void preset(int choice) {
+        flight.setSelectedIndex(choice==2?1:0);deadzone.setValue(choice==0?6:4);expo.setValue(choice==0?50:choice==1?35:25);rate.setValue(choice==0?85:choice==1?110:190);
+        smoothing.setValue(choice==0?90:choice==1?45:25);throttleSmoothing.setValue(choice==0?80:choice==1?40:25);throttleExpo.setValue(choice==0?30:choice==1?15:0);
+        angleLimit.setValue(choice==0?28:choice==1?35:45);cameraRoll.setValue(choice==0?35:choice==1?55:70);throttleRate.setValue(choice==0?30:choice==1?44:60);
+        status.setText("Пресет выбран. Калибровка осей сохранена. Настройки применятся после «Сохранить». ");
+    }
     private double raw(int i) {
         int selection = axes[i].getSelectedIndex();
         if (input.device == null || selection < 0 || selection >= axisIds.size()) return 0;
@@ -132,7 +153,7 @@ public final class VMCalibration {
             axes[i].setSelectedIndex(selected); inverse[i].setSelected(same && Boolean.parseBoolean(input.profile.getProperty(a+".invert")));
             centers[i] = input.setting(a+".center", 0); lows[i] = input.setting(a+".min", 0); highs[i] = input.setting(a+".max", 0);
         }
-        for (int i = 0; i < 6; i++) bindings[i].setSelectedIndex(Math.max(0, same ? buttonIds.indexOf(input.profile.getProperty("button."+VMController.BUTTONS[i], "")) : 0));
+        for (int i = 0; i < bindings.length; i++) bindings[i].setSelectedIndex(Math.max(0, same ? buttonIds.indexOf(input.profile.getProperty("button."+VMController.BUTTONS[i], "")) : 0));
         stage = same && input.mappingValid() ? 2 : 0; calibrate.setText(stage == 2 ? "Калибровать заново" : "1. Запомнить центр");
         selecting = false; status.setText(input.device == null ? "Подключённые контроллеры не найдены." : "Выбери оси и откалибруй стики.");
     }
@@ -152,13 +173,15 @@ public final class VMCalibration {
     private void save() {
         if (enabled.isSelected() && (input.device == null || stage != 2)) { status.setText("Сначала заверши калибровку четырёх осей."); return; }
         input.profile.setProperty("enabled", ""+enabled.isSelected()); input.profile.setProperty("kind", kind.getSelectedIndex()==0 ? "radio" : "gamepad"); input.profile.setProperty("flight", flight.getSelectedIndex()==0 ? "angle" : "acro");
+        input.profile.setProperty("keyboardFlight",keyboardFlight.getSelectedIndex()==0?"easy":"advanced");
         input.profile.setProperty("deadzone", ""+(deadzone.getValue()/100.0)); input.profile.setProperty("expo", ""+(expo.getValue()/100.0)); input.profile.setProperty("rate", ""+rate.getValue());
+        input.profile.setProperty("smoothing",""+(smoothing.getValue()/1000.0));input.profile.setProperty("throttleSmoothing",""+(throttleSmoothing.getValue()/1000.0));input.profile.setProperty("throttleExpo",""+(throttleExpo.getValue()/100.0));input.profile.setProperty("angleLimit",""+angleLimit.getValue());input.profile.setProperty("cameraRoll",""+(cameraRoll.getValue()/100.0));input.profile.setProperty("throttleRate",""+(throttleRate.getValue()/100.0));
         if (input.device != null && stage==2) {
             input.profile.setProperty("device", VMController.identity(input.device));
             for(int i=0;i<4;i++) { String a=VMController.ACTIONS[i]; input.profile.setProperty(a+".axis",axisIds.get(axes[i].getSelectedIndex())); input.profile.setProperty(a+".min",""+lows[i]); input.profile.setProperty(a+".max",""+highs[i]); input.profile.setProperty(a+".center",""+centers[i]); input.profile.setProperty(a+".invert",""+inverse[i].isSelected()); }
-            for(int i=0;i<6;i++) input.profile.setProperty("button."+VMController.BUTTONS[i], buttonIds.get(bindings[i].getSelectedIndex()));
+            for(int i=0;i<bindings.length;i++) input.profile.setProperty("button."+VMController.BUTTONS[i], buttonIds.get(bindings[i].getSelectedIndex()));
         }
-        try { input.save(); frame.dispose(); } catch(Exception error) { status.setText("Не удалось сохранить: "+error.getMessage()); }
+        try { input.save();wizardOutcome="saved";frame.dispose(); } catch(Exception error) { status.setText("Не удалось сохранить: "+error.getMessage()); }
     }
     public void show() { frame.setVisible(true); }
     public void preview(Path path) throws Exception {
@@ -169,6 +192,10 @@ public final class VMCalibration {
     }
     public static void main(String[] args) {
         final Path root = args.length>0 ? Paths.get(args[0]) : Paths.get(".");
-        SwingUtilities.invokeLater(() -> { try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); VMCalibration ui=new VMCalibration(root); if(args.length>1)ui.preview(Paths.get(args[1]));else ui.show(); } catch(Exception error){VMReflect.error("controller window",error);} });
+        SwingUtilities.invokeLater(() -> { try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); VMCalibration ui=new VMCalibration(root);
+            if(args.length>4&&args[1].equals("--wizard")){ui.wizardReport=Paths.get(args[2]);String id=args[3];int selected=-1;for(int i=0;i<ui.input.devices.length;i++)if(VMController.identity(ui.input.devices[i]).equals(id))selected=i;
+                if(selected<0){ui.input.report(ui.wizardReport,"unavailable");ui.wizardReport=null;ui.frame.dispose();return;}ui.devices.setSelectedIndex(selected);ui.kind.setSelectedIndex(args[4].equals("gamepad")?1:0);ui.enabled.setSelected(true);ui.show();
+            }else if(args.length>1)ui.preview(Paths.get(args[1]));else ui.show();
+        } catch(Exception error){VMReflect.error("controller window",error);System.exit(1);} });
     }
 }

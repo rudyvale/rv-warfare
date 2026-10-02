@@ -7,6 +7,7 @@ import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
+from release_contract import mark_published, validate_candidate
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
@@ -20,6 +21,7 @@ if repository != 'rudyvale/rv-warfare':
     raise SystemExit('Unexpected repository')
 tag = 'v' + metadata['version']
 directory = args.directory.resolve()
+candidate = validate_candidate(directory, metadata['version'])
 subprocess.run(['python', str(root / 'tools/verify_release.py'), '--directory', str(directory), '--tag', tag], check=True)
 commit = subprocess.check_output(['git', 'rev-parse', tag + '^{commit}'], cwd=root, text=True).strip()
 if subprocess.run(['git', 'diff', '--quiet', tag, '--'], cwd=root).returncode:
@@ -62,6 +64,8 @@ for name in assets:
     file = directory / name
     data = file.read_bytes()
     digest = 'sha256:' + hashlib.sha256(data).hexdigest()
+    if candidate is not None and digest[7:] != candidate['assets'].get(name):
+        raise SystemExit('Candidate changed during publication: ' + name)
     matches = [asset for asset in release['assets'] if asset['name'] == name]
     if len(matches) > 1:
         raise SystemExit('Duplicate release asset: ' + name)
@@ -76,10 +80,12 @@ for name in assets:
         raise SystemExit('Release checksum mismatch: ' + name)
     print('Verified uploaded asset:', name, flush=True)
 release = api('GET', prefix + '/releases/' + str(release['id']))
+validate_candidate(directory, metadata['version'])
 if len(release['assets']) != len(assets) or {asset['name'] for asset in release['assets']} != set(assets):
     raise SystemExit('Release asset list differs from verified local files')
 if args.publish and release['draft']:
     release = api('PATCH', prefix + '/releases/' + str(release['id']), {'draft': False, 'make_latest': 'true'})
 if not release['draft']:
     subprocess.run(['python', str(root / 'tools/verify_release.py'), '--directory', str(directory), '--tag', tag, '--remote'], check=True)
+    mark_published(directory, metadata['version'], commit, release['html_url'])
 print(json.dumps({'url': release['html_url'], 'tag': tag, 'draft': release['draft']}))

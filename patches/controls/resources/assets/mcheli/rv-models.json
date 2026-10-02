@@ -1,0 +1,348 @@
+{
+  "rc-goblin": {
+    "faces": 664,
+    "triangles": 1076,
+    "vertices": 652,
+    "parts": {
+      "$body": {
+        "faces": 488,
+        "vertices": 492
+      },
+      "$blade0": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade1": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade2": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade3": {
+        "faces": 44,
+        "vertices": 40
+      }
+    },
+    "bounds": [
+      [
+        -0.329453,
+        0.347627
+      ],
+      [
+        -0.067,
+        0.177
+      ],
+      [
+        -0.356878,
+        0.314941
+      ]
+    ],
+    "materials": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      6,
+      7
+    ],
+    "degenerate_faces": 0,
+    "inward_faces": 0,
+    "minimum_triangle_area": 8.768507213317428e-06,
+    "uv_valid": true,
+    "finite_vertices": true,
+    "source_units_per_block": 100,
+    "sha256": "e231808aaec7612cc43c9ff0af7ad879546d311f6e559b899a9dd541f578e7de",
+    "native_triangle_count": 1076,
+    "mqo_winding": "clockwise; native loader reverses face indices",
+    "pivots": {
+      "$blade0": {
+        "position": [
+          -0.22,
+          0.09,
+          0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade1": {
+        "position": [
+          0.22,
+          0.09,
+          0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade2": {
+        "position": [
+          -0.22,
+          0.09,
+          -0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade3": {
+        "position": [
+          0.22,
+          0.09,
+          -0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    "texture_sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "icon_sha256": "44c2c6c7c7162d9a7941e5af4cd6949a06b56f56f206c5fd67585c70da3d57da",
+    "icon_visible_pixels": 722
+  },
+  "rc-goblin-bomb": {
+    "faces": 728,
+    "triangles": 1188,
+    "vertices": 716,
+    "parts": {
+      "$body": {
+        "faces": 552,
+        "vertices": 556
+      },
+      "$blade0": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade1": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade2": {
+        "faces": 44,
+        "vertices": 40
+      },
+      "$blade3": {
+        "faces": 44,
+        "vertices": 40
+      }
+    },
+    "bounds": [
+      [
+        -0.329453,
+        0.347627
+      ],
+      [
+        -0.140846,
+        0.177
+      ],
+      [
+        -0.356878,
+        0.314941
+      ]
+    ],
+    "materials": [
+      0,
+      1,
+      2,
+      3,
+      5,
+      6,
+      7
+    ],
+    "degenerate_faces": 0,
+    "inward_faces": 0,
+    "minimum_triangle_area": 8.768507213317428e-06,
+    "uv_valid": true,
+    "finite_vertices": true,
+    "source_units_per_block": 100,
+    "sha256": "d67332a1bfd77669e2569daa501e46d9c933daa1c75325bede2423d6b9f9d0ea",
+    "native_triangle_count": 1188,
+    "mqo_winding": "clockwise; native loader reverses face indices",
+    "pivots": {
+      "$blade0": {
+        "position": [
+          -0.22,
+          0.09,
+          0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade1": {
+        "position": [
+          0.22,
+          0.09,
+          0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade2": {
+        "position": [
+          -0.22,
+          0.09,
+          -0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      },
+      "$blade3": {
+        "position": [
+          0.22,
+          0.09,
+          -0.22
+        ],
+        "axis": [
+          0,
+          1,
+          0
+        ]
+      }
+    },
+    "texture_sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "icon_sha256": "d0e18d1606a79f67ec097d4173ff451fb4b383f31a862b3177e7053e2d7282e5",
+    "icon_visible_pixels": 680
+  },
+  "rv_geran": {
+    "faces": 260,
+    "triangles": 424,
+    "vertices": 234,
+    "parts": {
+      "$body": {
+        "faces": 212,
+        "vertices": 194
+      },
+      "$blade0": {
+        "faces": 48,
+        "vertices": 40
+      }
+    },
+    "bounds": [
+      [
+        -1.4345,
+        1.4345
+      ],
+      [
+        0.076,
+        0.65
+      ],
+      [
+        -1.348,
+        1.19
+      ]
+    ],
+    "materials": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "degenerate_faces": 0,
+    "inward_faces": 0,
+    "minimum_triangle_area": 4.544286516403281e-06,
+    "uv_valid": true,
+    "finite_vertices": true,
+    "source_units_per_block": 100,
+    "sha256": "ac6e4c2cb970f23e798a8de5524b5b438afedf70a991395b01bff1130387aa8d",
+    "native_triangle_count": 424,
+    "mqo_winding": "clockwise; native loader reverses face indices",
+    "pivots": {
+      "$blade0": {
+        "position": [
+          0,
+          0.2,
+          -1.34
+        ],
+        "axis": [
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "texture_sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "icon_sha256": "a79dd09992eb2fc52ed04cc6bfb47ba9f1f397bc48b85d4a6ab2054855baf2ce",
+    "icon_visible_pixels": 1189
+  },
+  "rv_fp1": {
+    "faces": 362,
+    "triangles": 596,
+    "vertices": 324,
+    "parts": {
+      "$body": {
+        "faces": 314,
+        "vertices": 284
+      },
+      "$blade0": {
+        "faces": 48,
+        "vertices": 40
+      }
+    },
+    "bounds": [
+      [
+        -1.8,
+        1.8
+      ],
+      [
+        0.077,
+        0.8
+      ],
+      [
+        -1.78,
+        1.31
+      ]
+    ],
+    "materials": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "degenerate_faces": 0,
+    "inward_faces": 0,
+    "minimum_triangle_area": 4.486026432859671e-06,
+    "uv_valid": true,
+    "finite_vertices": true,
+    "source_units_per_block": 100,
+    "sha256": "56d1bf77d996296a7076a7f47b60c280526830ac03890ea1846888adb8fe1d1a",
+    "native_triangle_count": 596,
+    "mqo_winding": "clockwise; native loader reverses face indices",
+    "pivots": {
+      "$blade0": {
+        "position": [
+          0,
+          0.28,
+          -0.91
+        ],
+        "axis": [
+          0,
+          0,
+          1
+        ]
+      }
+    },
+    "texture_sha256": "75d4cb56b6914fe668c09e0a1d078324b727e7f72038d1e8b4018bb709fa9e74",
+    "icon_sha256": "51429a2d99f15e8641bb513da13e886e035e30d38c748c074fe82dd5221df776",
+    "icon_visible_pixels": 817
+  }
+}

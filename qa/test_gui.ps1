@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Path $InstallRoot,$PackageRoot -Force | Out-Null
 foreach ($path in @((Join-Path $InstallRoot 'release.json'),(Join-Path $PackageRoot 'release.json'),(Join-Path $InstallRoot '.updates\status.json'))) { if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force } }
 Set-Content -LiteralPath (Join-Path $PackageRoot 'payload.zip') -Value 'fixture' -Encoding ASCII
 Set-Content -LiteralPath (Join-Path $PackageRoot 'package-manifest.json') -Value '{"fixture":1}' -Encoding ASCII
-foreach($fixtureName in @('Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','runtime.zip','installer-files.json')){
+foreach($fixtureName in @('Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','runtime.zip','installer-files.json')){
     Set-Content -LiteralPath (Join-Path $PackageRoot $fixtureName) -Value 'fixture' -Encoding ASCII
 }
 $routingSource=[IO.File]::ReadAllText((Join-Path $workspace 'src\Warfare-Launcher.ps1'))
@@ -106,8 +106,8 @@ try {
             foreach($control in $window.Controls){if($control.Right -gt $window.ClientSize.Width -or $control.Bottom -gt $window.ClientSize.Height){throw 'Settings control outside window'}}
             $combo=@($window.Controls|Where-Object {$_ -is [Windows.Forms.ComboBox]})[0]
             $field=@($window.Controls|Where-Object {$_ -is [Windows.Forms.TextBox]})[0]
-            $button=@($window.Controls|Where-Object {$_ -is [Windows.Forms.Button]})[0]
-            $checkbox=@($window.Controls|Where-Object {$_ -is [Windows.Forms.CheckBox]})[0]
+            $button=$window.Controls['saveConnection']
+            $checkbox=$window.Controls['autoCheck']
             $checkbox.Checked=$false
             $combo.SelectedIndex=1;$field.Text=$script:dialogTarget;$button.PerformClick()
             if($script:editTicks -gt 15){$window.Close()}
@@ -124,6 +124,61 @@ try {
     if($script:connection.connectionTarget -or (Get-VmAutoCheck $InstallRoot)){throw 'Cannot save update preference without a server'}
     $script:connection=ConvertTo-WarfareConnection 'direct' 'changed.example:25600' '25565'; Save-Settings
     'update preference can be saved before choosing a server: PASS'
+    function Get-WarfareHardwareFacts{return [PSCustomObject]@{ramMB=8192;logicalProcessors=8;serverHeapMB=0}}
+    [IO.File]::WriteAllText((Join-Path $InstallRoot 'options.txt'),"renderDistance:17`r`nkey_key.attack:47`r`nmouseSensitivity:0.29`r`n")
+    $script:performanceStep='save'
+    $script:performanceExpected=''
+    $performanceTimer=[Windows.Forms.Timer]::new();$performanceTimer.Interval=100
+    $performanceTimer.Add_Tick({
+        $window=@([Windows.Forms.Application]::OpenForms|Where-Object {$_.Text -in @('Настройки','Settings')})|Select-Object -First 1
+        if(-not $window){return}
+        $controls=@($window.Controls)
+        foreach($control in $controls){if($control.Left -lt 0 -or $control.Top -lt 0 -or $control.Right -gt $window.ClientSize.Width -or $control.Bottom -gt $window.ClientSize.Height){throw ('Settings control outside window: '+$control.Name)}}
+        for($i=0;$i -lt $controls.Count;$i++){for($j=$i+1;$j -lt $controls.Count;$j++){if($controls[$i].Bounds.IntersectsWith($controls[$j].Bounds)){throw ('Settings controls overlap: '+$controls[$i].Name+'/'+$controls[$j].Name)}}}
+        $profile=$window.Controls['profile'];$profile.SelectedIndex=0
+        $window.Controls['hudHints'].Checked=$false
+        $window.Controls['hitFeedback'].Checked=$true
+        $window.Controls['memoryAuto'].Checked=$false
+        $window.Controls['memoryMB'].Value=2560
+        if($script:performanceStep -eq 'apply'){
+            $window.Controls['applyPerformance'].PerformClick()
+            $script:performanceExpected=$window.Controls['profileDetail'].Text
+        }
+        $bitmap=[Drawing.Bitmap]::new($window.Width,$window.Height)
+        try{$window.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$window.Width,$window.Height));$bitmap.Save((Join-Path $testRoot ('settings-'+$script:language+'-'+$script:performanceStep+'.png')))}finally{$bitmap.Dispose()}
+        $window.Controls['saveConnection'].PerformClick()
+    })
+    $graphicsHash=(Get-FileHash -LiteralPath (Join-Path $InstallRoot 'options.txt')).Hash
+    $performanceTimer.Start()
+    try{Click $changeServer}finally{$performanceTimer.Stop()}
+    if((Get-FileHash -LiteralPath (Join-Path $InstallRoot 'options.txt')).Hash -ne $graphicsHash){throw 'Save connection applied graphics implicitly'}
+    if($script:settings.PSObject.Properties['memoryMB']){throw 'Save connection changed memory without Apply'}
+    'saving connection leaves pending profile and memory unapplied: PASS'
+    $script:performanceStep='apply';$performanceTimer.Start()
+    try{Click $changeServer}finally{$performanceTimer.Stop()}
+    $prefs=Get-WarfareClientPreferences $InstallRoot
+    if($prefs.profile -ne 'low' -or $prefs.hudHints -or -not $prefs.hitFeedback -or $script:settings.memoryMB -ne 2560 -or $script:performanceExpected -ne 'Применено. Можно запускать игру.'){throw ('Profile Apply failed: '+$script:performanceExpected)}
+    $optionsNow=[IO.File]::ReadAllText((Join-Path $InstallRoot 'options.txt'))
+    if(-not $optionsNow.Contains('renderDistance:4') -or -not $optionsNow.Contains('key_key.attack:47') -or -not $optionsNow.Contains('mouseSensitivity:0.29')){throw 'Profile changed bindings or missed vanilla graphics'}
+    'explicit GUI Apply persists Low, HUD choices and memory while retaining bindings: PASS'
+    foreach($locale in @('en','ru')){
+        $script:language=$locale;Refresh-Text
+        $script:performanceStep='save';$performanceTimer.Start()
+        try{Click $changeServer}finally{$performanceTimer.Stop()}
+    }
+    $performanceTimer.Dispose()
+    'new settings dialog has no control overlap in both languages: PASS'
+    $cancelTimer=[Windows.Forms.Timer]::new();$cancelTimer.Interval=75
+    $cancelTimer.Add_Tick({
+        $window=@([Windows.Forms.Application]::OpenForms|Where-Object Name -eq firstPlay)|Select-Object -First 1
+        if($window){$window.Opacity=0;@($window.Controls.Find('setupCancel',$true))[0].PerformClick()}
+    })
+    $script:mode='';$cancelTimer.Start()
+    try{Click $primary}finally{$cancelTimer.Stop();$cancelTimer.Dispose()}
+    if($script:process -or $script:mode -eq 'play' -or $status.Text -notmatch 'Запуск отменён'){throw 'First Play cancellation started the game'}
+    'native first Play cancellation never starts the game: PASS'
+    $script:settings|Add-Member NoteProperty firstPlay ([PSCustomObject]@{schema=1;completed=$true;scope='client';inputMode='easy'}) -Force
+    Save-Settings
     Click $primary
     if($script:mode -ne 'play'){throw 'Play button does not start play'}
     Drain
@@ -197,5 +252,5 @@ try {
     Start-Install; Drain
     if($script:ready -or $script:busy -or $primary.Enabled -or -not $install.Enabled){throw 'Failed install exposed ready state'}
     'failure does not report success: PASS'
-    '17 GUI integration tests passed'
+    '21 GUI integration tests passed'
 } finally { $timer.Dispose(); $form.Dispose() }

@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.tag }}
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.14'
@@ -47,10 +48,32 @@ jobs:
         run: |
           & ./qa/test_updates.ps1
           & ./qa/test_connection.ps1
+          & ./qa/test_performance.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./qa/test_duplicate_mods.ps1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          & ./qa/test_onboarding.ps1
           & ./qa/test_gui.ps1
           python -X utf8 qa/test_connection_launch.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_launcher.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_release_contract.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_addon_release_contract.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_output.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_candidate.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_base.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_verifier.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_sources.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_third_party_sources.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_payload_repack.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_world_package.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
@@ -84,31 +107,21 @@ jobs:
       - name: Get verified base and build
         shell: pwsh
         run: |
-          gh release download $env:BASE_TAG --pattern RV-Setup.zip --dir base
+          python tools/download_release_base.py --tag $env:BASE_TAG --output .local/base
           if ($LASTEXITCODE) { throw 'Base download failed' }
-          Expand-Archive base/RV-Setup.zip -DestinationPath base/extracted
-          python tools/build_release.py --base base/extracted/RV-Setup --output dist --world-template .local/RV-World-Template.zip
+          $sourceArgs = @()
+          $version = (Get-Content src/release.json -Raw | ConvertFrom-Json).version
+          if ([version]$version -ge [version]'1.1.0') {
+            python tools/build_third_party_sources.py --output .local/RV-Third-Party-Sources.zip
+            if ($LASTEXITCODE) { throw 'Original source bundle failed' }
+            $sourceArgs = @('--third-party-sources', '.local/RV-Third-Party-Sources.zip')
+          }
+          python tools/build_release.py --base .local/base/RV-Setup --output dist --world-template .local/RV-World-Template.zip @sourceArgs
           if ($LASTEXITCODE) { throw 'Build failed' }
           python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG
           if ($LASTEXITCODE) { throw 'Artifact verification failed' }
-      - name: Stage complete release
+      - name: Stage, publish and verify public state
         shell: pwsh
         run: |
-          $assets = @('dist/RV-Setup.zip', 'dist/RV-Host-Tools.zip', 'dist/SHA256SUMS.txt')
-          if (Test-Path dist/RV-World-Template.zip) { $assets += 'dist/RV-World-Template.zip' }
-          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "RV Warfare $env:RELEASE_TAG" --notes-file CHANGELOG.md
-          if ($LASTEXITCODE) { throw 'Draft release failed' }
-          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
-          if ($release.assets.Count -ne $assets.Count) { throw 'Incomplete release' }
-          foreach ($line in (Get-Content dist/SHA256SUMS.txt)) {
-            $parts = $line -split '  ', 2
-            $asset = @($release.assets | Where-Object name -eq $parts[1])
-            if ($asset.Count -ne 1 -or $asset[0].digest -ne "sha256:$($parts[0])" -or $asset[0].state -ne 'uploaded') { throw 'Uploaded asset checksum mismatch' }
-          }
-      - name: Publish and verify public state
-        shell: pwsh
-        run: |
-          gh release edit $env:RELEASE_TAG --draft=false --latest
-          if ($LASTEXITCODE) { throw 'Publish failed' }
-          python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG --remote
+          python tools/publish_release.py --directory dist --notes CHANGELOG.md --publish
           if ($LASTEXITCODE) { throw 'Public release verification failed' }

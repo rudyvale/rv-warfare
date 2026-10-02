@@ -1,6 +1,6 @@
 scoreboard players set @s w_given 0
-function warfare:item_drone
 function warfare:item_tablet
+function warfare:item_drone
 scoreboard players set @s drone 0
 scoreboard players set @s w_drone 20
 execute @s[score_w_given_min=1] ~ ~ ~ scoreboard players set @s w_drone 100

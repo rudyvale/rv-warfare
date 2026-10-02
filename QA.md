@@ -11,6 +11,8 @@ RV is developed on Windows using Windows PowerShell 5.1. Automated checks live i
 | Connections | Porthole and direct address parsing, migration, user-setting priority and invalid inputs |
 | Launch flow | Steam/Porthole preparation, retry paths, connection switching and direct mode without Steam |
 | Interface | English/Russian text, background operations, connection settings, update state and adaptive layouts |
+| First-play setup | Saved choices, cancellation rollback, calibration preservation, bounded device scans and owned-worker cleanup |
+| Mod upgrades | Exact vendor archives, duplicate mod IDs, bounded default addon updates and preservation of unknown files |
 | Host panel | Separate actions, graceful stop, process ownership and concurrent start/stop handling |
 | Protocol | Local Minecraft status requests, partial replies, unrelated TCP services and closed connections |
 | Packaging | ZIP CRC, file allowlists, manifest hashes, public defaults and uploaded release digests |
@@ -20,6 +22,8 @@ RV is developed on Windows using Windows PowerShell 5.1. Automated checks live i
 | Owner access | Actual owner connection receives permissions; ordinary clients and a matching nickname from an untrusted directory are denied |
 
 The frozen gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
+
+The 1.1.0 component checks also exercised Easy flight and lost-focus input, malformed network input, current tank bindings, First Aid wounds and healing, and actual Low/Balanced effect values. Both 24-page books were parsed by Minecraft and checked against the native font renderer. The new Apache burst event was resolved through the actual loaded sound registry; codec and byte comparisons covered the updated audio archive.
 
 The 1.0.0 installer was also run with empty application-data directories and no Java on PATH. It verified 1,347 downloaded Minecraft files, ran the bundled Java 8 and passed the installed-file check. Separate upgrade tests preserved Unicode settings, personal mods, worlds and the server list, and backed up the retired managed JAR.
 

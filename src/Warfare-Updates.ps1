@@ -83,6 +83,13 @@ function Expand-VmPackage([string]$Archive, [string]$Destination, [string]$Versi
         foreach ($name in @('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico')) {
             if (-not $zip.GetEntry('RV-Setup/' + $name)) { throw ('Incomplete package: ' + $name) }
         }
+        if ((Get-VmVersion $Version) -ge [version]'1.1.0') {
+            if (-not $zip.GetEntry('RV-Setup/Warfare-Performance.ps1')) { throw 'Incomplete package: Warfare-Performance.ps1' }
+            foreach ($name in @('Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','THIRD-PARTY-NOTICES.md')) {
+                if (-not $zip.GetEntry('RV-Setup/' + $name)) { throw ('Incomplete package: ' + $name) }
+            }
+            if ($metadata.requiredMods -isnot [PSCustomObject] -or $metadata.requiredMods.mcheli -isnot [string] -or $metadata.requiredMods.mcheli -cnotmatch '^\S{1,128}$') { throw 'Package server protocol version is missing.' }
+        }
     } finally { $zip.Dispose() }
     [IO.Compression.ZipFile]::ExtractToDirectory($Archive, $Destination)
     return Join-Path $Destination 'RV-Setup'

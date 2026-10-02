@@ -6,7 +6,7 @@ import subprocess
 import time
 import traceback
 
-from host_runtime import acquire_lock, java_arguments, porthole, read_json, server_port, server_status, write_json
+from host_runtime import acquire_lock, apply_pending_profile, java_arguments, porthole, read_json, server_port, server_status, update_stock_addons, write_json
 
 
 def run(root):
@@ -25,12 +25,15 @@ def run(root):
 
     process = None
     try:
-        arguments, memory = java_arguments(root, read_json(root / 'launcher-settings.json'))
+        settings = read_json(root / 'launcher-settings.json')
+        arguments, memory = java_arguments(root, settings)
         port = server_port(root)
         with socket.socket() as port_check:
             if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
                 port_check.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             port_check.bind(('127.0.0.1', port))
+        update_stock_addons(root)
+        apply_pending_profile(root, settings)
         commands_path.write_text('', encoding='utf-8')
         save()
         with (root / 'console.log').open('w', encoding='utf-8', buffering=1) as output:

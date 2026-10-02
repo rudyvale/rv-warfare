@@ -61,14 +61,18 @@ try {
 }
 'background check uses installed version and respects opt-out: PASS'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0') {
+function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0', [bool]$WithoutPerformance=$false, [bool]$WithoutProtocol=$false, [string]$MissingFirstPlay='') {
     $file=Join-Path $testRoot $Name
     $zip=[IO.Compression.ZipFile]::Open($file,'Create')
     try {
         $names=@('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico','release.json')
+        if ([version]$Version -ge [version]'1.1.0' -and -not $WithoutPerformance) { $names += 'Warfare-Performance.ps1' }
+        if ([version]$Version -ge [version]'1.1.0') { $names += @('Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','THIRD-PARTY-NOTICES.md') | Where-Object { $_ -cne $MissingFirstPlay } }
+        $releaseMetadata=@{version=$Version;repository='rudyvale/rv-warfare'}
+        if ([version]$Version -ge [version]'1.1.0' -and -not $WithoutProtocol) { $releaseMetadata.requiredMods=@{mcheli='fixture-protocol'} }
         foreach ($name in $names) {
             $entry=$zip.CreateEntry('RV-Setup/'+$name); $writer=[IO.StreamWriter]::new($entry.Open())
-            try { $writer.Write($(if($name -eq 'release.json'){@{version=$Version;repository='rudyvale/rv-warfare'}|ConvertTo-Json}else{'fixture'})) } finally {$writer.Dispose()}
+            try { $writer.Write($(if($name -eq 'release.json'){$releaseMetadata|ConvertTo-Json}else{'fixture'})) } finally {$writer.Dispose()}
         }
         if($Extra){[void]$zip.CreateEntry($Extra)}
     } finally {$zip.Dispose()}
@@ -76,6 +80,31 @@ function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0') {
 }
 $safe=Archive 'safe.zip'; $expanded=Expand-VmPackage $safe (Join-Path $testRoot 'safe') '1.1.0'
 Assert (Test-Path (Join-Path $expanded 'Install-Warfare.ps1')) 'Safe archive failed'
+$legacy=Archive 'legacy.zip' '' '1.0.0'
+$legacyExpanded=Expand-VmPackage $legacy (Join-Path $testRoot 'legacy') '1.0.0'
+Assert (-not (Test-Path (Join-Path $legacyExpanded 'Warfare-Performance.ps1'))) 'Legacy package compatibility fixture failed'
+$incomplete=Archive 'missing-performance.zip' '' '1.1.0' $true
+$incompleteRoot=Join-Path $testRoot 'incomplete'
+Reject { Expand-VmPackage $incomplete $incompleteRoot '1.1.0' } 'RV 1.1.0 without performance helper accepted'
+Assert (-not (Test-Path $incompleteRoot)) 'Incomplete package wrote files before validation'
+'performance helper boundary and 1.0.0 compatibility: PASS'
+$noProtocol=Archive 'missing-protocol.zip' '' '1.1.0' $false $true
+$noProtocolRoot=Join-Path $testRoot 'missing-protocol'
+Reject { Expand-VmPackage $noProtocol $noProtocolRoot '1.1.0' } 'RV 1.1.0 without server mod version accepted'
+Assert (-not (Test-Path $noProtocolRoot)) 'Package without protocol wrote files before validation'
+'required server mod metadata boundary: PASS'
+foreach ($name in @('Warfare-Onboarding.ps1','Configure-FirstPlay.ps1')) {
+    $missing=Archive ([Guid]::NewGuid().ToString('N')+'.zip') '' '1.1.0' $false $false $name
+    $missingRoot=Join-Path $testRoot ([Guid]::NewGuid().ToString('N'))
+    Reject { Expand-VmPackage $missing $missingRoot '1.1.0' } ('RV 1.1.0 without first-play helper accepted: ' + $name)
+    Assert (-not (Test-Path $missingRoot)) 'Package without first-play helper wrote files before validation'
+}
+'first-play helper closure before extraction: PASS'
+$noNotices=Archive 'missing-notices.zip' '' '1.1.0' $false $false 'THIRD-PARTY-NOTICES.md'
+$noNoticesRoot=Join-Path $testRoot 'missing-notices'
+Reject { Expand-VmPackage $noNotices $noNoticesRoot '1.1.0' } 'RV 1.1.0 without installed source notices accepted'
+Assert (-not (Test-Path $noNoticesRoot)) 'Package without notices wrote files before validation'
+'source notices closure before extraction: PASS'
 foreach($entry in @('RV-Setup/../escape.ps1','RV-Setup/../../escape.ps1','RV-Setup/file:stream','outside/file','RV-Setup/folder./file','RV-Setup/release.json')) {
     $zip=Archive ([Guid]::NewGuid().ToString('N')+'.zip') $entry
     Reject { Expand-VmPackage $zip (Join-Path $testRoot ([Guid]::NewGuid().ToString('N'))) '1.1.0' } ('Unsafe archive accepted: '+$entry)

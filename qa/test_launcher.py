@@ -4,6 +4,8 @@ import socket
 import subprocess
 import threading
 import os
+import uuid
+import time
 
 ROOT = Path(__file__).resolve().parents[1]
 PS = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
@@ -11,6 +13,10 @@ source = (ROOT / 'src/Play-Warfare.ps1').read_text(encoding='utf-8-sig')
 functions = source[:source.index('\ntry {')]
 functions = functions.replace(". (Join-Path $gameRoot 'Warfare-Connection.ps1')", ". '" + str(ROOT / 'src/Warfare-Connection.ps1') + "'")
 functions = functions.replace(". (Join-Path $gameRoot 'Warfare-Updates.ps1')", ". '" + str(ROOT / 'src/Warfare-Updates.ps1') + "'")
+functions = functions.replace(". (Join-Path $gameRoot 'Warfare-Performance.ps1')", ". '" + str(ROOT / 'src/Warfare-Performance.ps1') + "'")
+fixture = ROOT / 'qa' / ('protocol-' + uuid.uuid4().hex)
+fixture.mkdir()
+env = dict(os.environ, VM_SKIP_UPDATE_CHECK='1')
 
 
 def varint(number):
@@ -33,7 +39,7 @@ def receive_varint(stream):
     raise AssertionError('Malformed VarInt')
 
 
-def run_case(label, payload, expect_response, address='127.0.0.1'):
+def run_case(label, payload, expect_response, address='127.0.0.1', slow=False):
     server = socket.socket(socket.AF_INET6 if ':' in address else socket.AF_INET)
     server.bind((address, 0))
     server.settimeout(4)
@@ -56,19 +62,26 @@ def run_case(label, payload, expect_response, address='127.0.0.1'):
                 assert receive_varint(connection) == 1
                 assert receive_varint(connection) == 0
                 if payload:
-                    for offset in range(0, len(payload), 7):
-                        connection.sendall(payload[offset:offset + 7])
+                    step = 1 if slow else 7
+                    for offset in range(0, len(payload), step):
+                        if slow:
+                            time.sleep(0.4)
+                        connection.sendall(payload[offset:offset + step])
         except Exception as exc:
-            errors.append(str(exc))
+            if not slow or not isinstance(exc, (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)):
+                errors.append(str(exc))
         finally:
             server.close()
 
     thread = threading.Thread(target=serve, daemon=True)
     thread.start()
     script = functions + f"\n$result=Test-GameServer '{address}' {port}\nif($result){{$result|ConvertTo-Json -Compress -Depth 8}}else{{'null'}}\n"
-    path = ROOT / 'qa/probe-case.ps1'
+    path = fixture / 'probe-case.ps1'
     path.write_text(script, encoding='utf-8-sig')
-    result = subprocess.run([str(PS), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(path)], capture_output=True, timeout=10)
+    started = time.monotonic()
+    result = subprocess.run([str(PS), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(path)], capture_output=True, timeout=10, env=env)
+    if slow:
+        assert time.monotonic() - started < 8, 'Whole-response deadline was exceeded'
     assert result.returncode == 0, result.stderr.decode(errors='replace')
     thread.join(4)
     assert not thread.is_alive(), label
@@ -85,6 +98,7 @@ run_case('fragmented Minecraft status with dynamic port', varint(len(packet)) + 
 run_case('non-Minecraft listener rejected', b'HTTP/1.1 200 OK\r\n\r\n', False)
 run_case('truncated response rejected', varint(len(packet)) + packet[:8], False)
 run_case('closed socket rejected', b'', False)
+run_case('slow fragmented response cannot keep the probe open indefinitely', varint(len(packet)) + packet, False, slow=True)
 with socket.socket(socket.AF_INET6) as ipv6_server:
     ipv6_server.bind(('::1', 0))
     ipv6_server.listen()

@@ -8,6 +8,20 @@ import java.util.concurrent.*;
 
 public final class WarfareOwnerAuth {
     private static final Map<String, Object> pending = new ConcurrentHashMap<String, Object>();
+    private static final Map<Object, LoginCheck> logins = new ConcurrentHashMap<Object, LoginCheck>();
+    private static final class LoginCheck {
+        final Object manager;
+        final Object profile;
+        final String nickname;
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(8);
+        volatile boolean finished;
+        volatile boolean verified;
+        LoginCheck(Object manager, Object profile, String nickname) {
+            this.manager = manager;
+            this.profile = profile;
+            this.nickname = nickname;
+        }
+    }
     private static final ThreadPoolExecutor workers = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(8), new ThreadFactory() {
         public Thread newThread(Runnable task) {
             Thread thread = new Thread(task, "RV owner check");
@@ -100,6 +114,107 @@ public final class WarfareOwnerAuth {
             }
         } catch (Throwable ignored) {
             if (process != null) process.destroyForcibly();
+            return false;
+        }
+    }
+
+    private static void denyLogin(Object handler) {
+        System.out.println("[RV owner] login denied before player admission");
+        try {
+            Class<?> text = Class.forName("net.minecraft.util.text.TextComponentString");
+            Object message = text.getConstructor(String.class).newInstance("This nickname is reserved for the host. Use your own nickname or the host launcher.");
+            try {
+                call(handler, new String[]{"disconnect", "func_194026_b"}, message);
+            } catch (NoSuchMethodException missing) {
+                call(field(handler, "networkManager", "field_147333_a"), new String[]{"closeChannel", "func_150718_a"}, message);
+            }
+        } catch (Throwable error) {
+            System.out.println("[RV owner] login rejection failed: " + error.getClass().getSimpleName());
+        }
+    }
+
+    public static boolean allowLogin(final Object handler) {
+        try {
+            long now = System.nanoTime();
+            for (Map.Entry<Object, LoginCheck> entry : logins.entrySet()) {
+                LoginCheck old = entry.getValue();
+                if (now >= old.deadline && logins.remove(entry.getKey(), old)) {
+                    denyLogin(entry.getKey());
+                    if (entry.getKey() == handler) return false;
+                }
+            }
+            final Object manager = field(handler, "networkManager", "field_147333_a");
+            if (!Boolean.TRUE.equals(call(manager, new String[]{"isChannelOpen", "func_150724_d"}))) {
+                logins.remove(handler);
+                return false;
+            }
+            final Object profile = field(handler, "loginGameProfile", "field_147337_i");
+            final String incoming = (String)call(profile, new String[]{"getName"});
+            LoginCheck current = logins.get(handler);
+            if (current != null) {
+                if (current.manager != manager || current.profile != profile || !current.nickname.equals(incoming)) {
+                    logins.remove(handler, current);
+                    denyLogin(handler);
+                    return false;
+                }
+                if (!current.finished) return false;
+                logins.remove(handler, current);
+                if (!current.verified) denyLogin(handler);
+                return current.verified;
+            }
+            final File root = new File(".").getCanonicalFile();
+            File policy = new File(root, "vm-owner.properties");
+            if (!policy.exists()) return true;
+            Properties settings = new Properties();
+            FileInputStream input = new FileInputStream(policy);
+            try { settings.load(input); } finally { input.close(); }
+            final String nickname = settings.getProperty("nickname", "");
+            if (!nickname.matches("[A-Za-z0-9_]{3,16}")) {
+                denyLogin(handler);
+                return false;
+            }
+            if (!nickname.equalsIgnoreCase(incoming)) return true;
+            final File script = new File(root, settings.getProperty("script", "Check-OwnerConnection.ps1")).getCanonicalFile();
+            SocketAddress address = (SocketAddress)call(manager, new String[]{"getRemoteAddress", "func_74430_c"});
+            if (!nickname.equals(incoming) || !script.getParentFile().equals(root) || !script.isFile() || !(address instanceof InetSocketAddress)) {
+                denyLogin(handler);
+                return false;
+            }
+            InetSocketAddress remote = (InetSocketAddress)address;
+            if (remote.getAddress() == null || !remote.getAddress().isLoopbackAddress() || logins.size() >= 9) {
+                denyLogin(handler);
+                return false;
+            }
+            final int port = remote.getPort();
+            final LoginCheck request = new LoginCheck(manager, profile, incoming);
+            if (logins.putIfAbsent(handler, request) != null) return false;
+            try {
+                workers.execute(new Runnable() {
+                    public void run() {
+                        if (System.nanoTime() >= request.deadline || logins.get(handler) != request) return;
+                        boolean verified = check(root, script, port, nickname);
+                        try {
+                            if (logins.get(handler) != request || !Boolean.TRUE.equals(call(manager, new String[]{"isChannelOpen", "func_150724_d"}))) {
+                                logins.remove(handler, request);
+                                return;
+                            }
+                            request.verified = verified && System.nanoTime() < request.deadline;
+                            request.finished = true;
+                        } catch (Throwable error) {
+                            request.verified = false;
+                            request.finished = true;
+                        }
+                    }
+                });
+            } catch (RejectedExecutionException full) {
+                logins.remove(handler, request);
+                denyLogin(handler);
+            }
+            return false;
+        } catch (Throwable error) {
+            logins.remove(handler);
+            denyLogin(handler);
+            System.out.println("[RV owner] login verification failed: " + error.getClass().getSimpleName());
             return false;
         }
     }

@@ -199,12 +199,11 @@ public final class RVCombatAcceptance {
         frame=type("net.minecraft.entity.item.EntityItemFrame").getConstructor(type("net.minecraft.world.World"),type("net.minecraft.util.math.BlockPos"),type("net.minecraft.util.EnumFacing")).newInstance(world,pos(704,81,8),VMReflect.get(type("net.minecraft.util.EnumFacing"),"NORTH"));
         call(frame,"func_82334_a",stack());call(world,"func_72838_d",frame);entities.add(frame);
         fire("GenericProjectile",704.5,81.5,0,8F);
+        for(int x=735;x<=737;x++)for(int y=80;y<=82;y++)for(int z=0;z<=9;z++)block(x,y,z,"minecraft:air");
         block(736,81,8,"minecraft:planks");
-        for(int x=735;x<=737;x++)for(int y=80;y<=82;y++)for(int z=7;z<=9;z++){
-            Object at=pos(x,y,z);if(!blocks.containsKey(at))blocks.put(at,call(world,"func_180495_p",at));
-        }
         run("incendiary",new RunnableCheck(){public void run() throws Exception{
             Object flame=bullet("FlamethrowerProjectile",736.5,81.5,0,8F);
+            VMReflect.set(flame,"field_70159_w",0D);VMReflect.set(flame,"field_70181_x",0D);
             java.lang.reflect.Field chance=flame.getClass().getDeclaredField("chanceToIgnite");chance.setAccessible(true);chance.setFloat(flame,1F);
             call(flame,"func_70071_h_");
         }});

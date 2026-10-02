@@ -21,8 +21,8 @@
 
 1. Download **RV-Setup.zip** from the [latest release](https://github.com/rudyvale/rv-warfare/releases/latest) and extract the entire archive.
 2. Open **INSTALL.cmd**, enter a nickname and click **Install**.
-3. Open **Settings** and enter your host's Porthole connection details or direct address and port.
-4. Click **Play** once the host's server is running.
+3. Click **Play**. The first-play setup lets you choose mouse and keyboard, an FPV radio or a gamepad, then your server.
+4. Join once the host's server is running. Device setup and connection details remain available in **Settings**.
 
 Porthole connections require Steam. If Porthole is missing, RV opens its installation in Steam and waits for it to finish. Direct connections do not require Steam. Public downloads contain no personal server destination.
 
@@ -33,12 +33,39 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 | Feature | What it does |
 | :--- | :--- |
 | **Installation** | Sets up Java 8, Forge, libraries and the modpack; reuses verified local files |
-| **FPV flight** | Throttle, tilt, inertia, stabilized and Acro flight; keyboard, mouse and configurable controller input |
-| **Combat** | Techguns, MC Heli CE and a dedicated combat sound pack |
+| **FPV flight** | Easy mouse-and-keyboard flight, Angle and Acro modes, axis mapping and calibration |
+| **Aircraft** | A quadcopter, combat FPV, Geran and FP-1 with distinct models and flight behaviour |
+| **Combat** | Techguns and MC Heli CE, tank controls, server-confirmed damage feedback and combat audio |
+| **Medical care** | First Aid wounds and timed healing, with configurable visual effects |
+| **World and guide** | A separate battlefield template with destructible props, equipment menus and a 24-page book in each language |
+| **First-play setup** | Actual device selection, calibration and server selection; cancelled setup preserves saved choices |
+| **Graphics profiles** | Low, Balanced and Quality applied explicitly; language changes preserve graphics settings |
 | **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
 | **Quiet updates** | Checks GitHub in the background when opening, launching or installing |
 | **Your data** | Preserves worlds, nickname, language, connection details and user files; backs up replaced files |
 | **Interface** | English and Russian, Windows display scaling, a simple code icon |
+
+## In game
+
+These are unedited screenshots from the game. The aircraft views use optional BSL shaders; they do not represent the default graphics settings or an FPS guarantee.
+
+<p align="center"><img src="assets/gameplay/fpv-quadcopter.png" alt="RV FPV quadcopter with all four rotors visible" width="100%"></p>
+
+| Geran | FP-1 |
+| :---: | :---: |
+| ![Geran aircraft](assets/gameplay/geran.png) | ![FP-1 aircraft](assets/gameplay/fp1.png) |
+
+<details>
+<summary>Compare the same scene with shaders off and with BSL</summary>
+
+| Shaders off | Optional BSL shaders |
+| :---: | :---: |
+| ![Battlefield with shaders off](assets/gameplay/battlefield-low.png) | ![Battlefield with BSL shaders](assets/gameplay/battlefield-shaders.png) |
+| ![Quadcopter with shaders off](assets/gameplay/fpv-quadcopter-low.png) | ![Quadcopter with BSL shaders](assets/gameplay/fpv-quadcopter.png) |
+
+</details>
+
+See the [player guide](pack/READ-ME.md) for flight, tank controls, healing and graphics settings, and [screenshot provenance](assets/gameplay/README.md) for capture details.
 
 ## Updates that stay out of the way
 
@@ -52,7 +79,7 @@ The host panel has separate **Play**, **Start server** and **Stop server** actio
 
 <p align="center"><img src="assets/host-launcher.png" alt="RV host panel in English with Play, Start server and Stop server buttons" width="100%"></p>
 
-**RV-Host-Tools.zip** contains the panel and management scripts for an existing configured server. The optional **RV-World-Template.zip** is a separate clean world for a new server. Existing worlds are never replaced by background updates. [Host setup and requirements →](host/README.md)
+**RV-Host-Tools.zip** contains the panel and management scripts for an existing configured server. The optional **RV-World-Template.zip** is a separate clean world for a new server. Existing worlds are never replaced by background updates. **RV-Third-Party-Sources.zip** contains the original pinned source archives and notices for the three medical and visual-effects dependencies. [Host setup and requirements →](host/README.md)
 
 ## Requirements
 

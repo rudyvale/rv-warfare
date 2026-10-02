@@ -1,0 +1,76 @@
+Author: RV
+DisplayName:
+  DEFAULT: RV FP-1
+Category: M.Q
+MaxFuel: 600
+MaxHP: 30
+FuelConsumption: 0.1
+ThrottleDownFactor: 1.0
+Camera:
+  AlwaysCameraView: true
+  Pos:
+  - Pos: [0.0, 0.38, 1.24]
+Sound:
+  MoveSound: mcheli:prop
+PhysicalProperties:
+  Speed: 0.6
+  RotationSnapValue: -1.4
+  RotationLimits:
+    Pitch:
+      Min: -60.0
+      Max: 60.0
+    Roll:
+      Min: -60.0
+      Max: 60.0
+Render:
+  ParticleScale: 0.2
+Seats:
+- Position: [0.0, 0.0, 0.0]
+  Hud: plane
+BoundingBoxes:
+- Type: DEFAULT
+  Position: [0, 0.29, 0.3]
+  Size: [0.47, 0.43, 2.06]
+- Type: DEFAULT
+  Position: [0, 0.425, 0.12]
+  Size: [3.6, 0.16, 0.76]
+- Type: DEFAULT
+  Position: [0, 0.322, -1.59]
+  Size: [1.3, 0.1, 0.4]
+- Type: DEFAULT
+  Position: [-0.48, 0.54, -1.6]
+  Size: [0.08, 0.54, 0.38]
+- Type: DEFAULT
+  Position: [0.48, 0.54, -1.6]
+  Size: [0.08, 0.54, 0.38]
+- Type: DEFAULT
+  Position: [-0.48, 0.29, -0.82]
+  Size: [0.08, 0.09, 1.78]
+- Type: DEFAULT
+  Position: [0.48, 0.29, -0.82]
+  Size: [0.08, 0.09, 1.78]
+Uav:
+  IsUav: true
+  IsSmallUav: true
+AircraftFeatures:
+  GunnerMode: false
+  NightVision: true
+  EntityRadar: true
+  ThrottleUpDown: 3.0
+PlaneFeatures:
+  VariableSweepWing: false
+  SweepWingSpeed: 0.1
+  EnableVtol: false
+  EnableAutoPilot: false
+Components:
+  PlaneRotor:
+  - Position: [0.0, 0.28, -0.91]
+    Rotation: [0.0, 0.0, 1.0]
+    PartName: rotor0
+    RotFactor: 0.0
+    Blades:
+    - Position: [0.0, 0.28, -0.91]
+      Rotation: [0.0, 0.0, -1.0]
+      PartName: blade0
+      BladeNum: 1
+      BladeRot: 0

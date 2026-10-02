@@ -1,1 +1,2 @@
-tellraw @s {"text": "Place a UAV on the ground, hold the tablet and right-click the UAV. Throttle resets on connection: increase it smoothly. F8: controller, calibration, Angle/Acro. Angle levels the UAV; Acro holds attitude and needs practice. At level attitude, 50% throttle hovers. Shift exits. Shift+right-click with the tablet levels a free grounded UAV. Lower USB throttle before connecting. Practise in Training.", "color": "white"}
+function warfare:drone_tip_en
+function warfare:book_request

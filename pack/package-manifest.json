@@ -1,9 +1,9 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "6177a9cb270a5f052cdbf5a7924e2a44554dfae0b9af2fbfde6862b7905fb602"
+      "sha256": "75d47be3187f269b90113c6bf5e4051aed9164f408b762d7ac97392bb136c9d0"
     },
     {
       "path": "runtime.zip",
@@ -16,8 +16,24 @@
       "sha256": "9c640dd189f2174f3e18fccdf5e5351a66c616c432b64b17451beb63967a78c4"
     },
     {
+      "path": "THIRD-PARTY-NOTICES.md",
+      "sha256": "0868b4cd2f580e2ffbdeb49059cb7280f35059fbc329bb94fd1b4491a2090f28"
+    },
+    {
       "path": "config/elegant_networking.cfg",
       "sha256": "9278f28499a8a1570bac4511d768b33e0694ddb1566c8aefd6158a5763745e80"
+    },
+    {
+      "path": "config/enhancedvisuals-client.json",
+      "sha256": "a35c6b11ffa969796e5b2827b87032ad078c8ed3c2fe0ff4eca573c4cb96a6ea"
+    },
+    {
+      "path": "config/enhancedvisuals.json",
+      "sha256": "eabd90df2ced8ca752103591f21cda97162ee76d0eacd99b2b623743d6c5397d"
+    },
+    {
+      "path": "config/firstaid.cfg",
+      "sha256": "eea298367f24c5f30093c6fbd07f27378b1670aee76109d4671679705378969b"
     },
     {
       "path": "config/foamfix.cfg",
@@ -81,17 +97,120 @@
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin-bomb.yml",
-      "sha256": "f6afe5d5b4031e4a6f060b20e48263beb5496f289d02136147d0428275b0e438",
+      "sha256": "b4916eb01a786a1dd87b65e8190c810643385d7a62a249f8d8d77712f6d78334",
       "existingOnly": true
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin.yml",
-      "sha256": "c6f1fc0eed40a0211edbdbef4d8eb038e15403d2153735ec0496619a4babe11f",
+      "sha256": "6a9d0a3c30eca99f62a783c413a1050c8a4c29d7dd3e57a936194e07a70efd71",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/hud/rv_fpv.yml",
+      "sha256": "cad9b018e2b1ad0b26e59baf161865d9aa06f6f60fd7003346de2685f5a593ce",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/models/helicopters/rc-goblin-bomb.mqo",
+      "sha256": "d67332a1bfd77669e2569daa501e46d9c933daa1c75325bede2423d6b9f9d0ea",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/models/helicopters/rc-goblin.mqo",
+      "sha256": "e231808aaec7612cc43c9ff0af7ad879546d311f6e559b899a9dd541f578e7de",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/models/planes/rv_fp1.mqo",
+      "sha256": "56d1bf77d996296a7076a7f47b60c280526830ac03890ea1846888adb8fe1d1a",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/models/planes/rv_geran.mqo",
+      "sha256": "ac6e4c2cb970f23e798a8de5524b5b438afedf70a991395b01bff1130387aa8d",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/planes/rv_fp1.yml",
+      "sha256": "69a79d05c3363237a9046be264cfc661f783daa691783c9e61c6b78114be0e97",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/planes/rv_geran.yml",
+      "sha256": "a6c7b4916ba7215ab8c9641811378f4ee57aee82b36adba51ccf7375d1acb43b",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/rv-models.json",
+      "sha256": "7c746d801ca634f3eceeeb880251a79f1f014af1cb96a74f7183fbb0fb79e18b",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/helicopters/rc-goblin-1.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/helicopters/rc-goblin-2.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/helicopters/rc-goblin-bomb-1.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/helicopters/rc-goblin-bomb.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/helicopters/rc-goblin.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/items/rc-goblin-bomb.png",
+      "sha256": "d0e18d1606a79f67ec097d4173ff451fb4b383f31a862b3177e7053e2d7282e5",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/items/rc-goblin.png",
+      "sha256": "44c2c6c7c7162d9a7941e5af4cd6949a06b56f56f206c5fd67585c70da3d57da",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/items/rv_fp1.png",
+      "sha256": "51429a2d99f15e8641bb513da13e886e035e30d38c748c074fe82dd5221df776",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/items/rv_geran.png",
+      "sha256": "a79dd09992eb2fc52ed04cc6bfb47ba9f1f397bc48b85d4a6ab2054855baf2ce",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/planes/rv_fp1.png",
+      "sha256": "75d4cb56b6914fe668c09e0a1d078324b727e7f72038d1e8b4018bb709fa9e74",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/textures/planes/rv_geran.png",
+      "sha256": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
       "existingOnly": true
     },
     {
       "path": "mods/!!mixinbooter-10.7.jar",
       "sha256": "8bb53080aede2d2b1e1c5f713bbf49a38f20add8caa3d52fabcdf8a536b55a18"
+    },
+    {
+      "path": "mods/CreativeCore_v1.10.71_mc1.12.2.jar",
+      "sha256": "b0ef34ec816fa91451f8d4b62c016c159ab3559d6f75870790d1215943f009d5"
+    },
+    {
+      "path": "mods/EnhancedVisuals_v1.4.4_mc1.12.2.jar",
+      "sha256": "4b8c538370ada6c25ab13990e90c903aed9e0bd0e63d59c34848ce59781fc966"
     },
     {
       "path": "mods/WorldEdit-CUI-FE3-1.12.2-3.0.9.jar",
@@ -104,6 +223,10 @@
     {
       "path": "mods/elegant-networking-1.12-3.14.jar",
       "sha256": "8b4c8bd7dc75c09fea910a6fe02dd451db337c8ce7da6f38f4eac3541e2233b8"
+    },
+    {
+      "path": "mods/firstaid-1.6.22.jar",
+      "sha256": "55dfe81a58d20575b6f6aa635d4296370c804fe52b77485b455aa99910da31a4"
     },
     {
       "path": "mods/foamfix-0.10.15-1.12.2.jar",
@@ -119,7 +242,7 @@
     },
     {
       "path": "mods/mcheli-ce-1.5.1-rv.jar",
-      "sha256": "c3fd8a25c8124bc9ede55d4de65735d8be6c3115a22d1ec956e9eb0e161ee714"
+      "sha256": "ea90ce380c54a45982b02f2ae61533517203e926da0f2d65d31e51d7dc3408bb"
     },
     {
       "path": "mods/modularui-3.1.6.jar",
@@ -135,7 +258,7 @@
     },
     {
       "path": "resourcepacks/Warfare-Combat-Audio.zip",
-      "sha256": "fb1478bcfcf7f45cd56402fd525cd86d7cc21b8b6d928246431c23fb8e4cab7b"
+      "sha256": "5fddd87a99455edbd85005dd24851591862ab7d065e405597d2def4bc66d1937"
     },
     {
       "path": "resourcepacks/Warfare-UI-fixes.zip",

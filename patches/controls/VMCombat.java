@@ -76,12 +76,7 @@ public final class VMCombat {
             Object projectile=VMReflect.call(source,"func_76364_f"),world=VMReflect.get(aircraft,"field_70170_p");
             double x=VMReflect.num(VMReflect.get(aircraft,"field_70165_t")),y=VMReflect.num(VMReflect.get(aircraft,"field_70163_u"))+1,z=VMReflect.num(VMReflect.get(aircraft,"field_70161_v"));
             if(projectile!=null){
-                Class<?> vector=Class.forName("net.minecraft.util.math.Vec3d");
-                double px=VMReflect.num(VMReflect.get(projectile,"field_70165_t")),py=VMReflect.num(VMReflect.get(projectile,"field_70163_u")),pz=VMReflect.num(VMReflect.get(projectile,"field_70161_v"));
-                Object start=vector.getConstructor(double.class,double.class,double.class).newInstance(px,py,pz);
-                Object end=vector.getConstructor(double.class,double.class,double.class).newInstance(px+VMReflect.num(VMReflect.get(projectile,"field_70159_w")),py+VMReflect.num(VMReflect.get(projectile,"field_70181_x")),pz+VMReflect.num(VMReflect.get(projectile,"field_70179_y")));
-                Object hit=VMReflect.call(VMReflect.call(aircraft,"func_174813_aQ"),"func_72327_a",start,end);
-                if(hit!=null){Object vec=VMReflect.get(hit,"field_72307_f");x=VMReflect.num(VMReflect.get(vec,"field_72450_a"));y=VMReflect.num(VMReflect.get(vec,"field_72448_b"));z=VMReflect.num(VMReflect.get(vec,"field_72449_c"));}
+                y=VMReflect.num(VMReflect.get(aircraft,"field_70163_u"))+1;
             }
             particles(world,"FIREWORKS_SPARK",x,y,z,6,.15,.1);soundAt(world,x,y,z,location("mcheli:hit"),1F,.95F);
         }catch(Exception|LinkageError e){VMReflect.error("armour impact feedback",e);}
@@ -98,7 +93,7 @@ public final class VMCombat {
             Object name=VMReflect.get(info,"fireSound");
             if(name!=null) VMReflect.call(Class.forName("com.norwood.mcheli.wrapper.W_McClient"),"playSound",name,.85F,(float)VMControlMath.clamp(VMReflect.num(VMReflect.get(info,"soundPitch")),.5,1.6));
             boolean cannon=VMReflect.num(VMReflect.get(info,"delay"))>=10 && VMReflect.num(VMReflect.get(info,"explosion"))>0;
-            if(!VMFlight.drone(aircraft)) kicks.put(aircraft,new double[]{now,cannon?1.25:.23});
+            if(!VMFlight.uav(aircraft)) kicks.put(aircraft,new double[]{now,cannon?1.25:.23});
             particles(VMReflect.get(aircraft,"field_70170_p"),"FLAME",x,y,z,2,.08,.03);
         }catch(Exception e){VMReflect.error("shot feedback",e);}
     }
@@ -110,17 +105,31 @@ public final class VMCombat {
             VMReflect.call(event,"setPitch",((Number)VMReflect.call(event,"getPitch")).floatValue()-offset);
         }catch(Exception e){VMReflect.error("camera recoil",e);}
     }
-    private static synchronized boolean budget(int count) {
+    private static synchronized boolean budget(int count,boolean remote) {
         long tick=System.nanoTime()/50000000;
         if(tick!=budgetTick){budgetTick=tick;particleBudget=0;}
-        if(particleBudget+count>160)return false;particleBudget+=count;return true;
+        int limit=160;if(remote){VMClient.reload();limit=VMClient.effectLimit;}
+        if(particleBudget+count>limit)return false;particleBudget+=count;return true;
     }
     private static void particles(Object world,String name,double x,double y,double z,int count,double spread,double speed)throws Exception {
-        if(!budget(count))return;
+        boolean remote=(Boolean)VMReflect.get(world,"field_72995_K");
+        if(remote&&!VMClient.nearby(x,y,z)){VMClient.particlesSkipped+=count;return;}
+        if(!budget(count,remote)){if(remote)VMClient.particlesSkipped+=count;return;}
         Object type=VMReflect.get(Class.forName("net.minecraft.util.EnumParticleTypes"),name);
-        if((Boolean)VMReflect.get(world,"field_72995_K")) {
+        if(remote) {
             for(int i=0;i<count;i++)VMReflect.call(world,"func_175688_a",type,x,y,z,0D,speed,0D,new int[0]);
-        }else VMReflect.call(world,"func_180505_a",type,true,x,y,z,count,spread,spread,spread,speed,new int[0]);
+            VMClient.particlesDrawn+=count;
+        }else {
+            for(Object observer:(List<?>)VMReflect.get(world,"field_73010_i")){
+                double dx=x-VMReflect.num(VMReflect.get(observer,"field_70165_t")),dy=y-VMReflect.num(VMReflect.get(observer,"field_70163_u")),dz=z-VMReflect.num(VMReflect.get(observer,"field_70161_v"));
+                Object controlled=VMReflect.call(Class.forName("com.norwood.mcheli.aircraft.MCH_EntityAircraft"),"getAircraft_RiddenOrControl",observer);
+                if(controlled!=null){dx=x-VMReflect.num(VMReflect.get(controlled,"field_70165_t"));dy=y-VMReflect.num(VMReflect.get(controlled,"field_70163_u"));dz=z-VMReflect.num(VMReflect.get(controlled,"field_70161_v"));}
+                if(dx*dx+dy*dy+dz*dz<=96*96){
+                    Object packet=Class.forName("net.minecraft.network.play.server.SPacketParticles").getConstructor(Class.forName("net.minecraft.util.EnumParticleTypes"),boolean.class,float.class,float.class,float.class,float.class,float.class,float.class,float.class,int.class,int[].class).newInstance(type,true,(float)x,(float)y,(float)z,(float)spread,(float)spread,(float)spread,(float)speed,count,new int[0]);
+                    VMReflect.call(VMReflect.get(observer,"field_71135_a"),"func_147359_a",packet);
+                }
+            }
+        }
     }
     public static void trail(Object bullet) {
         try {
@@ -133,7 +142,7 @@ public final class VMCombat {
             double px=VMReflect.num(VMReflect.get(bullet,"field_70169_q")),py=VMReflect.num(VMReflect.get(bullet,"field_70167_r")),pz=VMReflect.num(VMReflect.get(bullet,"field_70166_s"));
             double distance=Math.sqrt((x-px)*(x-px)+(y-py)*(y-py)+(z-pz)*(z-pz));
             if(distance>24 || distance<.02)return;
-            int steps=Math.min(8,Math.max(2,(int)(distance*2)));
+            VMClient.reload();int steps=Math.min(VMClient.trailSteps,Math.max(2,(int)(distance*2)));
             for(int i=0;i<steps;i++){double f=(i+.5)/steps;particles(world,i%3==0?"FLAME":"FIREWORKS_SPARK",px+(x-px)*f,py+(y-py)*f,pz+(z-pz)*f,1,0,0);}
         }catch(Exception e){VMReflect.error("projectile trail",e);}
     }

@@ -13,6 +13,8 @@ public final class VMPilot {
     private static long lastMouse;
     private static Object attitudeAircraft,attitude;
     private static double lastYaw,lastPitch,lastRoll;
+    private static long lastPacket;
+    private static Object packetAircraft;
     private static Object minecraft() throws Exception { return VMReflect.call(Class.forName("net.minecraft.client.Minecraft"),"func_71410_x"); }
     private static boolean focus() throws Exception {
         Object mc=minecraft();
@@ -31,15 +33,20 @@ public final class VMPilot {
     }
     public static void keys(Object handler,Object player,Object aircraft,boolean pilot) {
         try {
+            VMClient.bindings(handler);
             input.poll(focus());
             if (currentAircraft != aircraft) { input.armed=false; Arrays.fill(input.values,0); currentAircraft=aircraft; mousePitch=0; mouseRoll=0; }
+            if(VMEasy.client(aircraft)){for(String field:new String[]{"KeyFreeLook","KeyUseWeapon","KeyUp","KeyDown","KeyLeft","KeyRight"}){Object key=optionalKey(handler,field);if(key!=null){VMReflect.set(key,"isPress",false);VMReflect.set(key,"isBeforePress",false);}}bind(handler,"KeyUnmount",VMEasy.focus()&&VMEasy.key("field_74311_E"));return;}
             if(!input.enabled()) return;
             boolean active=input.connected&&input.armed&&focus();
             bind(handler,"KeyUseWeapon",active&&input.down("fire"));
             bind(handler,"KeySwitchWeapon1",active&&input.down("weapon"));
             bind(handler,"KeyBrake",active&&input.down("brake"));
             bind(handler,"KeyUnmount",active&&input.down("exit"));
-            if(!pilot || VMFlight.drone(aircraft)) return;
+            bind(handler,"KeyReloadWeapon",active&&input.down("reload"));
+            bind(handler,"KeySwWeaponMode",active&&input.down("weaponMode"));
+            if(input.down("zoom")||keys.containsKey(optionalKey(handler,"KeyZoom")))bindOptional(handler,"KeyZoom",active&&input.down("zoom"));
+            if(!pilot || VMFlight.uav(aircraft)) return;
             double gas=active?input.values[3]:0;
             boolean tank=aircraft.getClass().getName().contains("Tank") || aircraft.getClass().getName().contains("Vehicle");
             if(!input.gamepad() && tank) gas=active?gas*2-1:0;
@@ -48,6 +55,8 @@ public final class VMPilot {
             bind(handler,"KeyRight",active&&input.values[2]>.15); bind(handler,"KeyLeft",active&&input.values[2]<-.15);
         }catch(Exception e){VMReflect.error("controller buttons",e);}
     }
+    private static Object optionalKey(Object handler,String field){try{return VMReflect.get(handler,field);}catch(Exception e){return null;}}
+    private static void bindOptional(Object handler,String field,boolean pressed)throws Exception{if(optionalKey(handler,field)!=null)bind(handler,field,pressed);}
     private static void bind(Object handler,String field,boolean pressed) throws Exception {
         Object key=VMReflect.get(handler,field);
         boolean keyboard=(Boolean)VMReflect.get(key,"isPress");
@@ -57,11 +66,14 @@ public final class VMPilot {
     }
     public static boolean packet(boolean original,Object aircraft,Object data,boolean pilot) {
         try {
+            if(pilot&&VMEasy.packet(aircraft,data))return true;
             if(!input.enabled())return VMFlight.release(aircraft)||original;
-            if(!pilot || !VMFlight.drone(aircraft)) return original || input.enabled();
+            if(!pilot || !VMFlight.uav(aircraft)) return original || input.enabled();
             double desired=0;
             if(input.connected&&input.armed&&focus()) {
-                desired=input.gamepad()? VMControlMath.clamp(VMReflect.num(VMReflect.call(aircraft,"getCurrentThrottle"))+input.values[3]*.022,0,1):input.values[3];
+                long now=System.nanoTime();double dt=packetAircraft!=aircraft||lastPacket==0?.05:VMControlMath.clamp((now-lastPacket)/1e9,0,.1);lastPacket=now;packetAircraft=aircraft;
+                double current=VMFlight.target(aircraft,VMReflect.num(VMReflect.call(aircraft,"getCurrentThrottle")));
+                desired=input.gamepad()?VMControlMath.clamp(current+input.values[3]*VMControlMath.clamp(input.setting("throttleRate",.44),.1,1.2)*dt,0,1):input.values[3];
             }
             VMReflect.set(data,"vmThrottle",(float)desired); VMFlight.local(aircraft,desired);
             VMReflect.call(data,"setThrottleUp",false); VMReflect.call(data,"setThrottleDown",false);
@@ -75,7 +87,9 @@ public final class VMPilot {
             Object player=VMReflect.get(minecraft(),"field_71439_g");
             if(player==null) return;
             Object aircraft=VMReflect.call(Class.forName("com.norwood.mcheli.aircraft.MCH_EntityAircraft"),"getAircraft_RiddenOrControl",player);
-            if(aircraft==null || !input.enabled() || !input.connected || !input.armed || !focus()) return;
+            if(aircraft==null)return;
+            if(VMEasy.client(aircraft)){VMEasy.capture(handler,aircraft);return;}
+            if(!input.enabled() || !input.connected || !input.armed || !focus()) return;
             double rate=VMControlMath.clamp(input.setting("rate",110),45,240)*(input.down("aim")?.3:1);
             VMReflect.set(handler,"mouseDeltaX",input.values[0]*rate*dt/.15);
             VMReflect.set(handler,"mouseDeltaY",-input.values[1]*rate*dt/.15);
@@ -86,6 +100,7 @@ public final class VMPilot {
     public static boolean angles(Object aircraft,Object player,boolean fixRot,float fixYaw,float fixPitch,float dx,float dy,float ix,float iy,float seconds) {
         boolean fpv=VMFlight.drone(aircraft);
         try {
+            if(VMEasy.angles(aircraft,player))return true;
             boolean controller=input.enabled();
             if(!fpv && (!controller || !aircraft.getClass().getName().contains("Heli"))) return false;
             if(!VMReflect.remote(aircraft) || !(Boolean)VMReflect.call(aircraft,"isPilot",player)) return false;
@@ -113,7 +128,7 @@ public final class VMPilot {
                 newPitch=rotation[0];newYaw=rotation[1];newRoll=rotation[2];
             }else {
                 attitude=null;
-                double max=fpv?35:25;
+                double max=fpv?VMControlMath.clamp(input.setting("angleLimit",35),15,60):25;
                 newPitch=VMControlMath.angle(oldPitch,pitch*max,dt,rate);newRoll=VMControlMath.angle(oldRoll,-roll*max,dt,rate);
             }
             if((Boolean)VMReflect.get(aircraft,"field_70122_E")){newPitch=oldPitch;newRoll=oldRoll;attitude=null;}
@@ -128,6 +143,6 @@ public final class VMPilot {
         }catch(Exception | LinkageError e){VMReflect.error("flight controls",e);return false;}
     }
     public static float cameraRoll(float original,Object aircraft) {
-        return VMFlight.drone(aircraft)&&!input.acro()?(float)VMControlMath.clamp(original*.55,-18,18):original;
+        return VMEasy.client(aircraft)?0:VMFlight.drone(aircraft)&&!input.acro()?(float)VMControlMath.clamp(original*VMControlMath.clamp(input.setting("cameraRoll",.55),0,1),-18,18):original;
     }
 }

@@ -37,10 +37,28 @@ def probe_item(name, item, data=0, maximum=0):
     write(name, ['scoreboard players set @s w_probe 0', 'scoreboard players add @s w_probe 1 {Inventory:[{id:"' + item + '"}]}', 'function warfare:space', 'execute ' + selector + ' ~ ~ ~ give @s ' + item + ' 1 ' + str(data), 'execute ' + selector + ' ~ ~ ~ scoreboard players add @s w_given 1'])
 
 
+def supply_unstackable(name, item, target):
+    selector = '@s[score_w_probe=' + str(target - 1) + ',score_w_free_min=1]'
+    step = ['scoreboard players set @s w_probe 0', 'stats entity @s set AffectedItems @s w_probe', 'clear @s ' + item + ' -1 0', 'stats entity @s clear AffectedItems', 'function warfare:space', 'execute ' + selector + ' ~ ~ ~ give @s ' + item + ' 1 0', 'execute ' + selector + ' ~ ~ ~ scoreboard players add @s w_given 1']
+    write(name, step * target)
+
+
+def supply_stack(name, item, target):
+    commands = ['scoreboard players set @s w_probe 0', 'stats entity @s set AffectedItems @s w_probe', 'clear @s ' + item + ' -1 0', 'stats entity @s clear AffectedItems', 'function warfare:space']
+    for current in range(target):
+        selector = '@s[score_w_probe=' + str(current) + ',score_w_probe_min=' + str(current) + ',score_w_free_min=1]'
+        commands += ['execute ' + selector + ' ~ ~ ~ give @s ' + item + ' ' + str(target-current) + ' 0', 'execute ' + selector + ' ~ ~ ~ scoreboard players add @s w_given 1']
+    write(name, commands)
+
+
 for item in ['m4', 'scar', 'aug', 'as50', 'lmg', 'minigun', 'combatshotgun']:
     probe_item('item_' + item, 'techguns:' + item)
-probe_item('item_drone', 'mcheli:rc-goblin-bomb')
+supply_unstackable('item_drone', 'mcheli:rc-goblin-bomb', 3)
 probe_item('item_tablet', 'mcheli:uav_tablet')
+probe_item('item_geran', 'mcheli:rv_geran')
+probe_item('item_fp1', 'mcheli:rv_fp1')
+supply_stack('item_bandage', 'firstaid:bandage', 4)
+supply_stack('item_plaster', 'firstaid:plaster', 4)
 for number, slot, item in [(103, 'head', 'iron_helmet'), (102, 'chest', 'iron_chestplate'), (101, 'legs', 'iron_leggings'), (100, 'feet', 'iron_boots')]:
     write('armor_' + slot, ['scoreboard players set @s w_probe 0', 'scoreboard players add @s w_probe 1 {Inventory:[{Slot:' + str(number) + 'b}]}', 'execute @s[score_w_probe=0] ~ ~ ~ replaceitem entity @s slot.armor.' + slot + ' minecraft:' + item, 'execute @s[score_w_probe=0] ~ ~ ~ scoreboard players add @s w_given 1'])
 write('space', ['scoreboard players set @s w_used 0'] + ['scoreboard players add @s w_used 1 {Inventory:[{Slot:' + str(slot) + 'b}]}' for slot in range(36)] + ['scoreboard players set @s w_free 36', 'scoreboard players operation @s w_free -= @s w_used'])
@@ -50,7 +68,7 @@ for name, data, limit, count in [('rifle', 13, 15, 16), ('sniper', 19, 15, 16), 
     selector = '@s[score_w_probe=' + str(limit) + ',score_w_free_min=1]'
     write('ammo_' + name, ['scoreboard players set @s w_probe 0', 'stats entity @s set AffectedItems @s w_probe', 'clear @s ' + item + ' ' + str(data) + ' 0', 'stats entity @s clear AffectedItems', 'function warfare:space', 'execute ' + selector + ' ~ ~ ~ give @s ' + item + ' ' + str(count) + ' ' + str(data), 'execute ' + selector + ' ~ ~ ~ scoreboard players add @s w_given 1'])
 
-write('kit', ['function warfare:item_m4', 'function warfare:ammo_rifle', 'function warfare:ammo_food'] + ['function warfare:armor_' + key for key in ['head', 'chest', 'legs', 'feet']] + ['function warfare:item_drone', 'function warfare:item_tablet', 'scoreboard players set @s kit 0', 'scoreboard players set @s w_supply 100', 'scoreboard players tag @s add w_kit', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Снаряжение готово.'), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Kit ready.')])
+write('kit', ['function warfare:item_m4', 'function warfare:ammo_rifle', 'function warfare:ammo_food'] + ['function warfare:armor_' + key for key in ['head', 'chest', 'legs', 'feet']] + ['function warfare:item_tablet', 'function warfare:item_drone', 'function warfare:item_geran', 'function warfare:item_fp1', 'function warfare:item_bandage', 'function warfare:item_plaster', 'scoreboard players set @s kit 0', 'scoreboard players set @s w_supply 100', 'scoreboard players tag @s add w_kit', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Снаряжение готово.'), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Kit ready.')])
 for index, (role, items, ammo, ru, en) in enumerate([
     ('assault', ['scar', 'aug'], ['rifle'], 'SCAR и AUG готовы.', 'SCAR and AUG ready.'),
     ('sniper', ['as50'], ['sniper'], 'AS50 готова.', 'AS50 ready.'),
@@ -59,21 +77,25 @@ for index, (role, items, ammo, ru, en) in enumerate([
 ], 1):
     write('loadout_' + role, ['function warfare:item_' + item for item in items] + ['function warfare:ammo_' + item for item in ammo] + ['scoreboard players set @s w_class ' + str(index), 'scoreboard players set @s loadout 0', 'scoreboard players set @s w_supply 40', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message(ru), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message(en)])
 write('ammo', ['execute @s[score_w_class=1] ~ ~ ~ function warfare:ammo_rifle', 'execute @s[score_w_class=2,score_w_class_min=2] ~ ~ ~ function warfare:ammo_sniper', 'execute @s[score_w_class=3,score_w_class_min=3] ~ ~ ~ function warfare:ammo_lmg', 'execute @s[score_w_class=3,score_w_class_min=3] ~ ~ ~ function warfare:ammo_minigun', 'execute @s[score_w_class=4,score_w_class_min=4] ~ ~ ~ function warfare:ammo_shotgun', 'scoreboard players set @s ammo 0', 'scoreboard players set @s w_ammo 100', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Патроны готовы.'), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Ammo ready.')])
-write('drone', ['function warfare:item_drone', 'function warfare:item_tablet', 'scoreboard players set @s drone 0', 'scoreboard players set @s w_drone 100', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ function warfare:drone_tip_ru', 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ function warfare:drone_tip_en'])
+write('drone', ['function warfare:item_tablet', 'function warfare:item_drone', 'scoreboard players set @s drone 0', 'scoreboard players set @s w_drone 100', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ function warfare:drone_tip_ru', 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ function warfare:drone_tip_en'])
+write('wing', ['function warfare:item_tablet', 'function warfare:item_geran', 'function warfare:item_fp1', 'scoreboard players set @s wing 0'])
+write('wait_wing', ['scoreboard players set @s wing 0'])
+write('spawn', ['tp @s 0 65 -210', 'scoreboard players set @s spawn 0'])
 write('training', ['tp @s -48 65 -210', 'scoreboard players set @s training 0', 'execute @s[score_w_drone=0] ~ ~ ~ function warfare:drone'])
 write('wait_supply', ['scoreboard players set @s kit 0', 'scoreboard players set @s loadout 0', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Подожди пару секунд.', 'gray', True), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Wait a moment.', 'gray', True)])
 write('wait_drone', ['scoreboard players set @s drone 0', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Дрон уже выдан.', 'gray', True), 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('UAV already supplied.', 'gray', True)])
 write('wait_ammo', ['scoreboard players set @s ammo 0'])
-write('init_ui', ['scoreboard players add @s ' + name + ' 0' for name in ['wlang', 'kills', 'w_supply', 'w_drone', 'w_ammo', 'w_class', 'w_probe', 'w_used', 'w_free', 'w_given', 'w_admin']] + ['scoreboard players tag @s add w_ui2'])
+write('init_ui', ['scoreboard players add @s ' + name + ' 0' for name in ['wlang', 'kills', 'w_supply', 'w_drone', 'w_wing', 'w_ammo', 'w_class', 'w_probe', 'w_used', 'w_free', 'w_given', 'w_admin']] + ['scoreboard players tag @s add w_ui2'])
 
 for language, number in [('ru', 1), ('en', 2)]:
     ru = language == 'ru'
     rows = [
-        [{'text': '\nRV\n', 'color': 'gold', 'bold': True}, button('Синяя' if ru else 'Blue', 'blue'), button('Красная' if ru else 'Red', 'red', color='red'), button('Лобби' if ru else 'Lobby', 'lobby', color='yellow'), button('Учебка' if ru else 'Training', 'training')],
+        [{'text': '\nRV\n', 'color': 'gold', 'bold': True}, button('Синяя' if ru else 'Blue', 'blue'), button('Красная' if ru else 'Red', 'red', color='red'), button('Спавн' if ru else 'Spawn', 'spawn', color='yellow'), button('Учебка' if ru else 'Training', 'training')],
         [button('Набор' if ru else 'Kit', 'kit', color='green'), button('Оружие' if ru else 'Weapons', 'arsenal'), button('Патроны' if ru else 'Ammo', 'ammo'), button('Дрон' if ru else 'UAV', 'drone')],
-        [button('Книга' if ru else 'Book', 'wbook'), button('Помощь' if ru else 'Guide', 'guide'), button('Звук' if ru else 'Sound', 'sound'), button('Русский', 'lang_ru', color='gray'), button('English', 'lang_en', color='gray')],
+        [button('Крыло' if ru else 'Wing', 'wing'), button('Книга' if ru else 'Book', 'wbook'), button('Помощь' if ru else 'Guide', 'guide'), button('Звук' if ru else 'Sound', 'sound'), button('Русский', 'lang_ru', color='gray'), button('English', 'lang_en', color='gray')],
     ]
     write('help_' + language, ['tellraw @s ' + json.dumps(row, ensure_ascii=False) for row in rows] + ['execute @s[tag=v_owner] ~ ~ ~ function warfare:admin_' + language])
+    write('entry_' + language, ['tellraw @s ' + json.dumps([{'text': 'RV: ', 'color': 'gold'}, button('Меню' if ru else 'Menu', 'menu'), button('Книга' if ru else 'Book', 'wbook', hint='Освободи один слот, если инвентарь полон.' if ru else 'Make one free inventory slot if full.')], ensure_ascii=False)])
     guns = [{'text': '\nОружие\n' if ru else '\nWeapons\n', 'color': 'gold'}, button('Штурм' if ru else 'Assault', 'loadout', 1, hint='SCAR + AUG'), button('Снайпер' if ru else 'Sniper', 'loadout', 2, hint='AS50'), button('Пулемёты' if ru else 'Support', 'loadout', 3, hint='LMG + Minigun'), button('Дробовик' if ru else 'Shotgun', 'loadout', 4, hint='Combat Shotgun'), {'text': '\n'}, button('Назад' if ru else 'Back', 'menu')]
     write('arsenal_' + language, ['tellraw @s ' + json.dumps(guns, ensure_ascii=False)])
     guide = [{'text': '\nПомощь\n' if ru else '\nGuide\n', 'color': 'gold'}, button('Запуск' if ru else 'Start', 'ui_start'), button('Управление' if ru else 'Controls', 'ui_ctrl'), button('Дроны' if ru else 'UAV', 'ui_uav'), button('Друзья' if ru else 'Friends', 'ui_friend')]
@@ -90,7 +112,10 @@ write('ui_admin', ['execute @s[tag=v_owner,score_wlang=1,score_wlang_min=1] ~ ~ 
 write('drone_tip_ru', [message('Дрон: поставь → планшет → ПКМ по дрону. F8 — пульт и режим, Shift — выйти.')])
 write('drone_tip_en', [message('UAV: place → tablet → right-click UAV. F8: controller/mode. Shift: exit.')])
 write('adminhelp', ['execute @s[tag=v_owner,score_wlang=1,score_wlang_min=1] ~ ~ ~ function warfare:admin_ru', 'execute @s[tag=v_owner,score_wlang=2,score_wlang_min=2] ~ ~ ~ function warfare:admin_en'])
-write('welcome', ['execute @s[tag=!w_ui2] ~ ~ ~ function warfare:init_ui', 'scoreboard players add @s wlang 0', 'scoreboard players add @s kills 0', 'title @s times 10 50 20', 'title @s title {"text":"RV","color":"gold"}', 'scoreboard players tag @s add w_seen', 'execute @s[tag=!w_kit] ~ ~ ~ function warfare:kit', 'function warfare:help'])
+write('welcome', ['execute @s[tag=!w_ui2] ~ ~ ~ function warfare:init_ui', 'scoreboard players add @s wlang 0', 'scoreboard players add @s kills 0', 'title @s times 10 50 20', 'title @s title {"text":"RV","color":"gold"}', 'scoreboard players tag @s add w_seen', 'execute @s[tag=!w_kit] ~ ~ ~ function warfare:kit', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ function warfare:entry_ru', 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ function warfare:entry_en', 'execute @s[score_wlang=0] ~ ~ ~ function warfare:language'])
+for language in ('ru', 'en'):
+    write('guide_ctrl_' + language, [message('Управление танком и FPV — в книге. На HUD показаны текущие клавиши.' if language == 'ru' else 'Tank and FPV controls are in the book. The HUD shows current bindings.', 'gray'), 'function warfare:book_request'])
+    write('guide_uav_' + language, ['function warfare:drone_tip_' + language, 'function warfare:book_request'])
 write('help', ['execute @s[score_wlang=0] ~ ~ ~ function warfare:language', 'execute @s[score_wlang=1,score_wlang_min=1] ~ ~ ~ function warfare:help_ru', 'execute @s[score_wlang=2,score_wlang_min=2] ~ ~ ~ function warfare:help_en', 'scoreboard players set @s menu 0', 'scoreboard players enable @s menu'])
 guides = {
     'start': ('Запусти RV. Для игры нажми Play / Играть. Владелец включает сервер отдельной кнопкой Start server / Запустить сервер. Остановить сервер можно кнопкой Stop server / Остановить сервер: мир сохранится. В клиентском окне укажи ник и код хозяина или выбери сохранённое подключение. Steam и Porthole должны быть запущены.', 'Open RV and click Play. The host uses the separate Start server button. Stop server saves the world before closing. In the client window choose a nickname and enter the host code or use a saved connection. Steam and Porthole must be running.'),
@@ -100,10 +125,12 @@ guides = {
     'admin': ('WorldEdit: //wand выдаёт инструмент; ЛКМ/ПКМ выделяют два угла. //pos1 и //pos2 выделяют текущие позиции; //set, //copy, //paste, //undo изменяют выделение. /gamemode 1 — творчество, /gamemode 0 — выживание, /tp — телепорт. Админ-права проверяются сервером при подключении владельца.', 'WorldEdit: //wand gives the selection tool; left/right click select two corners. //pos1 and //pos2 select your current position; //set, //copy, //paste and //undo edit the selection. /gamemode 1: creative; /gamemode 0: survival; /tp: teleport. The server verifies owner permissions on connection.'),
 }
 for topic, texts in guides.items():
+    if topic in ('ctrl', 'uav'):
+        continue
     for language, text in zip(['ru', 'en'], texts):
         prefix = 'execute @s[tag=v_owner] ~ ~ ~ ' if topic == 'admin' else ''
         write('guide_' + topic + '_' + language, [prefix + message(text, 'white')])
-for name, cooldown in [('kit', 'w_supply'), ('loadout_assault', 'w_supply'), ('loadout_sniper', 'w_supply'), ('loadout_support', 'w_supply'), ('loadout_breacher', 'w_supply'), ('drone', 'w_drone'), ('ammo', 'w_ammo')]:
+for name, cooldown in [('kit', 'w_supply'), ('loadout_assault', 'w_supply'), ('loadout_sniper', 'w_supply'), ('loadout_support', 'w_supply'), ('loadout_breacher', 'w_supply'), ('drone', 'w_drone'), ('wing', 'w_wing'), ('ammo', 'w_ammo')]:
     path = root / (name + '.mcfunction')
     commands = [line for line in path.read_text(encoding='utf-8').splitlines() if not ('tellraw ' in line or 'function warfare:drone_tip_' in line or line.startswith('scoreboard players set @s ' + cooldown))]
     commands.insert(0, 'scoreboard players set @s w_given 0')
@@ -113,23 +140,24 @@ for name, cooldown in [('kit', 'w_supply'), ('loadout_assault', 'w_supply'), ('l
     write(name, commands)
 write('supply_result', ['execute @s[score_w_given_min=1,score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Снаряжение пополнено.'), 'execute @s[score_w_given_min=1,score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Supplies added.'), 'execute @s[score_w_given=0,score_w_free_min=1,score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Снаряжение уже есть.', 'gray', True), 'execute @s[score_w_given=0,score_w_free_min=1,score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Already supplied.', 'gray', True), 'execute @s[score_w_free=0,score_wlang=1,score_wlang_min=1] ~ ~ ~ ' + message('Инвентарь полон. Освободи один слот.', 'yellow', True), 'execute @s[score_w_free=0,score_wlang=2,score_wlang_min=2] ~ ~ ~ ' + message('Inventory full. Make one free slot.', 'yellow', True)])
 
-tick = ['execute @a[tag=!w_ui2] ~ ~ ~ function warfare:init_ui', 'scoreboard players remove @a[score_w_supply_min=1] w_supply 1', 'scoreboard players remove @a[score_w_drone_min=1] w_drone 1', 'scoreboard players remove @a[score_w_ammo_min=1] w_ammo 1', 'scoreboard players set @a w_admin 0', 'scoreboard players set @a[tag=v_owner] w_admin 1', 'execute @a[score_kit_min=1,score_kit=1,score_w_supply_min=1] ~ ~ ~ function warfare:wait_supply', 'execute @a[score_loadout_min=1,score_loadout=4,score_w_supply_min=1] ~ ~ ~ function warfare:wait_supply', 'execute @a[score_kit_min=1,score_kit=1,score_w_supply=0] ~ ~ ~ function warfare:kit']
+tick = ['execute @a[tag=!w_ui2] ~ ~ ~ function warfare:init_ui', 'scoreboard players add @a w_wing 0', 'scoreboard players remove @a[score_w_supply_min=1] w_supply 1', 'scoreboard players remove @a[score_w_drone_min=1] w_drone 1', 'scoreboard players remove @a[score_w_wing_min=1] w_wing 1', 'scoreboard players remove @a[score_w_ammo_min=1] w_ammo 1', 'scoreboard players set @a w_admin 0', 'scoreboard players set @a[tag=v_owner] w_admin 1', 'execute @a[score_kit_min=1,score_kit=1,score_w_supply_min=1] ~ ~ ~ function warfare:wait_supply', 'execute @a[score_loadout_min=1,score_loadout=4,score_w_supply_min=1] ~ ~ ~ function warfare:wait_supply', 'execute @a[score_kit_min=1,score_kit=1,score_w_supply=0] ~ ~ ~ function warfare:kit']
 for index, role in enumerate(['assault', 'sniper', 'support', 'breacher'], 1):
     tick.append('execute @a[score_loadout_min=' + str(index) + ',score_loadout=' + str(index) + ',score_w_supply=0] ~ ~ ~ function warfare:loadout_' + role)
 tick += ['execute @a[score_drone_min=1,score_drone=1,score_w_drone_min=1] ~ ~ ~ function warfare:wait_drone', 'execute @a[score_drone_min=1,score_drone=1,score_w_drone=0] ~ ~ ~ function warfare:drone', 'execute @a[score_ammo_min=1,score_ammo=1,score_w_ammo_min=1] ~ ~ ~ function warfare:wait_ammo', 'execute @a[score_ammo_min=1,score_ammo=1,score_w_ammo=0] ~ ~ ~ function warfare:ammo']
-actions = {'menu': 'help', 'blue': 'blue', 'red': 'red', 'lobby': 'lobby', 'sound': 'sound', 'lang_ru': 'lang_ru', 'lang_en': 'lang_en', 'guide': 'guide', 'ui_start': 'ui_start', 'ui_ctrl': 'ui_ctrl', 'ui_uav': 'ui_uav', 'ui_friend': 'ui_friend', 'arsenal': 'arsenal', 'training': 'training'}
+tick += ['execute @a[score_wing_min=1,score_wing=1,score_w_wing_min=1] ~ ~ ~ function warfare:wait_wing', 'execute @a[score_wing_min=1,score_wing=1,score_w_wing=0] ~ ~ ~ function warfare:wing']
+actions = {'menu': 'help', 'blue': 'blue', 'red': 'red', 'lobby': 'lobby', 'spawn': 'spawn', 'sound': 'sound', 'lang_ru': 'lang_ru', 'lang_en': 'lang_en', 'guide': 'guide', 'ui_start': 'ui_start', 'ui_ctrl': 'ui_ctrl', 'ui_uav': 'ui_uav', 'ui_friend': 'ui_friend', 'arsenal': 'arsenal', 'training': 'training'}
 tick += ['execute @a[score_' + key + '_min=1,score_' + key + '=1] ~ ~ ~ function warfare:' + value for key, value in actions.items()]
 tick += ['execute @a[tag=v_owner,score_ui_admin_min=1,score_ui_admin=1] ~ ~ ~ function warfare:ui_admin', 'scoreboard players set @a[tag=!v_owner] ui_admin 0', 'scoreboard players enable @a[tag=v_owner] ui_admin']
-triggers = list(actions) + ['kit', 'drone', 'ammo']
+triggers = list(actions) + ['kit', 'drone', 'wing', 'ammo']
 for key in triggers:
     tick += ['scoreboard players set @a[score_' + key + '=-1] ' + key + ' 0', 'scoreboard players set @a[score_' + key + '_min=2] ' + key + ' 0', 'scoreboard players enable @a ' + key]
 tick += ['scoreboard players set @a[score_loadout=-1] loadout 0', 'scoreboard players set @a[score_loadout_min=5] loadout 0', 'scoreboard players enable @a loadout', 'scoreboard players set @a[score_ui_admin=-1] ui_admin 0', 'scoreboard players set @a[score_ui_admin_min=2] ui_admin 0', 'function warfare:book_tick']
 tick.insert(1, 'execute @a[tag=!w_seen] ~ ~ ~ function warfare:welcome')
 write('tick', tick)
-setup = ['scoreboard objectives add ' + key + ' dummy' for key in ['wlang', 'w_supply', 'w_drone', 'w_ammo', 'w_class', 'w_probe', 'w_used', 'w_free', 'w_given', 'w_admin']]
+setup = ['scoreboard objectives add ' + key + ' dummy' for key in ['wlang', 'w_supply', 'w_drone', 'w_wing', 'w_ammo', 'w_class', 'w_probe', 'w_used', 'w_free', 'w_given', 'w_admin']]
 setup += ['scoreboard objectives add kills playerKillCount Kills']
 setup += ['scoreboard objectives add ' + key + ' trigger' for key in sorted(set(triggers + ['loadout', 'ui_admin']))]
-setup += ['function warfare:book_setup', 'scoreboard teams add blue Blue', 'scoreboard teams add red Red', 'scoreboard teams option blue color blue', 'scoreboard teams option red color red', 'scoreboard teams option blue friendlyfire false', 'scoreboard teams option red friendlyfire false', 'scoreboard objectives setdisplay sidebar kills', 'gamerule keepInventory true', 'gamerule doMobSpawning false', 'gamerule doFireTick true', 'gamerule mobGriefing true', 'gamerule gameLoopFunction warfare:tick', 'worldborder center 0 0', 'worldborder set 1280']
+setup += ['function warfare:book_setup', 'scoreboard teams add blue Blue', 'scoreboard teams add red Red', 'scoreboard teams option blue color blue', 'scoreboard teams option red color red', 'scoreboard teams option blue friendlyfire false', 'scoreboard teams option red friendlyfire false', 'scoreboard objectives setdisplay sidebar kills', 'gamerule keepInventory true', 'gamerule doMobSpawning false', 'gamerule doFireTick true', 'gamerule mobGriefing true', 'gamerule spawnRadius 0', 'setworldspawn 0 65 -210', 'gamerule gameLoopFunction warfare:tick', 'worldborder center 0 0', 'worldborder set 1280']
 write('boot', setup)
 (args.output / 'setup-commands.txt').write_text('\n'.join(setup) + '\n', encoding='utf-8')
 print(json.dumps({'functions': len(list(root.glob('*.mcfunction'))), 'generated': str(root)}))

@@ -1,1 +1,2 @@
-tellraw @s {"text": "T: chat; /trigger menu set 1: menu. Tab: player list and chat command/name completion. J: map; E: inventory and JEI. Techguns: left click fire, right click aim, R reload. MCH: W/S throttle, A/D turn, mouse tilt; I equipment, G/middle mouse switch weapon, Shift exit. F8 opens USB controller selection, calibration and FPV mode. For higher FPS turn shaders off, use 6–8 chunks and disable clouds. Sound: Options → Music & Sounds; turn up Master, Players and Blocks.", "color": "white"}
+tellraw @s {"text": "Tank and FPV controls are in the book. The HUD shows current bindings.", "color": "gray"}
+function warfare:book_request

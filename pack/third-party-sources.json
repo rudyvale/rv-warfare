@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "minecraft": "1.12.2",
+  "components": [
+    {
+      "name": "CreativeCore",
+      "modId": "creativecore",
+      "binaryFile": "CreativeCore_v1.10.71_mc1.12.2.jar",
+      "fileVersion": "1.10.71",
+      "binarySha256": "b0ef34ec816fa91451f8d4b62c016c159ab3559d6f75870790d1215943f009d5",
+      "binarySize": 1321137,
+      "binarySourcePage": "https://www.curseforge.com/minecraft/mc-mods/creativecore/files/4722163",
+      "sourceRepository": "https://github.com/CreativeMD/CreativeCore",
+      "sourceCommit": "fd410b278a3d3fd1237773708c52a4bebac440b6",
+      "sourceUrl": "https://codeload.github.com/CreativeMD/CreativeCore/zip/fd410b278a3d3fd1237773708c52a4bebac440b6",
+      "sourceArchive": "sources/CreativeCore-fd410b278a3d.zip",
+      "sourceSha256": "a253ac172d0183eefe4a6dc46b6311d8a20ae238d083cf9c508ea62d622376a8",
+      "sourceSize": 870708,
+      "licenses": [
+        {
+          "sourcePath": "LICENSE",
+          "path": "licenses/creativecore/LICENSE",
+          "sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2"
+        }
+      ],
+      "modifiedByRv": false,
+      "originalBuildScriptsIncluded": false
+    },
+    {
+      "name": "EnhancedVisuals",
+      "modId": "enhancedvisuals",
+      "binaryFile": "EnhancedVisuals_v1.4.4_mc1.12.2.jar",
+      "fileVersion": "1.4.4",
+      "binarySha256": "4b8c538370ada6c25ab13990e90c903aed9e0bd0e63d59c34848ce59781fc966",
+      "binarySize": 4725314,
+      "binarySourcePage": "https://www.curseforge.com/minecraft/mc-mods/enhancedvisuals/files/3507523",
+      "sourceRepository": "https://github.com/CreativeMD/EnhancedVisuals",
+      "sourceCommit": "da84fc1406f737f25ecd87d2bae4f0baf5647c2e",
+      "sourceUrl": "https://codeload.github.com/CreativeMD/EnhancedVisuals/zip/da84fc1406f737f25ecd87d2bae4f0baf5647c2e",
+      "sourceArchive": "sources/EnhancedVisuals-da84fc1406f7.zip",
+      "sourceSha256": "f60d838853f95f6417434e77ce6c679a07f7d75e139581eeb96cacacbb2ef9c9",
+      "sourceSize": 4715689,
+      "licenses": [
+        {
+          "sourcePath": "LICENSE",
+          "path": "licenses/enhancedvisuals/LICENSE",
+          "sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2"
+        }
+      ],
+      "modifiedByRv": false,
+      "originalBuildScriptsIncluded": false
+    },
+    {
+      "name": "FirstAid",
+      "modId": "firstaid",
+      "binaryFile": "firstaid-1.6.22.jar",
+      "fileVersion": "1.6.22",
+      "binarySha256": "55dfe81a58d20575b6f6aa635d4296370c804fe52b77485b455aa99910da31a4",
+      "binarySize": 493904,
+      "binarySourcePage": "https://www.curseforge.com/minecraft/mc-mods/first-aid/files/4414252",
+      "sourceRepository": "https://github.com/ichttt/FirstAid",
+      "sourceCommit": "e9f977ad099d54558a720a2ee967e75269e7b364",
+      "sourceUrl": "https://codeload.github.com/ichttt/FirstAid/zip/e9f977ad099d54558a720a2ee967e75269e7b364",
+      "sourceArchive": "sources/FirstAid-e9f977ad099d.zip",
+      "sourceSha256": "b0464c38cc9221e5c07a7bf75c84bbedead540bc0e1fdddd9a1dd84ec9e8d036",
+      "sourceSize": 484833,
+      "licenses": [
+        {
+          "sourcePath": "API_LICENSE",
+          "path": "licenses/firstaid/API_LICENSE",
+          "sha256": "5bb24308be22d0518f2ffdc83347dbbfe0f36ecc18ab4b2af11668b950d3694c"
+        },
+        {
+          "sourcePath": "API_LICENSE_HEADER",
+          "path": "licenses/firstaid/API_LICENSE_HEADER",
+          "sha256": "0b16f62ff77ec9877da9748a5bcc45fabb8ef6320dd9fb1c00af659eb26d83f0"
+        },
+        {
+          "sourcePath": "LICENSE",
+          "path": "licenses/firstaid/LICENSE",
+          "sha256": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2"
+        },
+        {
+          "sourcePath": "LICENSE_HEADER",
+          "path": "licenses/firstaid/LICENSE_HEADER",
+          "sha256": "2689470030d06b3276e5a28f3a1fede0b68ec5bd64059ecdbccfa74c254d2e44"
+        }
+      ],
+      "modifiedByRv": false,
+      "originalBuildScriptsIncluded": true
+    }
+  ]
+}

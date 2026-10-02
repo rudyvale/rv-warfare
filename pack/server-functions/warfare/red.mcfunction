@@ -1,6 +1,5 @@
 scoreboard teams join red @s
-tp @s 255 65 -29
-spawnpoint @s 255 65 -29
+tp @s 220 65 0
+spawnpoint @s 220 65 0
 scoreboard players set @s red 0
-scoreboard players enable @s red
 function warfare:help

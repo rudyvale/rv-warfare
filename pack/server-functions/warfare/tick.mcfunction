@@ -1,7 +1,9 @@
 execute @a[tag=!w_ui2] ~ ~ ~ function warfare:init_ui
 execute @a[tag=!w_seen] ~ ~ ~ function warfare:welcome
+scoreboard players add @a w_wing 0
 scoreboard players remove @a[score_w_supply_min=1] w_supply 1
 scoreboard players remove @a[score_w_drone_min=1] w_drone 1
+scoreboard players remove @a[score_w_wing_min=1] w_wing 1
 scoreboard players remove @a[score_w_ammo_min=1] w_ammo 1
 scoreboard players set @a w_admin 0
 scoreboard players set @a[tag=v_owner] w_admin 1
@@ -16,10 +18,13 @@ execute @a[score_drone_min=1,score_drone=1,score_w_drone_min=1] ~ ~ ~ function w
 execute @a[score_drone_min=1,score_drone=1,score_w_drone=0] ~ ~ ~ function warfare:drone
 execute @a[score_ammo_min=1,score_ammo=1,score_w_ammo_min=1] ~ ~ ~ function warfare:wait_ammo
 execute @a[score_ammo_min=1,score_ammo=1,score_w_ammo=0] ~ ~ ~ function warfare:ammo
+execute @a[score_wing_min=1,score_wing=1,score_w_wing_min=1] ~ ~ ~ function warfare:wait_wing
+execute @a[score_wing_min=1,score_wing=1,score_w_wing=0] ~ ~ ~ function warfare:wing
 execute @a[score_menu_min=1,score_menu=1] ~ ~ ~ function warfare:help
 execute @a[score_blue_min=1,score_blue=1] ~ ~ ~ function warfare:blue
 execute @a[score_red_min=1,score_red=1] ~ ~ ~ function warfare:red
 execute @a[score_lobby_min=1,score_lobby=1] ~ ~ ~ function warfare:lobby
+execute @a[score_spawn_min=1,score_spawn=1] ~ ~ ~ function warfare:spawn
 execute @a[score_sound_min=1,score_sound=1] ~ ~ ~ function warfare:sound
 execute @a[score_lang_ru_min=1,score_lang_ru=1] ~ ~ ~ function warfare:lang_ru
 execute @a[score_lang_en_min=1,score_lang_en=1] ~ ~ ~ function warfare:lang_en
@@ -45,6 +50,9 @@ scoreboard players enable @a red
 scoreboard players set @a[score_lobby=-1] lobby 0
 scoreboard players set @a[score_lobby_min=2] lobby 0
 scoreboard players enable @a lobby
+scoreboard players set @a[score_spawn=-1] spawn 0
+scoreboard players set @a[score_spawn_min=2] spawn 0
+scoreboard players enable @a spawn
 scoreboard players set @a[score_sound=-1] sound 0
 scoreboard players set @a[score_sound_min=2] sound 0
 scoreboard players enable @a sound
@@ -81,6 +89,9 @@ scoreboard players enable @a kit
 scoreboard players set @a[score_drone=-1] drone 0
 scoreboard players set @a[score_drone_min=2] drone 0
 scoreboard players enable @a drone
+scoreboard players set @a[score_wing=-1] wing 0
+scoreboard players set @a[score_wing_min=2] wing 0
+scoreboard players enable @a wing
 scoreboard players set @a[score_ammo=-1] ammo 0
 scoreboard players set @a[score_ammo_min=2] ammo 0
 scoreboard players enable @a ammo

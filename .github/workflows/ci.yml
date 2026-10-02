@@ -21,6 +21,12 @@ jobs:
         run: |
           & ./qa/test_updates.ps1
           & ./qa/test_connection.ps1
+          & ./qa/test_performance.ps1
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./qa/test_duplicate_mods.ps1
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+      - name: First-play setup transactions
+        shell: powershell
+        run: '& ./qa/test_onboarding.ps1'
       - name: Launcher interface
         shell: powershell
         run: '& ./qa/test_gui.ps1'
@@ -33,6 +39,22 @@ jobs:
           python -m compileall -q host tools
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_release_contract.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_addon_release_contract.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_output.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_candidate.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_base.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_verifier.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_release_sources.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_third_party_sources.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_payload_repack.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_world_package.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }

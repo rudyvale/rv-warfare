@@ -11,7 +11,7 @@ public final class VMImpact {
     public static void reset(Object aircraft){armed.remove(aircraft);}
     public static boolean droneMotion(Object aircraft){
         try {
-            if(!String.valueOf(VMReflect.call(aircraft,"getTypeName")).endsWith("rc-goblin-bomb")||VMReflect.remote(aircraft))return false;
+            if(!(String.valueOf(VMReflect.call(aircraft,"getTypeName")).endsWith("rc-goblin-bomb")||VMFlight.wing(aircraft))||VMReflect.remote(aircraft))return false;
             if(detonated.contains(aircraft)||(Boolean)VMReflect.get(aircraft,"field_70128_L"))return true;
             Object pilot=VMReflect.call(aircraft,"getRiddenByEntity");
             double vx=VMReflect.num(VMReflect.get(aircraft,"field_70159_w")),vy=VMReflect.num(VMReflect.get(aircraft,"field_70181_x")),vz=VMReflect.num(VMReflect.get(aircraft,"field_70179_y"));
@@ -20,11 +20,30 @@ public final class VMImpact {
             if(!armed.contains(aircraft)||speed<.02||!Double.isFinite(speed))return false;
             Object world=VMReflect.get(aircraft,"field_70170_p");
             double x=VMReflect.num(VMReflect.get(aircraft,"field_70165_t")),y=VMReflect.num(VMReflect.get(aircraft,"field_70163_u"))+.35,z=VMReflect.num(VMReflect.get(aircraft,"field_70161_v"));
-            Object start=vector(x,y,z),end=vector(x+vx,y+vy,z+vz);
-            Object closest=VMReflect.call(Class.forName("com.norwood.mcheli.wrapper.W_WorldFunc"),"clip",world,start,end);
-            double best=closest==null?Double.POSITIVE_INFINITY:distance(start,closest);
+            java.util.List<Object> starts=new ArrayList<Object>();starts.add(vector(x,y,z));
+            if(VMFlight.drone(aircraft)){
+                Object bounds=VMReflect.call(aircraft,"func_174813_aQ");double minX=VMReflect.num(VMReflect.get(bounds,"field_72340_a")),minY=VMReflect.num(VMReflect.get(bounds,"field_72338_b")),minZ=VMReflect.num(VMReflect.get(bounds,"field_72339_c")),maxX=VMReflect.num(VMReflect.get(bounds,"field_72336_d")),maxY=VMReflect.num(VMReflect.get(bounds,"field_72337_e")),maxZ=VMReflect.num(VMReflect.get(bounds,"field_72334_f"));
+                starts.add(vector(x,minY+.005,z));starts.add(vector(x,maxY-.005,z));starts.add(vector(minX+.005,y,z));starts.add(vector(maxX-.005,y,z));starts.add(vector(x,y,minZ+.005));starts.add(vector(x,y,maxZ-.005));
+            }
             Object box=VMReflect.call(VMReflect.call(VMReflect.call(aircraft,"func_174813_aQ"),"func_72321_a",vx,vy,vz),"func_72314_b",1D,1D,1D);
-            for(Object target:(List<?>)VMReflect.call(world,"func_72839_b",aircraft,box)){
+            if(VMFlight.wing(aircraft)){
+                VMReflect.call(aircraft,"updateExtraBoundingBox");
+                for(Object part:(Object[])VMReflect.get(aircraft,"extraBoundingBox")){
+                    Object center=VMReflect.get(part,"center");double cx=coordinate(center,"field_72450_a"),cy=coordinate(center,"field_72448_b"),cz=coordinate(center,"field_72449_c");starts.add(vector(cx,cy,cz));
+                    for(String axis:new String[]{"X","Z"}){
+                        Object direction=VMReflect.get(part,"axis"+axis);double radius=VMReflect.num(VMReflect.get(part,axis.equals("X")?"halfWidth":"halfDepth"))*.98;
+                        for(int sign:new int[]{-1,1})starts.add(vector(cx+coordinate(direction,"field_72450_a")*radius*sign,cy+coordinate(direction,"field_72448_b")*radius*sign,cz+coordinate(direction,"field_72449_c")*radius*sign));
+                    }
+                    box=VMReflect.call(box,"func_111270_a",VMReflect.call(VMReflect.call(part,"getBoundingBox"),"func_72321_a",vx,vy,vz));
+                }
+            }
+            Object closest=null;double best=Double.POSITIVE_INFINITY;
+            java.util.List<?> targets=(List<?>)VMReflect.call(world,"func_72839_b",aircraft,box);
+            for(Object start:starts){
+                Object end=vector(coordinate(start,"field_72450_a")+vx,coordinate(start,"field_72448_b")+vy,coordinate(start,"field_72449_c")+vz);
+                Object block=VMReflect.call(Class.forName("com.norwood.mcheli.wrapper.W_WorldFunc"),"clip",world,start,end);
+                if(block!=null&&distance(start,block)<best){best=distance(start,block);closest=block;}
+            for(Object target:targets){
                 if(target==pilot||(Boolean)VMReflect.get(target,"field_70128_L")||!(Boolean)VMReflect.call(target,"func_70067_L"))continue;
                 String type=target.getClass().getName();
                 if(type.contains("MCH_EntitySeat")||type.contains("MCH_EntityHitBox")||type.contains("MCH_EntityUavStation")||type.contains("MCH_EntityChain"))continue;
@@ -32,6 +51,7 @@ public final class VMImpact {
                 Object bounds=VMReflect.call(VMReflect.call(target,"func_174813_aQ"),"func_72314_b",.5D,.5D,.5D);
                 Object hit=VMReflect.call(bounds,"func_72327_a",start,end);
                 if(hit!=null&&distance(start,hit)<best){best=distance(start,hit);closest=Class.forName("net.minecraft.util.math.RayTraceResult").getConstructor(Class.forName("net.minecraft.entity.Entity"),Class.forName("net.minecraft.util.math.Vec3d")).newInstance(target,VMReflect.get(hit,"field_72307_f"));}
+            }
             }
             if(closest==null)return false;
             Object hit=VMReflect.get(closest,"field_72307_f");

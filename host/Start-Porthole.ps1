@@ -1,5 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
+. (Join-Path $root 'Porthole-Host.ps1')
+$lock = Enter-RvPortholeLock $root
+try {
 $stateFile = Join-Path $root 'porthole-state.json'
 $eventsFile = Join-Path $root 'porthole-events.jsonl'
 $steamSettings = Get-ItemProperty -LiteralPath 'HKCU:\Software\Valve\Steam' -ErrorAction SilentlyContinue
@@ -8,6 +11,14 @@ $steamRoot = [IO.Path]::GetFullPath([string]$steamSettings.SteamPath)
 if (-not (Get-Process steam -ErrorAction SilentlyContinue)) {
     Start-Process -FilePath (Join-Path $steamRoot 'steam.exe') -ArgumentList '-silent' -WindowStyle Hidden | Out-Null
 }
+$steamDeadline = [DateTime]::UtcNow.AddSeconds(8)
+do {
+    $steamProcess = Get-Process steam -ErrorAction SilentlyContinue | Sort-Object StartTime | Select-Object -First 1
+    if ($steamProcess) { break }
+    Start-Sleep -Milliseconds 200
+} while ([DateTime]::UtcNow -lt $steamDeadline)
+if (-not $steamProcess) { throw 'Steam is starting. Wait for sign-in, then retry Porthole.' }
+$steamStartedAt = ([DateTimeOffset]$steamProcess.StartTime).ToUnixTimeMilliseconds() / 1000.0
 $libraries = @($steamRoot)
 $libraryFile = Join-Path $steamRoot 'steamapps\libraryfolders.vdf'
 if (Test-Path -LiteralPath $libraryFile) {
@@ -40,30 +51,26 @@ if ($port -lt 1 -or $port -gt 65535) { throw 'Invalid server port.' }
 $target = 'tcp/127.0.0.1:' + $port
 function Save-PortholeState($Process) {
     $started = [DateTimeOffset]$Process.CreationDate
-    $state = [ordered]@{pid=$Process.ProcessId;port=$port;exposeTarget=$target;state='running';startedAt=$started.ToUnixTimeMilliseconds()/1000.0;ready=$false;code='';peerTarget=''}
-    $portReady = $false
-    $sessionReady = $false
-    if ((Test-Path -LiteralPath $eventsFile) -and (Get-Item -LiteralPath $eventsFile).LastWriteTimeUtc -ge $started.UtcDateTime.AddSeconds(-2)) {
-        foreach ($line in (Get-Content -LiteralPath $eventsFile -Encoding UTF8)) {
-            try { $event = $line | ConvertFrom-Json } catch { continue }
-            if ($event.event -eq 'static_code' -and $event.code -match '^[A-Za-z0-9]{4,16}$') { $state.code = ([string]$event.code).ToUpperInvariant() }
-            elseif ($event.event -eq 'steam_id' -and ([string]$event.steam_id) -match '^[0-9]{17}$') { $state.peerTarget = 'peer:' + [string]$event.steam_id }
-            elseif ($event.event -eq 'ready') { $sessionReady = $true }
-            elseif ($event.event -eq 'lobby_ready' -and ([string]$event.lobby_id) -match '^[1-9][0-9]{0,19}$') { $sessionReady = $true; $portReady = $true }
-            elseif ($event.event -eq 'port_accepted' -and $event.port -eq $port -and $event.proto -eq 'tcp') { $portReady = $true }
-        }
-    }
-    $state.ready = $sessionReady -and $portReady
-    [IO.File]::WriteAllText($stateFile, ($state | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
-    return $state
+    $state = [ordered]@{pid=$Process.ProcessId;port=$port;exposeTarget=$target;executable=$Process.ExecutablePath;state='running';startedAt=$started.ToUnixTimeMilliseconds()/1000.0;steamPid=$steamProcess.Id;steamStartedAt=$steamStartedAt}
+    Write-RvPortholeState $stateFile $state
+    $snapshot = & (Get-Command python.exe -ErrorAction Stop).Source (Join-Path $root 'porthole-status.py') --root $root
+    if ($LASTEXITCODE -ne 0) { throw 'Could not read Porthole status.' }
+    return $snapshot | ConvertFrom-Json
 }
 $existing = $null
 if (Test-Path -LiteralPath $stateFile) {
     try {
         $previous = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
-        $existing = Get-CimInstance Win32_Process -Filter ("ProcessId=" + [int]$previous.pid) -ErrorAction SilentlyContinue
-        if ($existing -and ($existing.ExecutablePath -ne $executable -or -not $existing.CommandLine.Contains('expose ' + $target))) { $existing = $null }
+        if ([string]$previous.exposeTarget -match '^tcp/127\.0\.0\.1:[0-9]{1,5}$') { $existing = Get-RvOwnedPorthole $previous ([string]$previous.exposeTarget) }
     } catch { $existing = $null }
+}
+if ($existing) {
+    $snapshot = & (Get-Command python.exe -ErrorAction Stop).Source (Join-Path $root 'porthole-status.py') --root $root | ConvertFrom-Json
+    $sameSteam = $previous.steamPid -eq $steamProcess.Id -and [Math]::Abs([double]$previous.steamStartedAt - $steamStartedAt) -lt 0.05
+    if ($snapshot.ready -and $sameSteam -and $existing.ExecutablePath -eq $executable -and $previous.exposeTarget -eq $target) { exit 0 }
+    Stop-Process -Id $existing.ProcessId -ErrorAction Stop
+    Wait-Process -Id $existing.ProcessId -Timeout 5 -ErrorAction SilentlyContinue
+    $existing = $null
 }
 if (-not $existing) {
     $env:SteamAppId = '4963920'
@@ -72,10 +79,16 @@ if (-not $existing) {
     $existing = Get-CimInstance Win32_Process -Filter ("ProcessId=" + $process.Id)
 }
 if (-not $existing) { throw 'Porthole failed to start.' }
-for ($attempt = 0; $attempt -lt 200; $attempt++) {
+$deadline = [DateTime]::UtcNow.AddSeconds(25)
+while ([DateTime]::UtcNow -lt $deadline) {
     $snapshot = Save-PortholeState $existing
     if ($snapshot.ready -and $snapshot.code) { exit 0 }
+    if ($snapshot.reason -in @('same_account','steam_offline','steam_changed','failed','timeout')) { throw ('Porthole connection: ' + $snapshot.reason + '. Retry Porthole after checking Steam.') }
     if (-not (Get-Process -Id $existing.ProcessId -ErrorAction SilentlyContinue)) { throw 'Porthole stopped. Details: porthole-errors.log' }
-    Start-Sleep -Milliseconds 100
+    Start-Sleep -Milliseconds 250
 }
-throw 'Porthole is not ready. Details: porthole-errors.log'
+$failed = Get-Content -LiteralPath $stateFile -Raw | ConvertFrom-Json
+$failed | Add-Member -NotePropertyName failureReason -NotePropertyValue timeout -Force
+Write-RvPortholeState $stateFile $failed
+throw 'Porthole connection timed out. Sign in to Steam and retry Porthole; the local server is still available.'
+} finally { $lock.ReleaseMutex(); $lock.Dispose() }

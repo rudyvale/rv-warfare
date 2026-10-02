@@ -12,7 +12,7 @@ import tkinter as tk
 from tkinter import ttk
 import webbrowser
 
-from host_runtime import memory_limit, porthole, read_json, server_status, write_json
+from host_runtime import SERVER_PROFILES, memory_limit, porthole, read_json, server_status, write_json
 
 ROOT = Path(__file__).resolve().parent
 RELEASE_URL = 'https://github.com/rudyvale/rv-warfare/releases/latest'
@@ -64,6 +64,22 @@ TEXTS = {
         'controller': 'Configure controller', 'controller_open': 'Calibration opened. You can also press F8 in the game.',
     },
 }
+
+
+TEXTS['ru'].update(profile='Профиль сервера', custom='Свои настройки', low='Слабый ПК: 4 чанка / 2 ГБ', balanced='Сбалансированный: 6 чанков / 3 ГБ', quality='Качество: 8 чанков / 4 ГБ', profile_note='Выбранный профиль изменит дальность сервера при следующем запуске. Текущий мир и игровые правила сохраняются. Объём памяти ограничен доступной ОЗУ.', network_same_account='Хост и гость используют один Steam-аккаунт. Для соединения нужны разные Steam-аккаунты.', network_steam_offline='Соединение со Steam потеряно. Войди в Steam, затем нажми «Повторить Porthole».', network_steam_changed='Steam перезапущен. Нажми «Повторить Porthole».', network_timeout='Соединение не успело установиться. Проверь Steam и интернет, затем повтори Porthole.', network_failed='Porthole сообщил об ошибке. Повтори подключение; локальный сервер доступен.', network_connecting='Подключаем Porthole…')
+TEXTS['en'].update(profile='Server profile', custom='Custom settings', low='Low: 4 chunks / 2 GB', balanced='Balanced: 6 chunks / 3 GB', quality='Quality: 8 chunks / 4 GB', profile_note='The selected profile changes server view distance on its next start. Your world and gameplay rules are preserved. Memory is capped by physical RAM.', network_same_account='Host and guest use the same Steam account. Connect using separate Steam accounts.', network_steam_offline='Steam connection was lost. Sign in to Steam, then click Retry Porthole.', network_steam_changed='Steam restarted. Click Retry Porthole.', network_timeout='Connection timed out. Check Steam and internet, then retry Porthole.', network_failed='Porthole reported an error. Retry the connection; the local server is available.', network_connecting='Connecting Porthole…')
+TEXTS['ru']['incompatible_mod_version'] = 'Версии игры и сервера не совпадают. Обнови оба до одной версии RV, затем повтори запуск игры.'
+TEXTS['en']['incompatible_mod_version'] = 'Game and server versions differ. Update both to the same RV release, then try playing again.'
+TEXTS['ru']['server_unavailable'] = 'Сервер сейчас недоступен. Дождись готовности сервера, затем повтори запуск игры.'
+TEXTS['en']['server_unavailable'] = 'The server is unavailable. Wait until it is ready, then try playing again.'
+TEXTS['ru']['memory_budget'] = 'Не хватает памяти для игры и сервера. Закрой другие игры Java или выбери слабый профиль сервера и перезапусти его с сохранением мира.'
+TEXTS['en']['memory_budget'] = 'Not enough memory for the game and server. Close other Java games or select the Low server profile and restart it with a world save.'
+TEXTS['ru']['cancelled'] = 'Запуск отменён.'
+TEXTS['en']['cancelled'] = 'Launch cancelled.'
+
+
+class PlayCancelled(Exception):
+    pass
 
 
 class Launcher:
@@ -190,7 +206,10 @@ class Launcher:
         can_stop = self.server_job != 'stop' and (state in ('starting', 'running') or self.connection.get('ready'))
         self.stop_button.configure(state='normal' if can_stop else 'disabled')
         code = self.connection.get('code') if self.connection.get('ready') else ''
-        self.network_label.configure(text=self.t('network') + ': ' + (code or self.t('network_loading' if self.server_job == 'tunnel' else 'network_off')))
+        network_key = 'network_loading' if self.server_job == 'tunnel' else 'network_' + str(self.connection.get('reason', 'off'))
+        if network_key not in TEXTS[self.language]:
+            network_key = 'network_off'
+        self.network_label.configure(text=self.t('network') + ': ' + (code or self.t(network_key)), wraplength=780, justify='left')
         self.copy_button.configure(state='normal' if code else 'disabled')
         if ready and not code:
             self.copy_button.pack_forget()
@@ -203,6 +222,9 @@ class Launcher:
         status_key = self.status_key
         if status_key == 'intro':
             status_key = 'online' if ready else 'wait' if state == 'starting' else 'intro'
+        if ready and not code and status_key in ('online', 'tunnel_error'):
+            candidate = 'network_' + str(self.connection.get('reason', ''))
+            status_key = candidate if candidate in TEXTS[self.language] else 'tunnel_error'
         self.status.configure(text=self.t(status_key))
         if busy and not self.progress_active:
             self.progress.grid()
@@ -231,15 +253,42 @@ class Launcher:
         lang = tk.StringVar(value='Русский' if self.language == 'ru' else 'English')
         ttk.Combobox(dialog, textvariable=lang, values=['Русский', 'English'], state='readonly').grid(row=1, column=0, sticky='ew', pady=(0, 20))
         ram = tk.StringVar(value=str(memory_limit(self.settings)))
-        ttk.Spinbox(dialog, from_=2, to=8, textvariable=ram, state='readonly').grid(row=3, column=0, sticky='ew')
+        ram_input = ttk.Spinbox(dialog, from_=2, to=8, textvariable=ram, state='readonly' if self.settings.get('serverProfile', 'custom') == 'custom' else 'disabled')
+        ram_input.grid(row=3, column=0, sticky='ew')
         tk.Label(dialog, text=self.t('memory_note'), bg='#0d1319', fg='#a6b7bc', wraplength=420, justify='left').grid(row=4, column=0, sticky='w', pady=(8, 20))
         auto = tk.BooleanVar(value=self.auto_check)
         tk.Checkbutton(dialog, text=self.t('auto'), variable=auto, bg='#0d1319', fg='#e4eee9', activebackground='#0d1319', activeforeground='#e4eee9', selectcolor='#263942', font=('Segoe UI', 11)).grid(row=5, column=0, sticky='w')
+        tk.Label(dialog, text=self.t('profile'), bg='#0d1319', fg='#e4eee9', font=('Segoe UI', 12)).grid(row=6, column=0, sticky='w', pady=(16, 8))
+        profile_keys = ['custom', 'low', 'balanced', 'quality']
+        profile_labels = [self.t(key) for key in profile_keys]
+        selected = self.settings.get('serverProfile', 'custom')
+        profile = tk.StringVar(value=self.t(selected) if selected in profile_keys else self.t('custom'))
+        chooser = ttk.Combobox(dialog, textvariable=profile, values=profile_labels, state='readonly')
+        chooser.grid(row=7, column=0, sticky='ew')
+        tk.Label(dialog, text=self.t('profile_note'), bg='#0d1319', fg='#a6b7bc', wraplength=420, justify='left').grid(row=8, column=0, sticky='w', pady=(8, 8))
+        profile_touched = [False]
+        def profile_changed(event):
+            profile_touched[0] = True
+            key = profile_keys[profile_labels.index(profile.get())]
+            if key in SERVER_PROFILES:
+                ram.set(str(memory_limit({'serverMemoryGB': SERVER_PROFILES[key]['memory']})))
+            ram_input.configure(state='disabled' if key in SERVER_PROFILES else 'readonly')
+        chooser.bind('<<ComboboxSelected>>', profile_changed)
         def save():
             try:
                 self.settings = read_json(self.folder / 'launcher-settings.json', self.settings)
                 self.language = 'ru' if lang.get() == 'Русский' else 'en'
                 self.settings.update(language=self.language, serverMemoryGB=memory_limit({'serverMemoryGB': ram.get()}))
+                key = profile_keys[profile_labels.index(profile.get())]
+                pending = self.settings.get('pendingServerProfile')
+                self.settings['serverProfile'] = key
+                self.settings.pop('pendingServerProfile', None)
+                if key in SERVER_PROFILES and (profile_touched[0] or key != selected or pending == key):
+                    self.settings['pendingServerProfile'] = key
+                    if profile_touched[0] or key != selected or 'serverProfileRequest' not in self.settings:
+                        self.settings['serverProfileRequest'] = str(time.time_ns())
+                else:
+                    self.settings.pop('serverProfileRequest', None)
                 write_json(self.folder / 'launcher-settings.json', self.settings)
                 self.auto_check = auto.get()
                 preferences = read_json(self.folder / '.updates/preferences.json')
@@ -256,9 +305,9 @@ class Launcher:
             self.configure_controller()
         controller_button = self.button(dialog, controller)
         controller_button.configure(text=self.t('controller'), state='disabled' if self.controller_job else 'normal')
-        controller_button.grid(row=6, column=0, sticky='ew', pady=(16, 0))
-        self.button(dialog, save, primary=True).grid(row=7, column=0, sticky='ew', pady=(12, 0))
-        dialog.grid_slaves(row=7)[0].configure(text=self.t('save'))
+        controller_button.grid(row=9, column=0, sticky='ew', pady=(16, 0))
+        self.button(dialog, save, primary=True).grid(row=10, column=0, sticky='ew', pady=(12, 0))
+        dialog.grid_slaves(row=10)[0].configure(text=self.t('save'))
 
     def configure_controller(self):
         if self.controller_job:
@@ -311,7 +360,9 @@ class Launcher:
         with (self.folder / 'launcher.log').open('a', encoding='utf-8') as log:
             log.write(time.strftime('\n%Y-%m-%d %H:%M:%S ') + name + '\n')
             log.flush()
-            result = subprocess.run([self.shell(), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(self.folder / name)] + list(arguments), cwd=self.folder, stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW, timeout=timeout)
+            result = subprocess.run([self.shell(), '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass', '-File', str(self.folder / name)] + list(arguments), cwd=self.folder, stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW, timeout=timeout)
+        if result.returncode == 2 and name == 'Join-Server.ps1':
+            raise PlayCancelled()
         if result.returncode:
             raise RuntimeError(name)
 
@@ -342,10 +393,11 @@ class Launcher:
         self.render()
         cancel = self.cancel_start
         generation = self.server_generation
+        action_started = time.time()
         def work():
             try:
                 if action == 'play':
-                    self.script('Join-Server.ps1')
+                    self.script('Join-Server.ps1', timeout=600)
                 elif action == 'stop':
                     with self.server_operation_lock:
                         self.script('Stop-All.ps1')
@@ -378,13 +430,22 @@ class Launcher:
                         self.events.put(('done', (action, 'tunnel_error', generation)))
                         return
                 self.events.put(('done', (action, {'play': 'launched', 'stop': 'stopped', 'start': 'online', 'tunnel': 'online'}[action], generation)))
+            except PlayCancelled:
+                self.events.put(('done', (action, 'cancelled', generation)))
             except Exception as error:
                 try:
                     with (self.folder / 'launcher.log').open('a', encoding='utf-8') as log:
                         log.write(str(error) + '\n')
                 except OSError:
                     pass
-                self.events.put(('done', (action, 'error', generation)))
+                client = read_json(self.folder / 'client-state.json') if action == 'play' else {}
+                try:
+                    reason = client.get('reason') if float(client.get('started', 0)) >= action_started else None
+                except (TypeError, ValueError, OverflowError):
+                    reason = None
+                if action == 'play' and not server_status(self.folder).get('ready'):
+                    reason = 'server_unavailable'
+                self.events.put(('done', (action, reason if reason in ('incompatible_mod_version', 'server_unavailable', 'memory_budget') else 'error', generation)))
         threading.Thread(target=work, daemon=True).start()
 
     def monitor(self):
@@ -394,7 +455,8 @@ class Launcher:
             client = read_json(self.folder / 'client-state.json')
             try:
                 identity = porthole.process_identity(int(client.get('pid', 0)))
-                running = bool(identity and abs(identity['startedAt'] - float(client.get('started', 0))) < 3)
+                stamp = client.get('processStartedAt')
+                running = bool(identity and Path(identity['executable']).name.lower() in ('java.exe','javaw.exe') and abs(identity['startedAt'] - float(stamp if stamp is not None else client.get('started',0))) < (0.05 if stamp is not None else 3))
             except (TypeError, ValueError, OverflowError):
                 running = False
             update = read_json(self.folder / '.updates/status.json')

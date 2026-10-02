@@ -25,6 +25,9 @@ def stage(template, functions, output):
     data['GameRules']['doMobSpawning'] = String('false')
     data['GameRules']['doFireTick'] = String('true')
     data['GameRules']['keepInventory'] = String('true')
+    data['GameRules']['spawnRadius'] = String('0')
+    for name, value in [('SpawnX', 0), ('SpawnY', 65), ('SpawnZ', -210)]:
+        data[name] = Int(value)
     level.save(world / 'level.dat', gzipped=True)
     target = world / 'data/functions/warfare'
     target.mkdir(parents=True)
@@ -42,7 +45,7 @@ def stage(template, functions, output):
         position = ' '.join(str(value) for value in manifest[name])
         path = target / (name + '.mcfunction')
         path.write_text('scoreboard teams join ' + name + ' @s\ntp @s ' + position + '\nspawnpoint @s ' + position + '\nscoreboard players set @s ' + name + ' 0\nfunction warfare:help\n', encoding='utf-8')
-    manifest.update(functionsIncluded=True, playerBookIncluded=True, scoreboardIncluded=True, gameLoopFunction='warfare:tick', bootFunction='warfare:boot', scoreboardPlayerEntries=0, functionCount=len(list(target.glob('*.mcfunction'))))
+    manifest.update(functionsIncluded=True, playerBookIncluded=True, scoreboardIncluded=True, gameLoopFunction='warfare:tick', bootFunction='warfare:boot', scoreboardPlayerEntries=0, functionCount=len(list(target.glob('*.mcfunction'))), spawn=[0,65,-210], spawnRadius=0)
     manifest['files'] = {path.relative_to(output).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(world.rglob('*')) if path.is_file()}
     (output / 'world-template-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     (output / 'INSTALL-NEW-WORLD.md').write_text('Extract the world folder into your Forge 1.12.2 server and set level-name=Battlefield-Extended in server.properties. Use the matching RV server mods. Start the server; scoreboard objectives, teams, menus and guide delivery are already initialized. Run function warfare:boot once from the console when using a custom runner. Keep server view-distance=6. Never replace a live world with this template; back it up and merge missing chunks separately. The template contains no player accounts or operator policy.\n', encoding='utf-8')

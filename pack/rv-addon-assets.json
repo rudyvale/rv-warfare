@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "mcheliSha256": "ea90ce380c54a45982b02f2ae61533517203e926da0f2d65d31e51d7dc3408bb",
+  "resources": {
+    "assets/mcheli/helicopters/rc-goblin-bomb.yml": "b4916eb01a786a1dd87b65e8190c810643385d7a62a249f8d8d77712f6d78334",
+    "assets/mcheli/helicopters/rc-goblin.yml": "6a9d0a3c30eca99f62a783c413a1050c8a4c29d7dd3e57a936194e07a70efd71",
+    "assets/mcheli/hud/rv_fpv.yml": "cad9b018e2b1ad0b26e59baf161865d9aa06f6f60fd7003346de2685f5a593ce",
+    "assets/mcheli/models/helicopters/rc-goblin-bomb.mqo": "d67332a1bfd77669e2569daa501e46d9c933daa1c75325bede2423d6b9f9d0ea",
+    "assets/mcheli/models/helicopters/rc-goblin.mqo": "e231808aaec7612cc43c9ff0af7ad879546d311f6e559b899a9dd541f578e7de",
+    "assets/mcheli/models/planes/rv_fp1.mqo": "56d1bf77d996296a7076a7f47b60c280526830ac03890ea1846888adb8fe1d1a",
+    "assets/mcheli/models/planes/rv_geran.mqo": "ac6e4c2cb970f23e798a8de5524b5b438afedf70a991395b01bff1130387aa8d",
+    "assets/mcheli/planes/rv_fp1.yml": "69a79d05c3363237a9046be264cfc661f783daa691783c9e61c6b78114be0e97",
+    "assets/mcheli/planes/rv_geran.yml": "a6c7b4916ba7215ab8c9641811378f4ee57aee82b36adba51ccf7375d1acb43b",
+    "assets/mcheli/rv-models.json": "7c746d801ca634f3eceeeb880251a79f1f014af1cb96a74f7183fbb0fb79e18b",
+    "assets/mcheli/textures/helicopters/rc-goblin-1.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "assets/mcheli/textures/helicopters/rc-goblin-2.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "assets/mcheli/textures/helicopters/rc-goblin-bomb-1.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "assets/mcheli/textures/helicopters/rc-goblin-bomb.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "assets/mcheli/textures/helicopters/rc-goblin.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc",
+    "assets/mcheli/textures/items/rc-goblin-bomb.png": "d0e18d1606a79f67ec097d4173ff451fb4b383f31a862b3177e7053e2d7282e5",
+    "assets/mcheli/textures/items/rc-goblin.png": "44c2c6c7c7162d9a7941e5af4cd6949a06b56f56f206c5fd67585c70da3d57da",
+    "assets/mcheli/textures/items/rv_fp1.png": "51429a2d99f15e8641bb513da13e886e035e30d38c748c074fe82dd5221df776",
+    "assets/mcheli/textures/items/rv_geran.png": "a79dd09992eb2fc52ed04cc6bfb47ba9f1f397bc48b85d4a6ab2054855baf2ce",
+    "assets/mcheli/textures/planes/rv_fp1.png": "75d4cb56b6914fe668c09e0a1d078324b727e7f72038d1e8b4018bb709fa9e74",
+    "assets/mcheli/textures/planes/rv_geran.png": "f4969c792ddb651fc94f727ea4777a52c752b0c802295840f40170e3a179e8dc"
+  }
+}

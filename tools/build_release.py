@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 import shutil
 import zipfile
-from release_contract import validate_base
+from release_contract import load_addon_map, required_mods, validate_base, validate_output, write_candidate
+from third_party_sources import verify_bundle, verify_vendor_manifest
 
 root = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
@@ -13,6 +14,8 @@ parser.add_argument('--output', type=Path)
 parser.add_argument('--private', action='store_true')
 parser.add_argument('--defaults', type=Path)
 parser.add_argument('--world-template', type=Path)
+parser.add_argument('--third-party-sources', type=Path)
+parser.add_argument('--replace-candidate', action='store_true')
 args = parser.parse_args()
 if args.defaults and not args.private:
     parser.error('--defaults is only allowed with --private')
@@ -20,23 +23,67 @@ if args.private and not args.defaults:
     parser.error('--private requires an explicit --defaults file')
 manifest = validate_base(args.base, root / 'pack/package-manifest.json')
 output = (args.output or root / ('dist-private' if args.private else 'dist')).resolve()
+metadata = json.loads((root / 'src/release.json').read_text())
+required_mods(metadata)
+version = metadata['version']
+validate_output(output, version, args.private, args.replace_candidate)
+if tuple(map(int, version.split('.'))) >= (1, 1, 0):
+    if not args.third_party_sources:
+        raise ValueError('RV 1.1.0 requires --third-party-sources')
+    source_registry = verify_bundle(args.third_party_sources, root / 'pack/third-party-sources.json', root / 'pack/THIRD-PARTY-NOTICES.md')
+    verify_vendor_manifest(manifest, source_registry)
+    notices = root / 'pack/THIRD-PARTY-NOTICES.md'
+    notice_sha = hashlib.sha256(notices.read_bytes()).hexdigest()
+    if not any(entry['path'] == 'THIRD-PARTY-NOTICES.md' and entry['sha256'] == notice_sha for entry in manifest['managedFiles']):
+        raise ValueError('RV 1.1.0 requires the installed third-party notices in the frozen payload')
+    addon_map = root / 'pack/rv-addon-assets.json'
+    if not addon_map.is_file():
+        raise ValueError('RV 1.1.0 requires a frozen addon resource map')
+    mcheli_sha = next(entry['sha256'] for entry in manifest['managedFiles'] if entry['path'] == 'mods/mcheli-ce-1.5.1-rv.jar')
+    load_addon_map(addon_map, mcheli_sha)
+scripts = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
+performance = root / 'src/Warfare-Performance.ps1'
+if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not performance.is_file():
+    raise ValueError('RV 1.1.0 requires Warfare-Performance.ps1')
+if performance.is_file():
+    scripts.append('Warfare-Performance.ps1')
+first_play = ['Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1']
+for name in first_play:
+    source = root / 'src' / name
+    if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not source.is_file():
+        raise ValueError('RV 1.1.0 requires ' + name)
+    if source.is_file():
+        scripts.append(name)
+host_scripts = ['README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
+porthole = root / 'host/Porthole-Host.ps1'
+if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not porthole.is_file():
+    raise ValueError('RV 1.1.0 requires Porthole-Host.ps1')
+if porthole.is_file():
+    host_scripts.append('Porthole-Host.ps1')
+client_memory = root / 'host/Get-ClientMemory.ps1'
+if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not client_memory.is_file():
+    raise ValueError('RV 1.1.0 requires Get-ClientMemory.ps1')
+if client_memory.is_file():
+    host_scripts.append('Get-ClientMemory.ps1')
 package = output / 'RV-Setup'
 package.mkdir(parents=True, exist_ok=True)
 for name in ['payload.zip', 'runtime.zip']:
     source = args.base / name
     if source.resolve() != (package / name).resolve():
         shutil.copyfile(source, package / name)
-scripts = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
 for name in scripts:
     source = root / 'src' / name
     data = source.read_text(encoding='utf-8-sig')
     (package / name).write_text(data, encoding='utf-8-sig' if source.suffix == '.ps1' else 'utf-8')
-for name in ['READ-ME.md']:
+pack_files = ['READ-ME.md']
+if tuple(map(int, version.split('.'))) >= (1, 1, 0):
+    pack_files.append('THIRD-PARTY-NOTICES.md')
+for name in pack_files:
     shutil.copyfile(root / 'pack' / name, package / name)
 shutil.copyfile(args.base / 'installer-files.json', package / 'installer-files.json')
 shutil.copyfile(args.defaults if args.private else root / 'pack/server-defaults.json', package / 'server-defaults.json')
 shutil.copyfile(root / 'assets/code.ico', package / 'code.ico')
-manifest['version'] = json.loads((root / 'src/release.json').read_text())['version']
+manifest['version'] = version
 guide = (root / 'pack/READ-ME.md').read_bytes()
 rewritten = package / 'payload-new.zip'
 with zipfile.ZipFile(package / 'payload.zip') as old, zipfile.ZipFile(rewritten, 'w', zipfile.ZIP_DEFLATED, compresslevel=4) as new:
@@ -57,20 +104,37 @@ play = '@echo off\r\nif exist "%~dp0payload.zip" (\r\n  start "" powershell.exe 
 (package / 'Play.cmd').write_bytes(play.encode('ascii'))
 archive_path = output / 'RV-Setup.zip'
 with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
-    for name in sorted(scripts + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'READ-ME.md', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
+    for name in sorted(scripts + pack_files + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
         archive.write(package / name, 'RV-Setup/' + name)
 with archive_path.open('rb') as stream:
     digest = hashlib.file_digest(stream, 'sha256').hexdigest()
 checksums = digest + '  RV-Setup.zip\n'
 host_path = output / 'RV-Host-Tools.zip'
 with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
-    for name in ['README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']:
+    for name in host_scripts:
         archive.write(root / 'host' / name, name)
     for name in ['Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Configure-Controller.ps1', 'release.json']:
         archive.write(root / 'src' / name, name)
+    if performance.is_file():
+        archive.write(package / 'Warfare-Performance.ps1', 'Warfare-Performance.ps1')
+    for name in first_play:
+        if (package / name).is_file():
+            archive.write(package / name, name)
+    if tuple(map(int, version.split('.'))) >= (1, 1, 0):
+        archive.write(package / 'Warfare-Connection.ps1', 'Warfare-Connection.ps1')
+        archive.write(package / 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.md')
+    addon_map = root / 'pack/rv-addon-assets.json'
+    if addon_map.is_file():
+        archive.write(addon_map, 'rv-addon-assets.json')
     archive.write(root / 'assets/code.ico', 'code.ico')
 with host_path.open('rb') as stream:
     checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-Host-Tools.zip\n'
+if tuple(map(int, version.split('.'))) >= (1, 1, 0):
+    source_asset = output / 'RV-Third-Party-Sources.zip'
+    if args.third_party_sources.resolve() != source_asset.resolve():
+        shutil.copyfile(args.third_party_sources, source_asset)
+    with source_asset.open('rb') as stream:
+        checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-Third-Party-Sources.zip\n'
 if args.world_template:
     world = output / 'RV-World-Template.zip'
     if args.world_template.resolve() != world.resolve():
@@ -86,4 +150,5 @@ if args.world_template:
     with world.open('rb') as stream:
         checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-World-Template.zip\n'
 (output / 'SHA256SUMS.txt').write_text(checksums, encoding='ascii')
+write_candidate(output, version, args.private)
 print(json.dumps({'archive': str(archive_path), 'bytes': archive_path.stat().st_size, 'sha256': digest}))

@@ -4,3 +4,4 @@ scoreboard objectives add wbPending dummy
 scoreboard objectives add wbWait dummy
 scoreboard objectives add wbUsed dummy
 scoreboard objectives add wbHas dummy
+scoreboard objectives add wbEdition dummy

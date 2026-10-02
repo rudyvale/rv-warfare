@@ -9,7 +9,7 @@ import net.java.games.input.Component;
 
 public final class VMController {
     public static final String[] ACTIONS = {"roll", "pitch", "yaw", "throttle"};
-    public static final String[] BUTTONS = {"fire", "aim", "weapon", "brake", "exit", "mode"};
+    public static final String[] BUTTONS = {"fire", "aim", "weapon", "brake", "exit", "mode", "reload", "weaponMode", "zoom"};
     public static final VMController INSTANCE = new VMController();
     public final Properties profile = new Properties();
     public final double[] values = new double[4];
@@ -120,7 +120,8 @@ public final class VMController {
             if (gamepad() ? Math.abs(target[3]) < 0.08 : target[3] < 0.06) armed = true;
             else { Arrays.fill(values, 0); buttons.clear(); status = "Для включения убери газ"; return; }
         }
-        for (int i = 0; i < 4; i++) values[i] = VMControlMath.smooth(values[i], target[i], dt, setting("smoothing", 0.07));
+        if(!gamepad())target[3]=VMControlMath.throttleCurve(target[3],setting("throttleExpo",0));
+        for (int i = 0; i < 4; i++) values[i] = VMControlMath.smooth(values[i], target[i], dt, VMControlMath.clamp(setting(i==3?"throttleSmoothing":"smoothing",0.07),.005,.2));
         for (String action : BUTTONS) {
             String binding = profile.getProperty("button." + action, "");
             String[] parts = binding.split(":");
@@ -136,9 +137,24 @@ public final class VMController {
     }
     public boolean down(String action) { return Boolean.TRUE.equals(buttons.get(action)); }
 
+    public boolean calibrated() {
+        Set<String> axes=new HashSet<String>();
+        for(String a:ACTIONS){String axis=profile.getProperty(a+".axis");if(axis==null||!axes.add(axis)||setting(a+".center",0)-setting(a+".min",0)<.08||setting(a+".max",0)-setting(a+".center",0)<.08)return false;}
+        return true;
+    }
+    public void report(Path path,String outcome)throws IOException {
+        scan();Map<String,Object> result=new LinkedHashMap<String,Object>();result.put("schema",1);result.put("outcome",outcome);
+        ArrayList<Map<String,Object>> found=new ArrayList<Map<String,Object>>();
+        for(Controller c:devices){Map<String,Object> d=new LinkedHashMap<String,Object>();int axes=0;for(Component component:c.getComponents())if(component.isAnalog()&&!component.isRelative())axes++;d.put("id",identity(c));d.put("name",c.getName());d.put("kind",c.getType()==Controller.Type.GAMEPAD?"gamepad":"radio");d.put("axisCount",axes);found.add(d);}
+        result.put("devices",found);Map<String,Object> p=new LinkedHashMap<String,Object>();p.put("enabled",enabled());p.put("kind",gamepad()?"gamepad":"radio");p.put("device",profile.getProperty("device",""));p.put("calibrated",calibrated());p.put("connected",device!=null&&device.poll()&&mappingValid());result.put("profile",p);result.put("inputMode",enabled()?(gamepad()?"gamepad":"radio"):profile.getProperty("keyboardFlight","easy"));
+        Path absolute=path.toAbsolutePath();Files.createDirectories(absolute.getParent());Path temp=absolute.resolveSibling(absolute.getFileName()+".tmp");Files.write(temp,new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(result).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        try{Files.move(temp,absolute,StandardCopyOption.ATOMIC_MOVE,StandardCopyOption.REPLACE_EXISTING);}catch(AtomicMoveNotSupportedException e){Files.move(temp,absolute,StandardCopyOption.REPLACE_EXISTING);}
+    }
+
     public static void main(String[] args) {
         VMController controller = new VMController();
-        controller.load();
+        controller.setRoot(args.length>0?Paths.get(args[0]):Paths.get("."));
+        if(args.length>2){try{if(args[1].equals("--keyboard")){controller.profile.setProperty("enabled","false");controller.profile.setProperty("keyboardFlight","easy");controller.save();}controller.report(Paths.get(args[2]),args[1].equals("--keyboard")?"saved":"probed");}catch(Exception e){VMReflect.error("controller report",e);System.exit(1);}return;}
         for (Controller c : controller.scan()) System.out.println(c.getName() + " | " + c.getType() + " | " + c.getComponents().length + " inputs");
         if (controller.devices.length == 0) System.out.println("No joystick connected");
     }

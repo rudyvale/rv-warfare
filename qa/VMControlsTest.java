@@ -61,13 +61,19 @@ public final class VMControlsTest {
         Class<?> dataClass=Class.forName("com.norwood.mcheli.networking.data.DataPlayerControlVehicle");
         Object data=dataClass.newInstance();near(VMReflect.num(VMReflect.get(data,"vmThrottle")),-1,"keyboard packet default");
         VMReflect.set(data,"vmThrottle",.63F);VMReflect.set(data,"unhitchChainId",12345);
+        VMReflect.set(data,"vmMode",(byte)2);VMReflect.set(data,"vmForward",.75F);VMReflect.set(data,"vmStrafe",-.5F);VMReflect.set(data,"vmLift",1F);
         Object buffer=VMReflect.call(Class.forName("io.netty.buffer.Unpooled"),"buffer");VMReflect.call(data,"serialize",buffer);
         Object decoded=dataClass.getConstructor(Class.forName("io.netty.buffer.ByteBuf")).newInstance(buffer);
         near(VMReflect.num(VMReflect.get(decoded,"vmThrottle")),.63,"analog network round trip");
+        check(VMReflect.num(VMReflect.get(decoded,"vmMode"))==2,"Easy mode network round trip");near(VMReflect.num(VMReflect.get(decoded,"vmForward")),.75,"Easy forward network round trip");near(VMReflect.num(VMReflect.get(decoded,"vmStrafe")),-.5,"Easy strafe network round trip");near(VMReflect.num(VMReflect.get(decoded,"vmLift")),1,"Easy lift network round trip");
         check(VMReflect.num(VMReflect.get(decoded,"unhitchChainId"))==12345,"derived packet data preserved");
         check(VMReflect.num(VMReflect.call(buffer,"readableBytes"))==0,"packet has no trailing data");VMReflect.call(buffer,"release");
         VMReflect.set(data,"vmThrottle",Float.NaN);
         check(VMControlMath.clamp(Double.POSITIVE_INFINITY,0,1)==0,"invalid throttle fails closed");
+        near(VMControlMath.throttleCurve(0,.7),0,"throttle expo preserves minimum");
+        near(VMControlMath.throttleCurve(.5,.7),.5,"throttle expo preserves hover midpoint");
+        near(VMControlMath.throttleCurve(1,.7),1,"throttle expo preserves maximum");
+        check(VMControlMath.throttleCurve(.6,.7)<.6&&VMControlMath.throttleCurve(.6,.7)>.5,"throttle expo softens hover range");
         System.out.println("VM controls: "+passed+" checks passed");
     }
     private static Object worldQuaternion(double yaw,double pitch,double roll)throws Exception{

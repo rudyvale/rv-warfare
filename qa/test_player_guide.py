@@ -234,14 +234,17 @@ class PlayerGuideTests(unittest.TestCase):
             book = Snbt(line.split(' 1 0 ', 1)[1]).parse()
             self.assertLessEqual(len(book['title']), 32)
             self.assertEqual(book['rvGuide'], 1)
+            self.assertEqual(book['rvGuideVersion'], 2)
             self.assertEqual(book['author'], 'RV')
-            self.assertEqual(len(book['pages']), 10)
+            self.assertEqual(len(book['pages']), 24)
             for encoded in book['pages']:
                 text = json.loads(encoded)['text']
                 self.assertLessEqual(len(text.splitlines()), 14)
                 self.assertTrue(all(builder.width(line) <= 114 for line in text.splitlines()))
             all_text = '\n'.join(json.loads(page)['text'] for page in book['pages'])
-            for required in ('/trigger wbook set 1', '/trigger menu set 1', 'F8', 'Angle', 'Acro', 'USB', '6–8', 'F3'):
+            for required in ('/trigger wbook set 1', '/trigger menu set 1', '/trigger spawn set 1', '/trigger kit set 1', '/trigger drone set 1', '/trigger wing set 1', 'X: 0', 'Y: 65', 'Z: -210', 'FP-1', 'First Aid', 'Easy', 'Space', 'Ctrl', 'F8', 'Angle', 'Acro', 'USB', '4–6', 'F3', 'Low', 'Balanced', 'Quality', 'HUD', 'HP'):
+                self.assertIn(required, all_text)
+            for required in (('Танк', 'ЛКМ — выстрел', 'ПОПАДАНИЕ', 'УРОН', 'УНИЧТОЖЕНО') if language == 'ru' else ('Tank', 'Left click — fire', 'HIT', 'DAMAGE', 'DESTROYED')):
                 self.assertIn(required, all_text)
 
     def test_no_destructive_or_modern_commands_and_all_refs_exist(self):
@@ -249,7 +252,7 @@ class PlayerGuideTests(unittest.TestCase):
         self.assertEqual(set(functions), set(builder.functions()))
         for commands in functions.values():
             for line in commands:
-                self.assertNotRegex(line, r'\b(clear|replaceitem|kill|summon|data|schedule)\b|execute (as|if|unless|store)\b')
+                self.assertNotRegex(line.split(' {', 1)[0], r'\b(clear|replaceitem|kill|summon|data|schedule)\b|execute (as|if|unless|store)\b')
                 for target in re.findall(r'function warfare:(\w+)', line):
                     self.assertIn(target, functions)
         self.assertTrue(all(len(name) <= 16 for name in builder.OBJECTIVES))
@@ -272,6 +275,54 @@ class PlayerGuideTests(unittest.TestCase):
         self.assertEqual(len(player.books()), 1)
         self.assertEqual(player.inventory[0]['tag']['ammo'], 7)
         self.assertEqual(player.scores['kills'], 17)
+
+    def test_old_edition_is_upgraded_once_without_replacing_inventory(self):
+        player = Player('Veteran')
+        player.scores = {'wlang': 1, 'wbOnce': 1, 'kills': 17}
+        old = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': 1, 'title': 'Old guide'}}
+        weapon = {'id': 'techguns:m4', 'Count': 1, 'tag': {'ammo': 7}}
+        player.inventory = {0: deepcopy(old), 1: deepcopy(weapon)}
+        model = Model([player])
+        model.tick(100)
+        self.assertEqual(player.inventory[0], old)
+        self.assertEqual(player.inventory[1], weapon)
+        self.assertEqual(player.scores['kills'], 17)
+        self.assertEqual(player.scores['wbEdition'], 2)
+        self.assertEqual([book['tag']['rvGuideVersion'] for book in player.books()], [1, 2])
+        self.assertEqual(model.gives, 1)
+        checks = model.nbt_checks
+        model.tick(100)
+        self.assertEqual(model.nbt_checks, checks)
+
+    def test_full_inventory_upgrade_survives_restart_and_waits_for_space(self):
+        player = Player('FullVeteran')
+        player.scores = {'wlang': 2, 'wbOnce': 1}
+        player.fill()
+        player.inventory[0] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': 1}}
+        before = deepcopy(player.inventory)
+        model = Model([player])
+        model.tick(100)
+        self.assertEqual(player.inventory, before)
+        self.assertEqual((model.gives, player.scores['wbEdition'], player.scores['wbPending']), (0, 0, 1))
+        rejoined = deepcopy(player)
+        restarted = Model([rejoined])
+        del rejoined.inventory[35]
+        restarted.tick(20)
+        self.assertEqual(rejoined.inventory[0], before[0])
+        self.assertEqual(rejoined.inventory[35]['tag']['rvGuideVersion'], 2)
+        self.assertEqual(rejoined.scores['wbEdition'], 2)
+        self.assertEqual(rejoined.dropped, [])
+
+    def test_current_edition_offhand_confirms_migration_without_free_slot(self):
+        player = Player('AlreadyUpgraded')
+        player.scores = {'wlang': 1, 'wbOnce': 1}
+        player.fill()
+        player.inventory[-106] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': 2}}
+        before = deepcopy(player.inventory)
+        model = Model([player])
+        model.tick(100)
+        self.assertEqual(player.inventory, before)
+        self.assertEqual((model.gives, player.scores['wbEdition'], player.scores['wbPending']), (0, 2, 0))
 
     def test_each_of_36_free_main_slots_is_usable(self):
         for slot in range(36):
@@ -454,7 +505,9 @@ def vanilla_check(vanilla_jar, java):
         {'nbt': '{Inventory:[' + almost + ',{Slot:-106b,id:"minecraft:shield",Count:1b},{Slot:100b,id:"minecraft:iron_boots",Count:1b}]}', 'occupied': 35},
         {'nbt': '{Inventory:[]}', 'occupied': 0},
     ], 'matches': [
-        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b}}]}', 'result': True},
+        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:2}}]}', 'result': True},
+        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:1}}]}', 'result': False},
+        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{title:"RV"}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:book",Count:1b,tag:{rvGuide:1b}}]}', 'result': False},
     ]}

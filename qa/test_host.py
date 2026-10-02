@@ -119,6 +119,31 @@ class InterfaceTests(unittest.TestCase):
         self.pump()
         self.assertEqual(self.invoked, [])
 
+    def test_first_play_cancel_returns_to_ready_without_launch_claim(self):
+        def cancelled(name, timeout=180):
+            raise ui.PlayCancelled()
+        self.app.script = cancelled
+        self.app.server = {'state':'running','ready':True}
+        self.app.render()
+        self.app.play_button.invoke()
+        self.pump()
+        self.assertFalse(self.app.client_job)
+        self.assertEqual(self.app.status_key,'cancelled')
+        self.assertEqual(self.app.play_button.cget('state'),'normal')
+
+    def test_malformed_client_timestamp_still_completes_failed_action(self):
+        runtime.write_json(self.root / 'client-state.json',{'state':'failed','reason':'memory_budget','started':{'bad':True}})
+        def failed(name,timeout=180):
+            raise RuntimeError('fixture launch failure')
+        self.app.script = failed
+        self.app.server = {'state':'running','ready':True}
+        with patch.object(ui,'server_status',return_value={'state':'running','ready':True}):
+            self.app.render()
+            self.app.play_button.invoke()
+            self.pump()
+        self.assertFalse(self.app.client_job)
+        self.assertEqual(self.app.status_key,'error')
+
     def test_start_does_not_launch_game(self):
         with patch.object(ui, 'server_status', return_value={'state': 'running', 'ready': True}):
             self.app.start_button.invoke()
@@ -181,7 +206,7 @@ class InterfaceTests(unittest.TestCase):
         dialog = self.app.dialog
         dialog.grid_slaves(row=1)[0].set('English')
         dialog.grid_slaves(row=5)[0].invoke()
-        dialog.grid_slaves(row=7)[0].invoke()
+        dialog.grid_slaves(row=10)[0].invoke()
         self.assertEqual(self.app.language, 'en')
         self.assertFalse(self.app.auto_check)
         self.assertEqual(runtime.read_json(self.root / '.updates/preferences.json'), {'custom': 'kept', 'autoCheck': False})
@@ -203,6 +228,31 @@ class InterfaceTests(unittest.TestCase):
                     self.assertLessEqual(top + widget.winfo_height(), self.window.winfo_height())
                     self.assertGreaterEqual(left, 0)
                     self.assertLessEqual(left + widget.winfo_width(), self.window.winfo_width())
+
+    def test_failed_network_keeps_local_play_and_shows_actionable_reason(self):
+        self.app.server = {'state': 'running', 'ready': True}
+        self.app.connection = {'ready': False, 'reason': 'same_account'}
+        self.app.status_key = 'online'
+        for language in ('ru', 'en'):
+            self.app.language = language
+            self.app.translate()
+            self.assertEqual(self.app.status.cget('text'), self.app.t('network_same_account'))
+            self.assertEqual(self.app.play_button.cget('state'), 'normal')
+            self.assertEqual(self.app.copy_button.cget('state'), 'disabled')
+            self.assertEqual(self.app.retry_button.cget('state'), 'normal')
+
+    def test_profile_selection_preserves_pending_choice_until_next_start(self):
+        self.app.show_settings()
+        chooser = self.app.dialog.grid_slaves(row=7)[0]
+        chooser.set(self.app.t('low'))
+        chooser.event_generate('<<ComboboxSelected>>')
+        self.app.dialog.grid_slaves(row=10)[0].invoke()
+        settings = runtime.read_json(self.root / 'launcher-settings.json')
+        self.assertEqual(settings['pendingServerProfile'], 'low')
+        self.assertEqual(settings['serverMemoryGB'], 2)
+        self.app.show_settings()
+        self.app.dialog.grid_slaves(row=10)[0].invoke()
+        self.assertEqual(runtime.read_json(self.root / 'launcher-settings.json')['pendingServerProfile'], 'low')
 
 
 if __name__ == '__main__':

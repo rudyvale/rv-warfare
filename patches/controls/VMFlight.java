@@ -8,9 +8,15 @@ public final class VMFlight {
         try { String name = String.valueOf(VMReflect.call(aircraft, "getTypeName")); return name.endsWith("rc-goblin") || name.endsWith("rc-goblin-bomb"); }
         catch (Exception e) { return false; }
     }
+    public static boolean wing(Object aircraft) {
+        try {String name=String.valueOf(VMReflect.call(aircraft,"getTypeName"));return name.equals("rv_geran")||name.equals("rv_fp1");}
+        catch(Exception e){return false;}
+    }
+    public static boolean uav(Object aircraft){return drone(aircraft)||wing(aircraft);}
     public static void receive(Object aircraft, Object data, Object player) {
         try {
-            if (player==null || !drone(aircraft) || !(Boolean)VMReflect.call(aircraft, "isPilot", player)) return;
+            if (player==null || !uav(aircraft) || !(Boolean)VMReflect.call(aircraft, "isPilot", player)) return;
+            if(VMEasy.receive(aircraft,data,player)){targets.remove(aircraft);return;}
             float value = (Float)VMReflect.get(data, "vmThrottle");
             if (value == -1) { targets.remove(aircraft); return; }
             if (!Float.isFinite(value) || value < 0 || value > 1) return;
@@ -21,8 +27,11 @@ public final class VMFlight {
     public static void local(Object aircraft, double value) {
         targets.put(aircraft, new double[]{VMControlMath.clamp(value,0,1),System.nanoTime()/1e9});
     }
-    public static void reset(Object aircraft) { targets.remove(aircraft);VMImpact.reset(aircraft); }
+    public static void reset(Object aircraft) { targets.remove(aircraft);VMImpact.reset(aircraft);VMEasy.reset(aircraft);if(uav(aircraft))try{VMReflect.call(aircraft,"setCurrentThrottle",0D);VMReflect.call(aircraft,"setThrottle",0D);VMReflect.set(aircraft,"throttleUp",false);VMReflect.set(aircraft,"throttleDown",false);}catch(Exception e){VMReflect.error("UAV throttle reset",e);} }
+    public static void station(Object aircraft){if(uav(aircraft))reset(aircraft);}
+    public static void wingControl(Object aircraft){if(wing(aircraft))afterControl(true,aircraft);}
     public static boolean release(Object aircraft) { return targets.remove(aircraft)!=null; }
+    public static double target(Object aircraft,double original) {double[] target=targets.get(aircraft);return target==null?original:target[0];}
     public static double throttle(Object aircraft, double original) {
         double[] target=targets.get(aircraft);
         if(target==null) return original;
@@ -30,7 +39,8 @@ public final class VMFlight {
         return VMControlMath.smooth(original, desired, .05, .12);
     }
     public static boolean afterControl(boolean original,Object aircraft) {
-        if(!original || !targets.containsKey(aircraft))return original;
+        if(!original)return original;
+        if(VMEasy.control(aircraft)||!targets.containsKey(aircraft))return original;
         try {
             double current=VMReflect.num(VMReflect.call(aircraft,"getCurrentThrottle"));
             double value=throttle(aircraft,current);
@@ -41,11 +51,11 @@ public final class VMFlight {
         return original;
     }
     public static void write(Object data, Object buffer) {
-        try { VMReflect.call(buffer, "writeFloat", (Float)VMReflect.get(data,"vmThrottle")); }
+        try { VMReflect.call(buffer, "writeFloat", (Float)VMReflect.get(data,"vmThrottle"));VMReflect.call(buffer,"writeByte",((Number)VMReflect.get(data,"vmMode")).intValue());for(String field:new String[]{"vmForward","vmStrafe","vmLift"})VMReflect.call(buffer,"writeFloat",VMReflect.get(data,field)); }
         catch(Exception e){ throw new IllegalStateException("VM control serialization", e); }
     }
     public static void read(Object data, Object buffer) {
-        try { VMReflect.set(data,"vmThrottle",VMReflect.call(buffer,"readFloat")); }
+        try { VMReflect.set(data,"vmThrottle",VMReflect.call(buffer,"readFloat"));VMReflect.set(data,"vmMode",VMReflect.call(buffer,"readByte"));for(String field:new String[]{"vmForward","vmStrafe","vmLift"})VMReflect.set(data,field,VMReflect.call(buffer,"readFloat")); }
         catch(Exception e){ throw new IllegalStateException("VM control version mismatch: update client and server",e); }
     }
 }

@@ -2,6 +2,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import tempfile
@@ -33,13 +34,17 @@ result=subprocess.run([str(java), '-cp', nashorn_cp, 'jdk.nashorn.tools.Shell', 
 if result.returncode:print(result.stderr)
 result.check_returncode()
 print(result.stdout)
+resources=root/'patches/controls/resources'
+if resources.exists():
+    shutil.copytree(resources,classes,dirs_exist_ok=True)
 target=output/'mcheli-ce-1.5.1-vm-controls1.jar'
 with zipfile.ZipFile(base) as old, zipfile.ZipFile(target,'w',zipfile.ZIP_DEFLATED,compresslevel=5) as archive:
     prior=set(old.namelist())
     for item in old.infolist():
         replacement=classes/item.filename
         archive.writestr(item,replacement.read_bytes() if replacement.is_file() else old.read(item.filename))
-    for source in sorted(classes.rglob('*.class')):
+    for source in sorted(classes.rglob('*')):
+        if not source.is_file():continue
         name=source.relative_to(classes).as_posix()
         if name not in prior:archive.write(source,name)
 with zipfile.ZipFile(target) as archive:

@@ -31,6 +31,8 @@ public class VmButton : Button {
 '@
 }
 . (Join-Path $PSScriptRoot 'Warfare-Connection.ps1')
+. (Join-Path $PSScriptRoot 'Warfare-Performance.ps1')
+. (Join-Path $PSScriptRoot 'Warfare-Onboarding.ps1')
 . (Join-Path $PSScriptRoot 'Warfare-Updates.ps1')
 [Windows.Forms.Application]::EnableVisualStyles()
 if (-not $InstallRoot) { $InstallRoot = Join-Path $env:LOCALAPPDATA 'Warfare-1.12.2' }
@@ -71,7 +73,7 @@ function Quote-Argument([string]$Value) {
 }
 function Has-Package {
     if (-not $script:packageRoot) { return $false }
-    foreach ($name in @('Install-Warfare.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','payload.zip','runtime.zip','package-manifest.json','installer-files.json')) {
+    foreach ($name in @('Install-Warfare.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','payload.zip','runtime.zip','package-manifest.json','installer-files.json')) {
         if (-not (Test-Path -LiteralPath (Join-Path $script:packageRoot $name) -PathType Leaf)) { return $false }
     }
     return $true
@@ -244,8 +246,8 @@ function Set-Busy([bool]$Busy) {
 function Save-Settings([switch]$ConnectionOnly) {
     if (-not $ConnectionOnly -and $nickname.Text.Trim() -notmatch '^[A-Za-z0-9_]{3,16}$') { throw (L 'Введи ник: 3–16 латинских букв, цифр или _.' 'Enter a nickname: 3–16 letters, digits or _.') }
     if (-not $script:settings) { $script:settings = [PSCustomObject]@{language=$script:language;nickname=$nickname.Text.Trim()} }
-    $script:settings.nickname = $nickname.Text.Trim()
-    $script:settings.language = $script:language
+    $script:settings|Add-Member NoteProperty nickname $nickname.Text.Trim() -Force
+    $script:settings|Add-Member NoteProperty language $script:language -Force
     $script:settings = Set-WarfareConnection $script:settings $script:connection
     New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
     $temp = $script:settingsPath + '.tmp'
@@ -305,6 +307,10 @@ function Start-Controller {
 }
 $primary.Add_Click({ try {
     if ($script:ready) {
+        Save-Settings
+        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $form
+        $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
+        if(-not $setup.completed){$status.Text=L 'Запуск отменён. Настройку можно продолжить по «Играть».' 'Launch cancelled. Click Play to continue setup.';return}
         $script:connection = ConvertTo-WarfareConnection $script:connection.connectionMode $script:connection.connectionTarget $script:connection.serverPort
         Save-Settings; $status.Text = L 'Подключение…' 'Connecting…'; Start-Worker 'play' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-StatusFile',$script:statusPath)
     }
@@ -312,7 +318,14 @@ $primary.Add_Click({ try {
 $install.Add_Click({ try { Start-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
 $repair.Add_Click({ try { Check-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
 $updateAction.Add_Click({ try { Start-Update } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
-$languageBox.Add_SelectedIndexChanged({ $script:language = if ($languageBox.SelectedIndex -eq 1) {'en'} else {'ru'}; Refresh-Text })
+$languageBox.Add_SelectedIndexChanged({
+    $script:language = if ($languageBox.SelectedIndex -eq 1) {'en'} else {'ru'}
+    Refresh-Text
+    if (Test-Path -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')) {
+        try { Set-WarfarePerformanceProfile -Root $InstallRoot -Language $script:language -LanguageOnly }
+        catch { $status.Text=Get-WarfarePreferenceError $_.Exception.Message $script:language }
+    }
+})
 $steam.Add_Click({ try {
     $installed = Get-ItemProperty -LiteralPath 'HKCU:\Software\Valve\Steam' -ErrorAction SilentlyContinue
     if ($installed -and $installed.SteamPath) { Start-Process 'steam://open/main' } else { Start-Process 'https://store.steampowered.com/about/' }
@@ -328,7 +341,7 @@ $advanced.Add_Click({ try { if(Test-Path -LiteralPath $InstallRoot){Start-Proces
 $changeServer.Add_Click({
     $dialog = [Windows.Forms.Form]::new()
     $dialog.Text = L 'Настройки' 'Settings'
-    $dialog.ClientSize = [Drawing.Size]::new(510,330)
+    $dialog.ClientSize = [Drawing.Size]::new(560,568)
     $dialog.StartPosition = 'CenterParent'
     $dialog.FormBorderStyle = 'FixedDialog'
     $dialog.MaximizeBox = $false
@@ -338,26 +351,77 @@ $changeServer.Add_Click({
     $dialog.ForeColor = $form.ForeColor
     $dialog.AutoScaleMode = 'Dpi'
     $dialog.AutoScaleDimensions = [Drawing.SizeF]::new(96,96)
+    $dialog.AutoScroll = $true
     $dialog.SuspendLayout()
-    $label = [Windows.Forms.Label]::new(); $label.Text = L 'Способ подключения' 'Connection type'; $label.SetBounds(20,18,465,24)
-    $modeBox = [Windows.Forms.ComboBox]::new(); $modeBox.DropDownStyle='DropDownList'; $modeBox.SetBounds(20,44,465,28)
+    $label = [Windows.Forms.Label]::new(); $label.Text = L 'Способ подключения' 'Connection type'; $label.SetBounds(20,18,510,24)
+    $modeBox = [Windows.Forms.ComboBox]::new(); $modeBox.Name='connectionMode'; $modeBox.DropDownStyle='DropDownList'; $modeBox.SetBounds(20,44,510,28)
     [void]$modeBox.Items.AddRange(@('Porthole',(L 'Прямой адрес' 'Direct address'))); $modeBox.SelectedIndex=if($script:connection.connectionMode -eq 'direct'){1}else{0}
     $targetLabel = [Windows.Forms.Label]::new(); $targetLabel.Text=L 'Код Porthole или адрес' 'Porthole code or address'; $targetLabel.SetBounds(20,85,340,24)
-    $portLabel = [Windows.Forms.Label]::new(); $portLabel.Text=L 'Порт сервера' 'Server port'; $portLabel.SetBounds(375,85,115,24)
-    $targetInput = [Windows.Forms.TextBox]::new(); $targetInput.SetBounds(20,112,340,28); $targetInput.MaxLength = 300; $targetInput.Text=$script:connection.connectionTarget
-    $portBox = [Windows.Forms.NumericUpDown]::new(); $portBox.SetBounds(375,112,110,28); $portBox.Minimum=1; $portBox.Maximum=65535; $portBox.Value=[Math]::Min(65535,[Math]::Max(1,[int]$script:connection.serverPort))
-    $detail = [Windows.Forms.Label]::new(); $detail.SetBounds(20,154,465,54)
+    $portLabel = [Windows.Forms.Label]::new(); $portLabel.Text=L 'Порт сервера' 'Server port'; $portLabel.SetBounds(420,85,110,24)
+    $targetInput = [Windows.Forms.TextBox]::new(); $targetInput.Name='connectionTarget'; $targetInput.SetBounds(20,112,385,28); $targetInput.MaxLength = 300; $targetInput.Text=$script:connection.connectionTarget
+    $portBox = [Windows.Forms.NumericUpDown]::new(); $portBox.SetBounds(420,112,110,28); $portBox.Minimum=1; $portBox.Maximum=65535; $portBox.Value=[Math]::Min(65535,[Math]::Max(1,[int]$script:connection.serverPort))
+    $detail = [Windows.Forms.Label]::new(); $detail.SetBounds(20,149,510,48)
     $detail.Text = L 'Код: из Porthole хозяина, peer:SteamID или lobby:ID. Прямое подключение: IP или домен сервера.' 'Porthole: host code, peer:SteamID or lobby:ID. Direct: server IP or hostname.'
-    $autoCheck = [Windows.Forms.CheckBox]::new(); $autoCheck.SetBounds(20,220,465,28)
+    $preferences = Get-WarfareClientPreferences $InstallRoot
+    $profileLabel = [Windows.Forms.Label]::new(); $profileLabel.SetBounds(20,204,510,24); $profileLabel.Text=L 'Производительность' 'Performance'
+    $profileBox = [Windows.Forms.ComboBox]::new(); $profileBox.Name='profile'; $profileBox.DropDownStyle='DropDownList'; $profileBox.SetBounds(20,230,320,28)
+    [void]$profileBox.Items.AddRange(@((L 'Слабый ПК' 'Low'),(L 'Баланс' 'Balanced'),(L 'Качество' 'Quality')))
+    $profileBox.SelectedIndex=@('low','balanced','quality').IndexOf($preferences.profile)
+    $profileDetail = [Windows.Forms.Label]::new(); $profileDetail.Name='profileDetail'; $profileDetail.SetBounds(20,268,510,48)
+    $describeProfile = {
+        $profileDetail.Text = switch ($profileBox.SelectedIndex) {
+            0 { L '4 чанка, минимум эффектов. Подтверждение попаданий остаётся.' '4 chunks, minimal effects. Hit confirmation remains visible.' }
+            2 { L '12 чанков, полные эффекты. Шейдеры выключены.' '12 chunks, full effects. Shaders are off.' }
+            default { L '8 чанков, умеренные эффекты. Шейдеры выключены.' '8 chunks, moderate effects. Shaders are off.' }
+        }
+    }
+    $profileBox.Add_SelectedIndexChanged($describeProfile); & $describeProfile
+    $memoryLabel=[Windows.Forms.Label]::new(); $memoryLabel.SetBounds(20,322,510,24); $memoryLabel.Text=L 'Память игры' 'Game memory'
+    $memoryAuto=[Windows.Forms.CheckBox]::new(); $memoryAuto.Name='memoryAuto'; $memoryAuto.SetBounds(20,350,145,28); $memoryAuto.Text=L 'Авто' 'Auto'
+    $memoryInput=[Windows.Forms.NumericUpDown]::new(); $memoryInput.Name='memoryMB'; $memoryInput.SetBounds(180,350,130,28); $memoryInput.Minimum=2048; $memoryInput.Maximum=8192; $memoryInput.Increment=256
+    $memoryInput.Value=3072
+    $savedMemory=0
+    if($script:settings -and $script:settings.PSObject.Properties['memoryMB']){[void][int]::TryParse([string]$script:settings.memoryMB,[ref]$savedMemory)}
+    if($savedMemory -ge 2048 -and $savedMemory -le 8192){$memoryInput.Value=$savedMemory}
+    $memoryAuto.Checked=$savedMemory -eq 0; $memoryInput.Enabled=-not $memoryAuto.Checked
+    $memoryAuto.Add_CheckedChanged({$memoryInput.Enabled=-not $memoryAuto.Checked})
+    $memoryUnit=[Windows.Forms.Label]::new(); $memoryUnit.SetBounds(322,354,80,24); $memoryUnit.Text=L 'МБ' 'MB'
+    $memoryDetail=[Windows.Forms.Label]::new(); $memoryDetail.SetBounds(20,386,510,42)
+    $memoryDetail.Text=L 'Авто учитывает память ПК и запущенного сервера. Изменения — по «Применить».' 'Auto accounts for system and local server memory. Use Apply to save these changes.'
+    $hudHints=[Windows.Forms.CheckBox]::new(); $hudHints.Name='hudHints'; $hudHints.SetBounds(20,434,235,28); $hudHints.Text=L 'Подсказки управления' 'Control hints'; $hudHints.Checked=$preferences.hudHints
+    $hitFeedback=[Windows.Forms.CheckBox]::new(); $hitFeedback.Name='hitFeedback'; $hitFeedback.SetBounds(270,434,260,28); $hitFeedback.Text=L 'Подтверждение попаданий' 'Hit confirmation'; $hitFeedback.Checked=$preferences.hitFeedback
+    $apply=[Windows.Forms.Button]::new(); $apply.Name='applyPerformance'; $apply.SetBounds(360,230,170,32); $apply.Text=L 'Применить' 'Apply'
+    $apply.FlatStyle='Flat'; $apply.BackColor=[Drawing.Color]::FromArgb(32,38,48)
+    $apply.Enabled=Test-Path -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')
+    $apply.Add_Click({try {
+        $chosenMemory=if($memoryAuto.Checked){0}else{[int]$memoryInput.Value}
+        $memorySettings=[PSCustomObject]@{memoryMB=$chosenMemory}
+        [void](Get-WarfareHeapMB $memorySettings)
+        $chosenProfile=@('low','balanced','quality')[$profileBox.SelectedIndex]
+        Set-WarfarePerformanceProfile -Root $InstallRoot -Profile $chosenProfile -Language $script:language -HudHints $hudHints.Checked -HitFeedback $hitFeedback.Checked -ApplyGraphics
+        if(-not $script:settings){$script:settings=[PSCustomObject]@{nickname=$nickname.Text.Trim();language=$script:language}}
+        $script:settings|Add-Member NoteProperty memoryMB $chosenMemory -Force
+        Save-Settings -ConnectionOnly
+        $profileDetail.Text=L 'Применено. Можно запускать игру.' 'Applied. You can start the game.'
+    }catch{$profileDetail.Text=Get-WarfarePreferenceError $_.Exception.Message $script:language}})
+    $autoCheck = [Windows.Forms.CheckBox]::new(); $autoCheck.Name='autoCheck'; $autoCheck.SetBounds(20,472,510,28)
     $autoCheck.Text = L 'Проверять обновления при запуске' 'Check for updates on startup'
     $autoCheck.Checked = Get-VmAutoCheck $InstallRoot
-    $save = [Windows.Forms.Button]::new(); $save.SetBounds(350,278,135,32); $save.Text = L 'Сохранить' 'Save'
+    $save = [Windows.Forms.Button]::new(); $save.Name='saveConnection'; $save.SetBounds(390,516,140,32); $save.Text = L 'Сохранить' 'Save'
     $save.FlatStyle = 'Flat'; $save.BackColor = [Drawing.Color]::FromArgb(32,38,48)
-    $controller = [VmButton]::new(); $controller.SetBounds(20,278,220,32)
-    $controller.Text = L 'Контроллер' 'Controller'
+    $controller = [VmButton]::new(); $controller.Name='setupControls';$controller.SetBounds(20,516,155,32)
+    $controller.Text = L 'Настроить игру' 'Play setup'
     $controller.FlatStyle = 'Flat'; $controller.BackColor = $save.BackColor
     $controller.Enabled = Test-Path -LiteralPath (Join-Path $InstallRoot 'Configure-Controller.ps1')
-    $controller.Add_Click({ try { Start-Controller; $dialog.DialogResult='Cancel' } catch { $detail.Text=$_.Exception.Message } })
+    $controller.Add_Click({ try {
+        Save-Settings -ConnectionOnly
+        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $dialog -Reconfigure
+        $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
+        if($setup.completed){$status.Text=L 'Управление и сервер сохранены.' 'Controls and server saved.';$dialog.DialogResult='Cancel'}
+    } catch { $detail.Text=$_.Exception.Message } })
+    $controlsHelp=[VmButton]::new(); $controlsHelp.Name='controlsHelp'; $controlsHelp.SetBounds(190,516,185,32); $controlsHelp.Text=L 'Управление · F8' 'Controls · F8'
+    $controlsHelp.FlatStyle='Flat'; $controlsHelp.BackColor=$save.BackColor
+    $controlsHelp.Add_Click({[void][Windows.Forms.MessageBox]::Show($dialog,(L 'F8 — контроллер, калибровка, пресеты и плавность FPV. Настройки сохраняются локально. Огонь, оружие и перезарядка показаны в HUD техники и руководстве.' 'F8 opens controller selection, calibration, presets and FPV smoothing. Settings are saved locally. Fire, weapon selection and reload are shown in the vehicle HUD and guide.'),(L 'Управление' 'Controls'),'OK','Information')})
     $save.Add_Click({ try {
         $modeValue = if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}
         $newConnection = if ($targetInput.Text.Trim()) { ConvertTo-WarfareConnection $modeValue $targetInput.Text $portBox.Value.ToString() } else { [PSCustomObject]@{connectionMode=$modeValue;connectionTarget='';serverPort=[int]$portBox.Value} }
@@ -369,11 +433,12 @@ $changeServer.Add_Click({
         $status.Text=L 'Настройки сохранены.' 'Settings saved.'; $dialog.DialogResult='OK'
     } catch { $detail.Text=Get-WarfareConnectionError $_.Exception.Message $script:language } })
     $dialog.AcceptButton = $save
-    $dialog.Controls.AddRange(@($label,$modeBox,$targetLabel,$portLabel,$targetInput,$portBox,$detail,$autoCheck,$save,$controller))
+    $dialog.Controls.AddRange(@($label,$modeBox,$targetLabel,$portLabel,$targetInput,$portBox,$detail,$autoCheck,$save,$controller,$profileLabel,$profileBox,$profileDetail,$memoryLabel,$memoryAuto,$memoryInput,$memoryUnit,$memoryDetail,$hudHints,$hitFeedback,$apply,$controlsHelp))
     $dialog.AutoScaleDimensions = [Drawing.SizeF]::new(96,96)
     $dialog.ResumeLayout($true)
     $dialogScale = $dialog.CurrentAutoScaleDimensions.Width / 96
-    $dialog.ClientSize = [Drawing.Size]::new([int](510*$dialogScale),[int](330*$dialogScale))
+    $availableHeight=[Windows.Forms.Screen]::FromControl($form).WorkingArea.Height-80
+    $dialog.ClientSize = [Drawing.Size]::new([int](560*$dialogScale),[int][Math]::Min(568*$dialogScale,$availableHeight))
     try {
         [void]$dialog.ShowDialog($form)
     } catch { $status.Text = $_.Exception.Message } finally { $dialog.Dispose() }

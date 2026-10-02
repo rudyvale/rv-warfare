@@ -21,6 +21,10 @@ public final class VMControlMath {
     public static double smooth(double previous, double target, double dt, double seconds) {
         return previous + (target - previous) * (1 - Math.exp(-clamp(dt, 0, 0.1) / Math.max(0.001, seconds)));
     }
+    public static double throttleCurve(double throttle,double expo) {
+        double x=clamp(throttle,0,1)*2-1,e=clamp(expo,0,.7);
+        return (x*(1-e)+x*x*x*e+1)/2;
+    }
     public static double angle(double current, double target, double dt, double rate) {
         double difference = (target - current) % 360;
         if (difference > 180) difference -= 360;

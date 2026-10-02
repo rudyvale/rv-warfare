@@ -1,0 +1,1 @@
+tellraw @s [{"text": "RV: ", "color": "gold"}, {"text": "[Меню] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/trigger menu set 1"}}, {"text": "[Книга] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/trigger wbook set 1"}, "hoverEvent": {"action": "show_text", "value": "Освободи один слот, если инвентарь полон."}}]
