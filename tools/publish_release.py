@@ -16,7 +16,7 @@ parser.add_argument('--publish', action='store_true')
 args = parser.parse_args()
 metadata = json.loads((root / 'src/release.json').read_text())
 repository = metadata['repository']
-if repository != 'rudyvale/vm-warfare':
+if repository != 'rudyvale/rv-warfare':
     raise SystemExit('Unexpected repository')
 tag = 'v' + metadata['version']
 directory = args.directory.resolve()
@@ -37,7 +37,7 @@ def api(method, path, data=None, content_type='application/json', allow_missing=
     if urllib.parse.urlsplit(url).hostname not in {'api.github.com', 'uploads.github.com'}:
         raise ValueError('Unexpected API host')
     body = json.dumps(data, ensure_ascii=False).encode('utf-8') if isinstance(data, dict) else data
-    request = urllib.request.Request(url, data=body, method=method, headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'VM-release-tools', 'Content-Type': content_type, 'X-GitHub-Api-Version': '2022-11-28'})
+    request = urllib.request.Request(url, data=body, method=method, headers={'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json', 'User-Agent': 'RV-release-tools', 'Content-Type': content_type, 'X-GitHub-Api-Version': '2022-11-28'})
     try:
         with urllib.request.urlopen(request, timeout=240) as response:
             return json.load(response)
@@ -49,8 +49,9 @@ def api(method, path, data=None, content_type='application/json', allow_missing=
 prefix = '/repos/' + repository
 release = api('GET', prefix + '/releases/tags/' + tag, allow_missing=True)
 if release is None:
-    release = api('POST', prefix + '/releases', {'tag_name': tag, 'target_commitish': commit, 'name': 'VM Warfare ' + metadata['version'], 'body': args.notes.read_text(encoding='utf-8'), 'draft': True, 'prerelease': False})
-for name in ['VM-Setup.zip', 'VM-Host-Tools.zip', 'SHA256SUMS.txt']:
+    release = api('POST', prefix + '/releases', {'tag_name': tag, 'target_commitish': commit, 'name': 'RV Warfare ' + metadata['version'], 'body': args.notes.read_text(encoding='utf-8'), 'draft': True, 'prerelease': False})
+assets = [line.split('  ', 1)[1] for line in (directory / 'SHA256SUMS.txt').read_text().splitlines()] + ['SHA256SUMS.txt']
+for name in assets:
     file = directory / name
     data = file.read_bytes()
     digest = 'sha256:' + hashlib.sha256(data).hexdigest()

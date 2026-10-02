@@ -3,6 +3,10 @@
 *.cmd text eol=crlf
 *.py text eol=lf
 *.java text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.svg text eol=lf
 *.png binary
 *.ico binary
 *.ogg binary

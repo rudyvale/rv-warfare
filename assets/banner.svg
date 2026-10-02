@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="VM Warfare — Minecraft 1.12.2, Windows launcher, FPV and multiplayer">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="RV Warfare — Minecraft 1.12.2, Windows launcher, FPV and multiplayer">
   <defs>
     <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#172e38"/></linearGradient>
     <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#87d7c3" stroke-opacity=".07"/></pattern>
@@ -8,7 +8,7 @@
   <circle cx="1120" cy="170" r="224" fill="none" stroke="#97eed6" stroke-opacity=".07" stroke-width="60"/>
   <g transform="translate(1010 124)" fill="none" stroke="#97eed6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><path d="M26 22L-8 56 26 90M112 22L146 56 112 90M84 7L55 106"/></g>
   <text x="76" y="87" fill="#97eed6" font-family="Segoe UI,Arial,sans-serif" font-size="14" letter-spacing="4">MINECRAFT 1.12.2 · WINDOWS</text>
-  <text x="70" y="206" fill="#f2f5f8" font-family="Segoe UI,Arial,sans-serif" font-size="104" font-weight="700" letter-spacing="-5">VM Warfare</text>
+  <text x="70" y="206" fill="#f2f5f8" font-family="Segoe UI,Arial,sans-serif" font-size="104" font-weight="700" letter-spacing="-5">RV Warfare</text>
   <text x="76" y="264" fill="#b6c6d6" font-family="Segoe UI,Arial,sans-serif" font-size="25">One launcher. Your server. Ready to play.</text>
   <path d="M76 308H158" stroke="#97eed6" stroke-width="4" stroke-linecap="round"/>
   <text x="182" y="315" fill="#c0cfdc" font-family="Segoe UI,Arial,sans-serif" font-size="16" letter-spacing="2">FPV · MULTIPLAYER · RU / EN</text>

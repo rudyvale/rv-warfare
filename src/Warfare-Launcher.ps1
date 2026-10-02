@@ -73,7 +73,7 @@ function Has-Package {
     return ($script:packageRoot -and (Test-Path -LiteralPath (Join-Path $script:packageRoot 'Install-Warfare.ps1')) -and (Test-Path -LiteralPath (Join-Path $script:packageRoot 'payload.zip')))
 }
 $form = [Windows.Forms.Form]::new()
-$form.Text = 'VM'
+$form.Text = 'RV'
 $form.ShowIcon = $false
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'code.ico')) { $form.Icon = [Drawing.Icon]::new((Join-Path $PSScriptRoot 'code.ico')); $form.ShowIcon = $true }
 $form.ClientSize = [Drawing.Size]::new(960,640)
@@ -107,7 +107,7 @@ $control.FlatStyle = 'Flat'
     return $control
 }
 $title = Label 32 24 430 64 34
-$title.Text = 'VM'
+$title.Text = 'RV'
 $nicknameLabel = Label 35 113 350 26
 $nickname = [Windows.Forms.TextBox]::new()
 $nickname.Location = [Drawing.Point]::new(35,145)
@@ -164,14 +164,17 @@ function Update-Layout {
     $margin = [Math]::Max(28,[Math]::Min(64,$width * 0.04))
     $content = $width - 2 * $margin
     $column = ($content - 48) / 2
+    $compact = $height -lt 600
+    $titleY = if ($compact) { 8 } else { 24 }
+    $fieldY = if ($compact) { 80 } else { 132 }
     $bounds = @(
-        @($title,$margin,24,($content-200),70),
-        @($languageBox,($width-$margin-168),44,168,30),
-        @($nicknameLabel,$margin,132,$column,28),
-        @($nickname,$margin,167,$column,38),
-        @($hint,$margin,215,$column,30),
-        @($serverHeading,($margin+$column+48),132,$column,28),
-        @($serverLabel,($margin+$column+48),173,$column,32),
+        @($title,$margin,$titleY,($content-200),64),
+        @($languageBox,($width-$margin-168),($titleY+20),168,30),
+        @($nicknameLabel,$margin,$fieldY,$column,26),
+        @($nickname,$margin,($fieldY+35),$column,38),
+        @($hint,$margin,($fieldY+83),$column,26),
+        @($serverHeading,($margin+$column+48),$fieldY,$column,26),
+        @($serverLabel,($margin+$column+48),($fieldY+41),$column,32),
         @($status,$margin,[Math]::Max(278,($height-316)/2),$content,80),
         @($updateLabel,$margin,($height-264),$content,26),
         @($progress,$margin,($height-226),$content,5),
@@ -185,6 +188,23 @@ function Update-Layout {
         @($steam,($margin+3*($content+12)/4),($height-54),(($content-36)/4),32)
     )
     foreach ($item in $bounds) { $item[0].SetBounds([int]($item[1]*$scale),[int]($item[2]*$scale),[int]($item[3]*$scale),[int]($item[4]*$scale)) }
+    if ($compact) {
+        $compactBounds = @(
+            @($hint,$margin,154,$column,26),
+            @($updateLabel,($margin+$column+48),154,$column,26),
+            @($status,$margin,186,$content,44),
+            @($progress,$margin,($height-190),$content,4),
+            @($install,$margin,($height-178),(($content-24)/3),36),
+            @($repair,($margin+($content+12)/3),($height-178),(($content-24)/3),36),
+            @($updateAction,($margin+2*($content+12)/3),($height-178),(($content-24)/3),36),
+            @($primary,$margin,($height-124),$content,56),
+            @($changeServer,$margin,($height-46),(($content-36)/4),28),
+            @($advanced,($margin+($content+12)/4),($height-46),(($content-36)/4),28),
+            @($logs,($margin+2*($content+12)/4),($height-46),(($content-36)/4),28),
+            @($steam,($margin+3*($content+12)/4),($height-46),(($content-36)/4),28)
+        )
+        foreach ($item in $compactBounds) { $item[0].SetBounds([int]($item[1]*$scale),[int]($item[2]*$scale),[int]($item[3]*$scale),[int]($item[4]*$scale)) }
+    }
 }
 $form.Add_ClientSizeChanged({ Update-Layout })
 function Refresh-Text {
@@ -247,7 +267,7 @@ function Start-Install {
     if (-not (Has-Package)) {
         $picker = [Windows.Forms.OpenFileDialog]::new()
         $picker.Title = L 'Выбери Install-Warfare.ps1 в распакованном пакете' 'Choose Install-Warfare.ps1 in the extracted package'
-        $picker.Filter = 'VM installer|Install-Warfare.ps1'
+        $picker.Filter = 'RV installer|Install-Warfare.ps1'
         try { if ($picker.ShowDialog($form) -ne 'OK') { return }; $script:packageRoot = Split-Path -Parent $picker.FileName } finally { $picker.Dispose() }
     }
     if (-not (Has-Package)) { throw (L 'Распакуй весь архив установщика в одну папку.' 'Extract the entire installer archive into one folder.') }
@@ -431,14 +451,14 @@ $form.Add_FormClosing({
         if ($script:process -and -not $script:process.HasExited) { $script:process.Kill(); [void]$script:process.WaitForExit(3000) }
     } elseif ($script:busy) {
         $_.Cancel = $true
-        [void][Windows.Forms.MessageBox]::Show($form,(L 'Дождись окончания операции. Окно можно свернуть.' 'Wait for the operation to finish. You can minimize this window.'),'VM','OK','Information')
+        [void][Windows.Forms.MessageBox]::Show($form,(L 'Дождись окончания операции. Окно можно свернуть.' 'Wait for the operation to finish. You can minimize this window.'),'RV','OK','Information')
     }
 })
 Refresh-Text
 $form.AutoScaleDimensions = [Drawing.SizeF]::new(96,96)
 $form.ResumeLayout($true)
 $formScale = $form.CurrentAutoScaleDimensions.Width / 96
-$form.ClientSize = [Drawing.Size]::new([int](820*$formScale),[int](640*$formScale))
+$form.ClientSize = [Drawing.Size]::new([int](740*$formScale),[int](420*$formScale))
 $form.MinimumSize = $form.Size
 $form.ClientSize = [Drawing.Size]::new([int](960*$formScale),[int](680*$formScale))
 Update-Layout

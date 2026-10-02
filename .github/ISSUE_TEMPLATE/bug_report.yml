@@ -1,23 +1,23 @@
-name: Ошибка / Bug
-description: Проблема установки, запуска или обновления
+name: Bug report
+description: Report an installation, launch or update problem
 body:
   - type: input
     id: version
     attributes:
-      label: Версия VM и Windows
-      placeholder: VM 1.0.0, Windows 11
+      label: RV and Windows versions
+      placeholder: RV 1.0.0, Windows 11
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Что произошло
-      description: Шаги, ожидаемый результат и фактическое поведение.
+      label: What happened?
+      description: Include steps to reproduce, the expected result and the actual behaviour.
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Сообщение ошибки
-      description: Вставьте нужный фрагмент журнала, убрав токены, личные адреса и данные аккаунтов.
+      label: Error message
+      description: Include the relevant log excerpt after removing tokens, private addresses and account data.
       render: text

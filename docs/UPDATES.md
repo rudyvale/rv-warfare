@@ -1,33 +1,43 @@
-# Обновления
+# Updates
 
-Источник — `https://api.github.com/repos/rudyvale/vm-warfare/releases/latest`. Проверка получает метаданные стабильного релиза. Ник, адрес сервера, Steam ID, настройки и файлы игры в запрос не включаются. Токен GitHub не нужен.
+RV reads stable release metadata from `https://api.github.com/repos/rudyvale/rv-warfare/releases/latest`. The request contains no nickname, server address, Steam ID, settings or game files. No GitHub token is needed on a player's computer.
 
-## Поведение
+## Behaviour
 
-- Открытие клиентского окна запускает скрытый `Check-WarfareUpdate.ps1`.
-- Прямой запуск `Play-Warfare.ps1` и вызов `Install-Warfare.ps1` тоже запускают проверку.
-- Панель хозяина проверяет версии при открытии и действиях запуска; её фоновые проверки не открывают браузер.
-- Тайм-аут запроса метаданных — 8 секунд. Интерфейс и запуск не ждут сеть.
-- Файловая блокировка исключает одновременно работающие проверки одного экземпляра.
-- Проверку можно отключить в интерфейсе. Настройка хранится в `.updates/preferences.json` как `{"autoCheck":false}` и сохраняется при установке обновления. По умолчанию проверка включена. Ручная кнопка обновления продолжает работать.
-- Результат сохраняется атомарно в `.updates/status.json`; ошибка — в `.updates/last-error.json`.
-- Проверка не устанавливает ничего самостоятельно. Клиент загружает и устанавливает новую версию по кнопке **Обновить**. Панель хозяина даёт ссылку на релиз.
-- Сравнение числовое: `1.10.0` новее `1.9.0`. Старые версии и prerelease не предлагаются.
-- Повторная проверка сохраняет уже загруженный пакет той же версии и контрольной суммы.
+- Opening the client launcher starts a hidden `Check-WarfareUpdate.ps1` process.
+- Direct calls to `Play-Warfare.ps1` and `Install-Warfare.ps1` also start a check.
+- The host panel checks when opening and when starting the server or game.
+- The metadata request has an eight-second timeout; the interface does not wait for it.
+- A per-installation file lock prevents overlapping checks.
+- **Settings** can disable automatic checks. `.updates/preferences.json` stores `{"autoCheck":false}`; installation preserves this choice. Checks are enabled by default. Manual updates still work.
+- Results are written atomically to `.updates/status.json`; failures are recorded in `.updates/last-error.json`.
+- Background checks do not install anything. The client downloads and installs through **Update**. The host panel offers a release link.
+- Versions are compared numerically: `1.10.0` is newer than `1.9.0`. Prereleases and older versions are not offered.
+- Rechecking preserves an already downloaded package with the same version and checksum.
 
-Загрузчик сверяет размер и SHA-256 с полем `digest` GitHub Release Asset. Затем проверяет список путей ZIP, отсутствие дубликатов, лимит распакованного размера, обязательные файлы и `release.json`. При сбое текущие файлы игры не заменяются. SHA-256 и HTTPS проверяют соответствие опубликованному артефакту; отдельная подпись издателя в версии 1.0.0 не используется.
+The downloader checks the asset size and SHA-256 against GitHub's release asset `digest`. It then validates ZIP paths, duplicate entries, extraction limits, required files and `release.json`. Failed verification leaves the current installation untouched. HTTPS and SHA-256 verify that the bytes match the published artifact; version 1.0.0 does not use a separate publisher signature.
 
-## Новый релиз
+## Release contract
 
-1. Поднять `version` в `src/release.json`, используя `major.minor.patch`.
-2. Подготовить проверенные `payload.zip` и `runtime.zip`, обновить `pack/package-manifest.json` и исходники изменений.
-3. Запустить проверки и собрать пакет через `tools/build_release.py`.
-4. Создать тег `vX.Y.Z` и **draft release** с этим тегом.
-5. Загрузить `VM-Setup.zip`, `VM-Host-Tools.zip` и `SHA256SUMS.txt`.
-6. Проверить SHA-256 и поле `digest` загруженного `VM-Setup.zip`, затем опубликовать релиз как latest.
+The repository is `rudyvale/rv-warfare`; the client asset is **RV-Setup.zip**, containing the **RV-Setup/** root directory. Releases use stable `vMAJOR.MINOR.PATCH` tags matching `src/release.json`.
 
-Имена файлов и репозиторий — часть контракта. Не заменять файл уже опубликованной версии другим содержимым; исправления получают новую версию. Проверка использует [официальный API GitHub Releases](https://docs.github.com/en/rest/releases/releases#get-the-latest-release).
+1. Update `src/release.json` and `CHANGELOG.md`.
+2. Prepare and verify the binary base, source changes and manifests.
+3. Run the checks and build with `tools/build_release.py`.
+4. Push the corresponding source commit and tag.
+5. Stage **RV-Setup.zip**, **RV-Host-Tools.zip**, **SHA256SUMS.txt** and, when included, **RV-World-Template.zip** in a draft release.
+6. Verify the uploaded asset sizes and SHA-256 digests before publishing as latest.
 
-Для сборки на основе существующего релиза предусмотрен workflow **Publish release** с полями `tag` и `base_tag`. Для новой локально подготовленной базы: собрать ZIP, запушить соответствующий тег и выполнить `python tools/publish_release.py --directory dist --notes release-notes.md --publish`. Без `--publish` скрипт оставит проверенный черновик. Он использует `GH_TOKEN` либо сохранённую авторизацию GitHub в Git Credential Manager; токен не сохраняется в файлы. Повторный запуск продолжает загрузку только совпадающих по SHA-256 артефактов.
+Do not replace an already published version with different bytes. Corrections need a new version. The checker uses the [official GitHub Releases API](https://docs.github.com/en/rest/releases/releases#get-the-latest-release).
 
-Для изолированных тестов можно установить `VM_SKIP_UPDATE_CHECK=1` в окружении процесса. Обычные ярлыки эту переменную не задают.
+For a new local binary base, build the archives, push the matching tag, then run:
+
+```powershell
+python tools/publish_release.py --directory dist --notes release-notes.md --publish
+```
+
+Without `--publish`, the tool leaves a verified draft. It uses `GH_TOKEN`, `GITHUB_TOKEN` or the Git Credential Manager login, without writing tokens to files. Retrying resumes only when existing assets have matching checksums. `tools/verify_release.py --directory dist --remote` verifies the public release and latest pointer.
+
+The **Publish release** workflow rebuilds launcher and source updates from an existing verified release using `tag` and `base_tag`. Gameplay changes need a newly integrated and tested binary base, followed by the local publishing command above. The workflow does not compile third-party mods from upstream sources. The optional world is generated separately from its source generator.
+
+For isolated tests, set `VM_SKIP_UPDATE_CHECK=1` in the test process. The legacy environment variable and internal `Get-Vm*` helper names remain for compatibility; ordinary shortcuts do not disable checks.

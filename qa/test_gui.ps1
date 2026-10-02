@@ -56,15 +56,15 @@ function Check-Bounds {
     for($i=0;$i -lt $controls.Count;$i++){for($j=$i+1;$j -lt $controls.Count;$j++){if($controls[$i].Bounds.IntersectsWith($controls[$j].Bounds)){throw ('Overlapping controls: '+$controls[$i].Text+' / '+$controls[$j].Text)}}}
 }
 try {
-    if($form.Text -ne 'VM' -or $title.Text -ne 'VM'){throw 'Wrong branding'}
+    if($form.Text -ne 'RV' -or $title.Text -ne 'RV'){throw 'Wrong branding'}
     foreach($locale in @('ru','en')){
         $script:language=$locale; Refresh-Text
-        foreach($size in @(@(820,640),@(960,680),@(1280,720),@(1920,1080))){
+        foreach($size in @(@(740,420),@(820,500),@(960,540),@(820,640),@(960,680),@(1280,720),@(1920,1080))){
             $form.ClientSize=[Drawing.Size]::new([int]($size[0]*$formScale),[int]($size[1]*$formScale)); Update-Layout; Check-Bounds
         }
     }
     $script:language='ru'; Refresh-Text
-    'VM branding and ru/en responsive bounds without overlap: PASS'
+    'RV branding and ru/en responsive bounds without overlap: PASS'
     $nickname.Text='User_123'
     Click $install
     if(-not $script:busy -or $primary.Enabled){throw 'Install did not disable duplicate action'}

@@ -1,10 +1,15 @@
-# История версий
+# Changelog
 
-## 1.0.0 · 2 октября 2026
+## 1.0.0
 
-- Первый GitHub-релиз VM Warfare на основе проверенного пакета VM3.
-- Тихая проверка новых версий при открытии, запуске и установке.
-- Загрузка через кнопку обновления с проверкой размера, SHA-256, ZIP и версии.
-- Значок `</>` для клиента и панели хозяина.
-- Исходники лаунчера, установщика, серверных инструментов и модификаций в одном репозитории.
-- Публичный пакет без личного Steam peer; выбранное пользователем подключение сохраняется при обновлении.
+Initial RV Warfare release.
+
+- Windows client launcher with separate Play, Install, Check and Update actions.
+- English and Russian interfaces, adaptive layouts and a code icon.
+- Host panel with separate Play, Start server and Stop server buttons.
+- Porthole and direct connections configured through Settings.
+- Quiet GitHub update checks, a persistent opt-out and verified downloads.
+- Installer backups, preservation of player data and downgrade protection.
+- FPV flight, controller configuration and the combat audio pack.
+- Separate clean world template for new servers.
+- Source materials, automated checks and release tooling.

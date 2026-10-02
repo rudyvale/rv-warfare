@@ -23,7 +23,7 @@ try {
     if ($Download -and $release.state -eq 'available') {
         $partial = Join-Path $directory ([Guid]::NewGuid().ToString('N') + '.zip.part')
         $request = [Net.HttpWebRequest]::Create($release.url)
-        $request.UserAgent = 'VM-Warfare-Update'
+        $request.UserAgent = 'RV-Warfare-Update'
         $request.Timeout = 15000
         $request.ReadWriteTimeout = 20000
         $response = $request.GetResponse()

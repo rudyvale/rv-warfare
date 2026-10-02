@@ -266,11 +266,11 @@ Copy-Item -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Destina
 if (-not $NoShortcut) {
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
-    $shortcutPath = Join-Path $desktop 'VM.lnk'
+    $shortcutPath = Join-Path $desktop 'RV.lnk'
     $shortcut = $shell.CreateShortcut($shortcutPath)
     $canSaveShortcut = -not (Test-Path -LiteralPath $shortcutPath) -or ($shortcut.TargetPath -eq (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -and $shortcut.Arguments.Contains($InstallRoot) -and $shortcut.Arguments.Contains('Warfare-Launcher.ps1'))
     if (-not $canSaveShortcut) {
-        $shortcutPath = Join-Path $desktop 'Warfare.lnk'
+        $shortcutPath = Join-Path $desktop 'RV Client.lnk'
         $shortcut = $shell.CreateShortcut($shortcutPath)
         $canSaveShortcut = -not (Test-Path -LiteralPath $shortcutPath) -or ($shortcut.TargetPath -eq (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -and $shortcut.Arguments.Contains($InstallRoot) -and $shortcut.Arguments.Contains('Warfare-Launcher.ps1'))
     }
@@ -278,7 +278,7 @@ if (-not $NoShortcut) {
     $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $shortcut.Arguments = '-NoProfile -ExecutionPolicy Bypass -STA -WindowStyle Hidden -File "' + (Join-Path $InstallRoot 'Warfare-Launcher.ps1') + '" -InstallRoot "' + $InstallRoot + '"'
     $shortcut.WorkingDirectory = $InstallRoot
-    $shortcut.Description = 'VM'
+    $shortcut.Description = 'RV'
     $shortcut.IconLocation = (Join-Path $InstallRoot 'code.ico') + ',0'
     $shortcut.Save()
     $legacyShortcutPath = Join-Path $desktop 'Warfare.lnk'
@@ -297,7 +297,7 @@ $stageAbsolute = [IO.Path]::GetFullPath($stage)
 if (-not $stageAbsolute.StartsWith($InstallRoot.TrimEnd('\') + '\.update-', [StringComparison]::OrdinalIgnoreCase)) { throw 'Unsafe staging directory.' }
 Remove-Item -LiteralPath $stageAbsolute -Recurse -Force
 Say ('Готово. Запуск: ' + (Join-Path $InstallRoot 'Play.cmd')) ('Ready. Start: ' + (Join-Path $InstallRoot 'Play.cmd'))
-Say 'Обновления доступны в окне VM. Миры и настройки сохраняются.' 'Updates are available in VM. Worlds and settings are preserved.'
+Say 'Обновления доступны в окне RV. Миры и настройки сохраняются.' 'Updates are available in RV. Worlds and settings are preserved.'
 } finally {
     if ($installLock) { $installLock.Dispose() }
 }

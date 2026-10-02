@@ -57,20 +57,22 @@ jobs:
       - name: Get verified base and build
         shell: pwsh
         run: |
-          gh release download $env:BASE_TAG --pattern VM-Setup.zip --dir base
+          gh release download $env:BASE_TAG --pattern RV-Setup.zip --dir base
           if ($LASTEXITCODE) { throw 'Base download failed' }
-          Expand-Archive base/VM-Setup.zip -DestinationPath base/extracted
-          python tools/build_release.py --base base/extracted/VM-Setup --output dist
+          Expand-Archive base/RV-Setup.zip -DestinationPath base/extracted
+          python tools/build_release.py --base base/extracted/RV-Setup --output dist
           if ($LASTEXITCODE) { throw 'Build failed' }
           python tools/verify_release.py --directory dist --tag $env:RELEASE_TAG
           if ($LASTEXITCODE) { throw 'Artifact verification failed' }
       - name: Stage complete release
         shell: pwsh
         run: |
-          gh release create $env:RELEASE_TAG dist/VM-Setup.zip dist/VM-Host-Tools.zip dist/SHA256SUMS.txt --verify-tag --draft --title "VM Warfare $env:RELEASE_TAG" --notes-file CHANGELOG.md
+          $assets = @('dist/RV-Setup.zip', 'dist/RV-Host-Tools.zip', 'dist/SHA256SUMS.txt')
+          if (Test-Path dist/RV-World-Template.zip) { $assets += 'dist/RV-World-Template.zip' }
+          gh release create $env:RELEASE_TAG @assets --verify-tag --draft --title "RV Warfare $env:RELEASE_TAG" --notes-file CHANGELOG.md
           if ($LASTEXITCODE) { throw 'Draft release failed' }
           $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
-          if ($release.assets.Count -ne 3) { throw 'Incomplete release' }
+          if ($release.assets.Count -ne $assets.Count) { throw 'Incomplete release' }
           foreach ($line in (Get-Content dist/SHA256SUMS.txt)) {
             $parts = $line -split '  ', 2
             $asset = @($release.assets | Where-Object name -eq $parts[1])

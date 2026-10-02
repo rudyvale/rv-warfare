@@ -1,4 +1,4 @@
-$ErrorActionPreference = 'Stop'
+﻿$ErrorActionPreference = 'Stop'
 $env:VM_SKIP_UPDATE_CHECK = '1'
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $root 'src\Warfare-Updates.ps1')
@@ -7,7 +7,7 @@ New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
 function Assert([bool]$Condition, [string]$Message) { if (-not $Condition) { throw $Message } }
 function Reject([scriptblock]$Action, [string]$Message) { $failed=$false; try { & $Action | Out-Null } catch { $failed=$true }; Assert $failed $Message }
 function Release([string]$Tag='v1.1.0') {
-    return [PSCustomObject]@{tag_name=$Tag;draft=$false;prerelease=$false;assets=@([PSCustomObject]@{name='VM-Setup.zip';state='uploaded';size=100;digest=('sha256:' + ('a'*64));browser_download_url=('https://github.com/rudyvale/vm-warfare/releases/download/' + $Tag + '/VM-Setup.zip')})}
+    return [PSCustomObject]@{tag_name=$Tag;draft=$false;prerelease=$false;assets=@([PSCustomObject]@{name='RV-Setup.zip';state='uploaded';size=100;digest=('sha256:' + ('a'*64));browser_download_url=('https://github.com/rudyvale/rv-warfare/releases/download/' + $Tag + '/RV-Setup.zip')})}
 }
 Assert ((ConvertTo-VmRelease (Release) '1.0.0').state -eq 'available') 'New release not detected'
 Assert ((ConvertTo-VmRelease (Release) '1.1.0').state -eq 'current') 'Equal version must not update'
@@ -17,7 +17,7 @@ foreach ($invalid in @('main','1.0','1.0.0-beta','01.0.0','1.0.0/../../bad')) { 
 $release=Release; $release.draft=$true; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Draft accepted'
 $release=Release; $release.prerelease=$true; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Prerelease accepted'
 $release=Release; $release.assets[0].digest=''; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Missing checksum accepted'
-$release=Release; $release.assets[0].browser_download_url='https://example.com/VM-Setup.zip'; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Wrong repository accepted'
+$release=Release; $release.assets[0].browser_download_url='https://example.com/RV-Setup.zip'; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Wrong repository accepted'
 $release=Release; $release.assets += $release.assets[0]; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Duplicate asset accepted'
 $release=Release; $release.assets[0].size=3GB; Reject { ConvertTo-VmRelease $release '1.0.0' } 'Oversized download accepted'
 'release policy and semantic versions: PASS'
@@ -52,8 +52,8 @@ function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0') {
     try {
         $names=@('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico','release.json')
         foreach ($name in $names) {
-            $entry=$zip.CreateEntry('VM-Setup/'+$name); $writer=[IO.StreamWriter]::new($entry.Open())
-            try { $writer.Write($(if($name -eq 'release.json'){@{version=$Version;repository='rudyvale/vm-warfare'}|ConvertTo-Json}else{'fixture'})) } finally {$writer.Dispose()}
+            $entry=$zip.CreateEntry('RV-Setup/'+$name); $writer=[IO.StreamWriter]::new($entry.Open())
+            try { $writer.Write($(if($name -eq 'release.json'){@{version=$Version;repository='rudyvale/rv-warfare'}|ConvertTo-Json}else{'fixture'})) } finally {$writer.Dispose()}
         }
         if($Extra){[void]$zip.CreateEntry($Extra)}
     } finally {$zip.Dispose()}
@@ -61,7 +61,7 @@ function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0') {
 }
 $safe=Archive 'safe.zip'; $expanded=Expand-VmPackage $safe (Join-Path $testRoot 'safe') '1.1.0'
 Assert (Test-Path (Join-Path $expanded 'Install-Warfare.ps1')) 'Safe archive failed'
-foreach($entry in @('VM-Setup/../escape.ps1','VM-Setup/../../escape.ps1','VM-Setup/file:stream','outside/file','VM-Setup/folder./file','VM-Setup/release.json')) {
+foreach($entry in @('RV-Setup/../escape.ps1','RV-Setup/../../escape.ps1','RV-Setup/file:stream','outside/file','RV-Setup/folder./file','RV-Setup/release.json')) {
     $zip=Archive ([Guid]::NewGuid().ToString('N')+'.zip') $entry
     Reject { Expand-VmPackage $zip (Join-Path $testRoot ([Guid]::NewGuid().ToString('N'))) '1.1.0' } ('Unsafe archive accepted: '+$entry)
 }

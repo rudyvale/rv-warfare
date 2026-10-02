@@ -78,7 +78,7 @@ function Initialize-WarfareSteam {
     }
     $porthole = Find-Porthole $steamRoot
     if (-not $porthole) {
-        Set-Status 'preparing' (Text 'Подтверди установку Porthole в Steam. После загрузки VM продолжит сам.' 'Confirm the Porthole installation in Steam. VM will continue after the download.') | Out-Host
+        Set-Status 'preparing' (Text 'Подтверди установку Porthole в Steam. После загрузки RV продолжит сам.' 'Confirm the Porthole installation in Steam. RV will continue after the download.') | Out-Host
         Start-Process 'steam://install/4963920'
         $installDeadline = [DateTime]::UtcNow.AddMinutes(10)
         while (-not $porthole -and [DateTime]::UtcNow -lt $installDeadline) {
@@ -142,19 +142,19 @@ try {
             if (-not $full.StartsWith($gameRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid installed file path.' }
             if ($entry.existingOnly -and -not (Test-Path -LiteralPath $full)) { continue }
             if (-not (Test-Path -LiteralPath $full -PathType Leaf) -or (Get-FileHash -LiteralPath $full -Algorithm SHA256).Hash -ne $entry.sha256) {
-                throw (Text ('Файл повреждён или отсутствует: ' + $entry.path + '. Нажми «Проверить».') ('File missing or damaged: ' + $entry.path + '. Click Repair.'))
+                throw (Text ('Файл повреждён или отсутствует: ' + $entry.path + '. Нажми «Установить».') ('File missing or damaged: ' + $entry.path + '. Click Install.'))
             }
         }
         Set-Status 'ready' 'Launch files OK'; exit 0
     }
     try { $launchLock = [IO.File]::Open((Join-Path $gameRoot '.launch.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw (Text 'Запуск уже выполняется. Подожди.' 'A launch is already in progress. Please wait.') }
     $activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($gameRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
-    if ($activeGame) { Set-Status 'running' (Text 'VM уже запущен. Переключись в окно игры.' 'VM is already running. Switch to the game window.'); exit 0 }
+    if ($activeGame) { Set-Status 'running' (Text 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'); exit 0 }
     $defaults = $null
     $defaultsFile = Join-Path $gameRoot 'server-defaults.json'
     if (Test-Path -LiteralPath $defaultsFile) { $defaults = Get-Content -LiteralPath $defaultsFile -Raw -Encoding UTF8 | ConvertFrom-Json }
     $connection = Get-WarfareConnection $settings $defaults
-    if (-not $SkipTunnel) { $connection = ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget $connection.serverPort }
+    if (-not $SkipTunnel -and (-not $Prepare -or $connection.connectionTarget)) { $connection = ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget $connection.serverPort }
     if (-not $Server) { $Server = if ($SkipTunnel) { '127.0.0.1' } else { $connection.connectionTarget } }
     if (-not $Port) { $Port = [int]$connection.serverPort }
     if ($Port -lt 1 -or $Port -gt 65535) { throw (Text 'Неверный порт сервера.' 'Invalid server port.') }

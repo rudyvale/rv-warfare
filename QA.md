@@ -1,45 +1,22 @@
-# Warfare: установка и запуск
+# Verification scope
 
-Проверено 1 октября 2026 года на Windows с Windows PowerShell 5.1.
+RV is developed on Windows using Windows PowerShell 5.1. Automated checks live in `qa`; the [Windows checks workflow](https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml) shows the result for each pushed source revision.
 
-- Полная установка без кэша Minecraft: 66,42 секунды. Требуется интернет; это измерение на текущем компьютере и соединении.
-- Установка с повторным использованием проверенных файлов Minecraft: 8,04 секунды.
-- Повторное обновление: 6,40 секунды. Сохраняются миры, список серверов, пользовательские моды, конфигурация, гамма, сторонние ресурс-паки, ник и код подключения.
-- Устаревший управляемый мод переносится в резервную копию.
-- Неверная контрольная сумма останавливает установку до изменения управляемых файлов.
-- Искусственный сбой в конце записи восстанавливает предыдущее содержимое проверенных файлов.
-- Повреждённый мод обнаруживается проверкой и восстанавливается установщиком.
-- Запуск блокируется на время установки; повторный запуск не создаёт вторую игру.
-- Отсутствующие дополнительные YAML не создают неполный каталог MC Heli. При существующем пакете содержимого обновляются ровно два файла дронов с резервной копией; пользовательские дополнения сохраняются.
-- Окно проверено на русском и английском. Пять интеграционных сценариев проверяют фоновые операции, сохранение настроек, обнаружение обновления и отсутствие ложного успеха после сбоя.
-- Четыре сетевых сценария проверяют запрос статуса Minecraft, частичный ответ, посторонний TCP-сервис и закрытие соединения.
-- Проверка готовности учитывает контрольные суммы управляемых файлов и необязательные файлы.
-- Финальный проверенный payload: fix8, 33 управляемых файла, 100 монофонических OGG, без повреждённых ZIP/JAR и повторяющихся modid.
-- По журналам реального клиента из полного установщика: SetupTester подключился к локальному серверу, звуковой пакет загрузился, отсутствующих звуковых файлов не обнаружено.
-- Серверный тест FPV завершился PASS: gravity, hover, tilt, bank, inverted, inertia, motor lag, ground, long flight, runtime hooks.
+| Area | Checks |
+| :--- | :--- |
+| Update metadata | Stable version comparison, malformed responses, wrong repository, missing hashes and duplicate assets |
+| Downloads | Size and SHA-256 verification, safe extraction paths, archive limits and required package metadata |
+| Update behaviour | Offline operation, concurrent checks, persistent opt-out and downloaded-package reuse |
+| Installation | Fresh install, repeated install, preservation of user settings/worlds, backups and downgrade rejection |
+| Connections | Porthole and direct address parsing, migration, user-setting priority and invalid inputs |
+| Launch flow | Steam/Porthole preparation, retry paths, connection switching and direct mode without Steam |
+| Interface | English/Russian text, background operations, connection settings, update state and adaptive layouts |
+| Host panel | Separate actions, graceful stop, process ownership and concurrent start/stop handling |
+| Protocol | Local Minecraft status requests, partial replies, unrelated TCP services and closed connections |
+| Packaging | ZIP CRC, file allowlists, manifest hashes, public defaults and uploaded release digests |
 
-Подключение через Porthole с другого физического компьютера и субъективное удобство управления дроном в полёте этой проверкой не подтверждены.
+Launch-flow tests substitute external processes. A passing test is not evidence of a connection between two physical computers. A local IPv6 test was skipped on the development machine because Windows rejected loopback traffic with Winsock error 10013; live IPv6 connectivity remains unverified.
 
-Исходники окна и запуска находятся в `src`, воспроизводимые проверки и отчёты — в `qa`. Основной установщик и общий пакет поддерживаются в согласованном чате «Найди и исправь ошибку».
+Controller math and software runtime checks do not establish compatibility with every physical radio or USB controller. Flight feel, network conditions, server capacity and FPS depend on the hardware, world and player count.
 
-## Изменения 2 октября
-
-Подключение вынесено в настройки: Porthole (код, peer или lobby) либо прямой IP/домен с портом. Старые настройки мигрируют с сохранением выбора пользователя. Смена назначения или порта пересоздаёт только принадлежащий этому запуску туннель; неотвечающий туннель не используется повторно. Прямое подключение не требует Steam.
-
-Проверки Windows PowerShell 5.1: 7 допустимых адресов, 11 ошибочных вводов, миграция и приоритет пользовательских настроек; 6 интеграционных проверок окна с фактическим вызовом диалога; 4 проверки сетевого протокола; 8 сценариев запуска с подменой внешних процессов и сетевого ответа. Последние проверяют маршрутизацию и обработку ошибок, а не соединение с удалённым Steam-пользователем.
-
-Проверка сервера использует сокет IPv4/IPv6, если IPv6 поддерживается системой. Живой тест IPv6 пропущен: на этом компьютере ОС запрещает даже локальное соединение Python с Python по `::1` с ошибкой Winsock 10013. Соединение IPv6 не подтверждено.
-
-Новая установка с привязкой к хозяину в Steam проверена за 10,03 секунды с локальным кэшем. Ещё три установки проверили миграцию старого кода и порта, сохранение выбранного прямого адреса и пользовательских ключей, миграцию старого адреса. Итоговая проверка файлов прошла. Результаты — `qa/connection-installation-results.json`.
-
-По последней правке пользователя окно называется VM, подзаголовка нет. Включена поддержка системного DPI; при масштабе Windows 150% проверены размеры окна и границы элементов. Восемь проверок окна проходят, включая подготовку после установки и повтор после незавершённой загрузки Steam.
-
-После установки вызывается `Play-Warfare.ps1 -Prepare`: запускается Steam, отсутствующий Porthole устанавливается через стандартное окно Steam. Скрипт ждёт до 10 минут, перечитывает библиотеки Steam и проверяет завершённое состояние приложения и наличие EXE/DLL. Ожидание можно прекратить закрытием окна. При следующем «Играть» подготовка повторяется. Четырнадцать сценариев с подменой внешнего Steam проверяют запуск, установку, незавершённую загрузку и продолжение. Реальный `-Prepare` с уже установленным Steam/Porthole тоже прошёл. Установка отсутствующего Porthole через живое окно Steam на отдельном чистом ПК этой проверкой не подтверждена.
-
-Кандидат `2026.10.02-connection2`: точное совпадение трёх исходников, контрольных сумм архивов и 33 управляемых файлов, CRC payload — успешно. Фактический клиент в `%LOCALAPPDATA%\Warfare-1.12.2` обновлён этим кандидатом без замены ярлыка хозяина; его SHA-256 не изменился. Ник сохранён. Вызов установленного `-Prepare` после освобождения блокировки установщика и финальный `-Check` прошли.
-
-Реальное открытие через `Start-Process` из PowerShell 7 выявило наследование чужого `PSModulePath`: дочерний Windows PowerShell не находил `Get-FileHash`. Общий helper теперь восстанавливает приоритет штатных модулей Windows PowerShell и загружает его Utility. После исправления открыто реальное окно с заголовком VM и свежим статусом `ready`; 8 GUI, 14 launch/Prepare и проверки адресов/миграций повторно прошли.
-
-По следующему скриншоту исправлена кодировка прогресса: общий helper задаёт UTF-8 для `Console.OutputEncoding` и `OutputEncoding`. Воспроизведён сбой до исправления; после него проходят CP866, CP1251, UTF-8 и отдельная проверка реального фонового задания GUI с русским `Write-Host`.
-
-`Play.cmd` из распакованного пакета мог передать папку пакета как каталог игры. GUI теперь направляет такую попытку в установленный клиент `%LOCALAPPDATA%`; девять проверок GUI проходят. В старой папке `Downloads\Warfare-Setup` обнаружены следы таких незавершённых установок. Содержимое пользовательской папки не удалялось.
+Installation timings from a developer machine are not treated as performance guarantees. Actual release archives are checked separately before publication; GitHub Actions source checks do not launch a complete interactive game session.

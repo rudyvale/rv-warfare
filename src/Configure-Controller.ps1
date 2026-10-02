@@ -5,9 +5,9 @@ $InstallRoot = [IO.Path]::GetFullPath($InstallRoot)
 $java = Join-Path $InstallRoot 'runtime\bin\java.exe'
 $sharedRoot = Join-Path $env:LOCALAPPDATA 'Warfare-1.12.2'
 if (-not (Test-Path -LiteralPath $java)) { $java = Join-Path $sharedRoot 'runtime\bin\java.exe' }
-if (-not (Test-Path -LiteralPath $java)) { throw 'Для настройки нужен установленный runtime VM.' }
+if (-not (Test-Path -LiteralPath $java)) { throw 'Для настройки нужен установленный runtime RV.' }
 $mod = @(Get-ChildItem -LiteralPath (Join-Path $InstallRoot 'mods') -Filter 'mcheli*.jar' -File)
-if ($mod.Count -ne 1) { throw 'Ожидается один мод MC Heli. Нажми «Проверить» в VM.' }
+if ($mod.Count -ne 1) { throw 'Ожидается один мод MC Heli. Нажми «Проверить» в RV.' }
 $libraryRoot = Join-Path $InstallRoot 'libraries'
 if (-not (Test-Path -LiteralPath $libraryRoot)) { $libraryRoot = Join-Path $env:APPDATA '.minecraft\libraries' }
 if (-not (Test-Path -LiteralPath $libraryRoot)) { $libraryRoot = Join-Path $sharedRoot 'libraries' }

@@ -1,12 +1,12 @@
-# Изменения проекта
+# Contributing
 
-Для ошибки открой Issue с версией VM, Windows, шагами воспроизведения и нужным фрагментом журнала без данных аккаунта.
+Report bugs with the RV version, Windows version, reproduction steps and the relevant error message. Remove account details, tokens and private connection data from logs.
 
-Для изменения кода:
+For code changes:
 
-1. Создай ветку и внеси правку в исходники.
-2. Запусти проверки из [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
-3. Для обновлений добавь сценарий отказа: повреждённый архив, отсутствующая сеть, старый установщик или сохранение настроек.
-4. Опиши в pull request, что изменилось и как это проверено.
+1. Create a branch and edit the source files.
+2. Run the relevant [development checks](docs/DEVELOPMENT.md).
+3. For installer or updater changes, cover failures such as corrupted archives, offline operation, downgrade attempts and preservation of user settings.
+4. Describe the resulting behaviour and validation in your pull request.
 
-Не добавляй сохранения игроков, токены, аккаунты, журналы, личные Steam peer и большие бинарные архивы в Git. Бинарные сборки выпускаются через Releases; номер версии и контрольные суммы должны соответствовать содержимому.
+Keep player saves, tokens, accounts, personal Steam peers, logs and large binary archives out of Git. Binary builds belong in Releases; versions and checksums must match their contents. Keep public documentation in English and preserve both supported interface languages.

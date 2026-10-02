@@ -1,91 +1,83 @@
-<p align="center"><img src="assets/banner.svg" alt="VM Warfare" width="100%"></p>
+<p align="center"><img src="assets/banner.svg" alt="RV Warfare" width="100%"></p>
 
 <p align="center">
-  <a href="https://github.com/rudyvale/vm-warfare/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/rudyvale/vm-warfare?style=flat-square&color=97eed6&label=release"></a>
-  <a href="https://github.com/rudyvale/vm-warfare/actions/workflows/ci.yml"><img alt="Checks" src="https://github.com/rudyvale/vm-warfare/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/rudyvale/rv-warfare/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/rudyvale/rv-warfare?style=flat-square&color=97eed6&label=release"></a>
+  <a href="https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml"><img alt="Windows checks" src="https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Windows 10 / 11" src="https://img.shields.io/badge/Windows-10%20%2F%2011-619fe4?style=flat-square">
   <img alt="Minecraft 1.12.2" src="https://img.shields.io/badge/Minecraft-1.12.2-a8cd78?style=flat-square">
-  <img alt="Русский / English" src="https://img.shields.io/badge/language-RU%20%2F%20EN-c1b5ec?style=flat-square">
+  <img alt="English / Russian" src="https://img.shields.io/badge/interface-EN%20%2F%20RU-c1b5ec?style=flat-square">
 </p>
 
-<p align="center"><strong>Сборка Minecraft с FPV-дронами, оружием и удобным запуском для игры с друзьями.</strong><br>Установка Java и модов, подключение к серверу и обновления — в одном окне.</p>
+<p align="center"><strong>FPV drones, combat and a simpler way to play together.</strong><br>A Windows launcher and installer for a Minecraft 1.12.2 modpack.</p>
 
 <p align="center">
-  <a href="https://github.com/rudyvale/vm-warfare/releases/latest/download/VM-Setup.zip"><strong>Скачать VM</strong></a> ·
-  <a href="pack/READ-ME.md">Инструкция / English</a> ·
-  <a href="https://github.com/rudyvale/vm-warfare/releases">Версии</a> ·
-  <a href="https://github.com/rudyvale/vm-warfare/issues">Сообщить об ошибке</a>
+  <a href="https://github.com/rudyvale/rv-warfare/releases/latest/download/RV-Setup.zip"><strong>Download RV</strong></a> ·
+  <a href="pack/READ-ME.md">Player guide</a> ·
+  <a href="https://github.com/rudyvale/rv-warfare/releases">Releases</a> ·
+  <a href="https://github.com/rudyvale/rv-warfare/issues">Report a bug</a>
 </p>
 
----
+## Start playing
 
-## Начать играть
+1. Download **RV-Setup.zip** from the [latest release](https://github.com/rudyvale/rv-warfare/releases/latest) and extract the entire archive.
+2. Open **INSTALL.cmd**, enter a nickname and click **Install**.
+3. Open **Settings** and enter your host's Porthole connection details or direct address and port.
+4. Click **Play** once the host's server is running.
 
-1. Скачай **VM-Setup.zip** из [последнего релиза](https://github.com/rudyvale/vm-warfare/releases/latest) и распакуй архив целиком.
-2. Открой **УСТАНОВИТЬ.cmd**, введи ник и нажми **Установить**.
-3. Открой **Настройки** и укажи код Porthole хозяина либо прямой адрес и порт.
-4. Нажми **Играть**. Сервер хозяина должен быть запущен.
+Porthole connections require Steam. If Porthole is missing, RV opens its installation in Steam and waits for it to finish. Direct connections do not require Steam. Public downloads contain no personal server destination.
 
-Для Porthole нужен Steam. Если приложение отсутствует, VM откроет его установку в Steam и дождётся загрузки. Для прямого подключения Steam не требуется. Личные данные хозяина не включены в публичный пакет.
+<p align="center"><img src="assets/launcher.png" alt="RV client launcher with separate Play, Install, Check and Update actions" width="780"></p>
 
-<p align="center"><img src="assets/launcher.png" alt="Окно VM: ник, язык, выбор сервера и кнопка запуска" width="680"></p>
+## What is included
 
-## Внутри
-
-| Возможность | Как работает |
+| Feature | What it does |
 | :--- | :--- |
-| **Установка** | Java 8, Forge, библиотеки и сборка; повторное использование проверенных локальных файлов |
-| **FPV** | Газ, наклон, инерция и управление с мыши; разведывательный дрон и вариант с бомбой |
-| **Оружие и звук** | Techguns, MC Heli CE и ресурс-пак боевых звуков |
-| **Подключение** | Porthole: код, Steam peer или lobby; прямой IP/домен и порт |
-| **Обновления** | Фоновая проверка GitHub при открытии, запуске игры и установке; загрузка через **Обновить** |
-| **Сохранение данных** | Ник, язык, адрес сервера, миры и пользовательские файлы; резервные копии заменённых файлов |
-| **Интерфейс** | Русский и английский, системный масштаб Windows, значок `</>` |
+| **Installation** | Sets up Java 8, Forge, libraries and the modpack; reuses verified local files |
+| **FPV flight** | Throttle, tilt, inertia, stabilized and Acro flight; keyboard, mouse and configurable controller input |
+| **Combat** | Techguns, MC Heli CE and a dedicated combat sound pack |
+| **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
+| **Quiet updates** | Checks GitHub in the background when opening, launching or installing |
+| **Your data** | Preserves worlds, nickname, language, connection details and user files; backs up replaced files |
+| **Interface** | English and Russian, Windows display scaling, a simple code icon |
 
-## Обновления без лишних окон
+## Updates that stay out of the way
 
-Проверка выполняется отдельным скрытым процессом. Она не открывает браузер, не показывает консоль и не ждёт ответа GitHub в интерфейсе. При ошибке сети установленная игра остаётся доступной.
+The update check runs in a hidden process. It opens no browser or console and does not hold up the interface while waiting for GitHub. Network failures leave the installed game available. Automatic checks can be disabled in **Settings**, and that choice survives reinstalls and updates.
 
-Проверку можно отключить в настройках. Выбор сохраняется после перезапуска и установки обновлений.
+When a newer stable version is available, click **Update**. RV checks the download's size, SHA-256, archive paths and version before installation. Close the game before replacing its files. [How updates work →](docs/UPDATES.md)
 
-Когда найдена более новая стабильная версия, появляется **Обновить**. После нажатия VM скачивает архив только из Releases этого репозитория, проверяет размер, SHA-256, пути внутри ZIP и версию пакета. Установка использует резервные копии и сохраняет настройки подключения. Игра должна быть закрыта перед заменой файлов.
+## Host a session
 
-<p align="center"><img src="assets/host-launcher.png" alt="Панель хозяина VM с отдельными кнопками игры, запуска и остановки сервера" width="860"></p>
+The host panel has separate **Play**, **Start server** and **Stop server** actions. Closing the panel leaves the server running. Settings include language, server memory, controller configuration and automatic update checks.
 
-Панель хозяина VM тоже проверяет новые версии в фоне. Ссылка **Обновление** появляется только при наличии новой версии. Серверные файлы и мир не заменяются в фоне.
+<p align="center"><img src="assets/host-launcher.png" alt="RV host panel in English with Play, Start server and Stop server buttons" width="100%"></p>
 
-[Подробнее о проверке и выпуске версий →](docs/UPDATES.md)
+**RV-Host-Tools.zip** contains the panel and management scripts for an existing configured server. The optional **RV-World-Template.zip** is a separate clean world for a new server. Existing worlds are never replaced by background updates. [Host setup and requirements →](host/README.md)
 
-## Требования
+## Requirements
 
-- Windows 10 / 11, 64 бита, Windows PowerShell 5.1.
-- Интернет для первой установки и загрузки обновлений.
-- Steam и Porthole для подключения через Steam.
-- Память и свободное место для Minecraft с модами; объём зависит от мира, настроек и дополнительных модов.
+- Windows 10 / 11, 64-bit, with Windows PowerShell 5.1.
+- Internet access for initial installation and update downloads.
+- Steam and Porthole when using Steam-based connections.
+- Enough memory and disk space for modded Minecraft; requirements depend on world size, settings and extra mods.
 
-Java входит в установщик. Python нужен только для разработки и отдельной панели хозяина; клиентскому установщику он не требуется.
+Java is bundled with the installer. Python is needed for development and the separate host panel; the client installer does not require it.
 
-## Структура
+## Repository
 
 ```text
-src/          Лаунчер, установщик и проверка обновлений
-host/         Панель хозяина и скрипты управления сервером
-pack/         Манифесты, конфигурация и инструкция
-patches/      Исходники и инструменты изменений модов
-assets/       Иконка, обложка и скриншот
-tools/        Сборка установочного архива и иконок
-qa/           Проверки установки, интерфейса и обновлений
-docs/         Устройство проекта и выпуск версий
+src/          Client launcher, installer and update checker
+host/         Host panel and server management scripts
+pack/         Manifests, configuration and player guide
+patches/      Mod changes and supporting build tools
+assets/       Code icon, banner and screenshots
+tools/        Packaging, publishing and verification
+qa/           Installation, interface and update checks
+docs/         Development and release documentation
 ```
 
-Установочные бинарные файлы находятся в **Releases**. В Git нет пользовательских миров, журналов, токенов и настроек аккаунтов.
+Downloadable binaries live in **Releases**. Player worlds, account profiles, personal connection settings and logs are excluded from Git.
 
-## Для разработчиков
+See [development instructions](docs/DEVELOPMENT.md), [contribution guidelines](CONTRIBUTING.md), [changes](CHANGELOG.md) and [verification scope](QA.md). Minecraft and the bundled components belong to their respective authors; see [credits and notices](THIRD_PARTY.md).
 
-Инструкция по сборке и проверкам — в [DEVELOPMENT.md](docs/DEVELOPMENT.md). Панель хозяина — [host/README.md](host/README.md). Ограничения проверки перечислены в [QA.md](QA.md); результаты локального тестирования не означают проверку подключения между двумя физическими компьютерами.
-
-## Авторы компонентов
-
-VM объединяет инструменты запуска и изменения сборки. Minecraft, Forge, Java и моды принадлежат своим авторам. Ссылки и сведения о лицензиях: [THIRD_PARTY.md](THIRD_PARTY.md).
-
-<p align="center"><sub>VM Warfare · Minecraft 1.12.2 · Сделано для совместной игры</sub></p>
+<p align="center"><sub>RV Warfare · Minecraft 1.12.2 · Built for playing together</sub></p>
