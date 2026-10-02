@@ -53,7 +53,7 @@ function Start-VmUpdateCheck([string]$Root, [string]$SourceRoot = $PSScriptRoot)
     try {
         $worker = Join-Path $SourceRoot 'Check-WarfareUpdate.ps1'
         if (-not (Test-Path -LiteralPath $worker)) { return }
-        $version = (Get-VmVersion (Get-VmLocalVersion $SourceRoot)).ToString()
+        $version = (Get-VmVersion (Get-VmLocalVersion $Root)).ToString()
         $shell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
         $arguments = '-NoLogo -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $worker + '" -Root "' + $Root.TrimEnd('\') + '" -CurrentVersion "' + $version + '"'
         Start-Process -FilePath $shell -ArgumentList $arguments -WindowStyle Hidden | Out-Null
@@ -80,7 +80,7 @@ function Expand-VmPackage([string]$Archive, [string]$Destination, [string]$Versi
         $reader = [IO.StreamReader]::new($releaseEntry.Open())
         try { $metadata = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
         if ($metadata.version -cne $Version -or $metadata.repository -cne $script:VmRepository) { throw 'Package version does not match the release.' }
-        foreach ($name in @('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico')) {
+        foreach ($name in @('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico')) {
             if (-not $zip.GetEntry('RV-Setup/' + $name)) { throw ('Incomplete package: ' + $name) }
         }
     } finally { $zip.Dispose() }

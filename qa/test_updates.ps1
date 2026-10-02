@@ -45,12 +45,27 @@ Assert-VmUpgrade $new $new
 Reject { Assert-VmUpgrade $old $new } 'Older installer could downgrade existing installation'
 Reject { Assert-VmUpgrade $testRoot $new } 'Unversioned installer could downgrade existing installation'
 'older and unversioned installer downgrade protection: PASS'
+[IO.File]::WriteAllText((Join-Path $old 'Check-WarfareUpdate.ps1'),'fixture')
+$env:VM_SKIP_UPDATE_CHECK = '0'
+function Start-Process { param($FilePath,$ArgumentList,$WindowStyle) $script:capturedArguments=$ArgumentList }
+try {
+    Start-VmUpdateCheck $new $old
+    Assert ($script:capturedArguments -match '-CurrentVersion "1.1.0"') 'Background check used old package version instead of installed version'
+    Set-VmAutoCheck $new $false
+    $script:capturedArguments=$null
+    Start-VmUpdateCheck $new $old
+    Assert (-not $script:capturedArguments) 'Disabled startup launched a worker'
+} finally {
+    Remove-Item Function:Start-Process
+    $env:VM_SKIP_UPDATE_CHECK = '1'
+}
+'background check uses installed version and respects opt-out: PASS'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 function Archive([string]$Name, [string]$Extra='', [string]$Version='1.1.0') {
     $file=Join-Path $testRoot $Name
     $zip=[IO.Compression.ZipFile]::Open($file,'Create')
     try {
-        $names=@('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico','release.json')
+        $names=@('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','code.ico','release.json')
         foreach ($name in $names) {
             $entry=$zip.CreateEntry('RV-Setup/'+$name); $writer=[IO.StreamWriter]::new($entry.Open())
             try { $writer.Write($(if($name -eq 'release.json'){@{version=$Version;repository='rudyvale/rv-warfare'}|ConvertTo-Json}else{'fixture'})) } finally {$writer.Dispose()}

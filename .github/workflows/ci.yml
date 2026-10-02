@@ -34,6 +34,8 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_release_contract.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_world_package.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_host_races.py
