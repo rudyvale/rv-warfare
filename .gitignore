@@ -34,3 +34,4 @@ server.properties
 *.log
 *.lock
 docs/coordination-*.md
+host/porthole-events.jsonl

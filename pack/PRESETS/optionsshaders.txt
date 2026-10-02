@@ -1,5 +1,5 @@
 #Tue Sep 29 22:34:56 MSK 2026
-shaderPack=BSL_v8.2.09p2.zip
+shaderPack=OFF
 antialiasingLevel=0
 normalMapEnabled=true
 specularMapEnabled=true

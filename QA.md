@@ -14,6 +14,13 @@ RV is developed on Windows using Windows PowerShell 5.1. Automated checks live i
 | Host panel | Separate actions, graceful stop, process ownership and concurrent start/stop handling |
 | Protocol | Local Minecraft status requests, partial replies, unrelated TCP services and closed connections |
 | Packaging | ZIP CRC, file allowlists, manifest hashes, public defaults and uploaded release digests |
+| World template | Region headers, complete chunks, spawn access, lighting, borders and byte-identical source rebuild |
+| Player book and menus | Both languages, non-operator delivery, full inventories, equipment preservation, reconnect and restart |
+| Combat runtime | Dedicated server and client loading, rotated tank hulls, turret hits, projectile stopping, wall obstruction, FPV impact and prop damage |
+
+The frozen gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
+
+The 1.0.0 installer was also run with empty application-data directories and no Java on PATH. It verified 1,347 downloaded Minecraft files, ran the bundled Java 8 and passed the installed-file check. Separate upgrade tests preserved Unicode settings, personal mods, worlds and the server list, and backed up the retired managed JAR.
 
 Launch-flow tests substitute external processes. A passing test is not evidence of a connection between two physical computers. A local IPv6 test was skipped on the development machine because Windows rejected loopback traffic with Winsock error 10013; live IPv6 connectivity remains unverified.
 

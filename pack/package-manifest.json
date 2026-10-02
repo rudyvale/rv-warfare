@@ -1,9 +1,9 @@
 {
-  "version": "2026.10.02-vm3",
+  "version": "1.0.0",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "09a920516eb10e25bb39959a34e1530852c2d95274dd6b98ab3dbc831825fa91"
+      "sha256": "6177a9cb270a5f052cdbf5a7924e2a44554dfae0b9af2fbfde6862b7905fb602"
     },
     {
       "path": "runtime.zip",
@@ -12,48 +12,8 @@
   ],
   "managedFiles": [
     {
-      "path": "mods/!!mixinbooter-10.7.jar",
-      "sha256": "8bb53080aede2d2b1e1c5f713bbf49a38f20add8caa3d52fabcdf8a536b55a18"
-    },
-    {
-      "path": "mods/brigo_forge-1.1.1+1.12.x.jar",
-      "sha256": "5f70e2a9c3ca6cd6fcca74405605a7fb2e10c55bfee1dd3abbee2797fe381662"
-    },
-    {
-      "path": "mods/elegant-networking-1.12-3.14.jar",
-      "sha256": "8b4c8bd7dc75c09fea910a6fe02dd451db337c8ce7da6f38f4eac3541e2233b8"
-    },
-    {
-      "path": "mods/foamfix-0.10.15-1.12.2.jar",
-      "sha256": "e6752973cf884f96fcd3835fe6c184b3b4180a27fd955ca07c561cf77e837dda"
-    },
-    {
-      "path": "mods/jei_1.12.2-4.16.1.302.jar",
-      "sha256": "9dbc2c0ec8c28821fdd5dca487909089501607ee25c0e8470c43c9fd0bd12053"
-    },
-    {
-      "path": "mods/journeymap-1.12.2-5.7.1p3.jar",
-      "sha256": "b72c9dd7e6dd0f7438c01ea8e440519bf4a3c0b47674810929a9c899dc98b406"
-    },
-    {
-      "path": "mods/mcheli-ce-1.5.1-warfare-fix8.jar",
-      "sha256": "36ed7fe7e6b45be2d4235036d28bb6ea8edd89713635019833ef53faf8c75ba4"
-    },
-    {
-      "path": "mods/modularui-3.1.6.jar",
-      "sha256": "4c16829c70b322aab735e73f53608fcabbf1d14956d5365c0c2b911c4d4dca54"
-    },
-    {
-      "path": "mods/techguns-1.12.2-2.0.2.0_pre3.2.jar",
-      "sha256": "154d3d794cfd74252f2cec979a6e72f5187bb9c21897ed4b42f45771a0e558f7"
-    },
-    {
-      "path": "mods/WorldEdit-CUI-FE3-1.12.2-3.0.9.jar",
-      "sha256": "f6339650a40b6473d76e38d6c73bb82221a988918d319888c272580489f729da"
-    },
-    {
-      "path": "mods/worldedit-forge-mc1.12.2-6.1.10-dist.jar",
-      "sha256": "cd4768ded9e2b527e3fc093fdf4ce07f058187de7961bdc0d7fa821c1b756f75"
+      "path": "READ-ME.md",
+      "sha256": "9c640dd189f2174f3e18fccdf5e5351a66c616c432b64b17451beb63967a78c4"
     },
     {
       "path": "config/elegant_networking.cfg",
@@ -70,6 +30,22 @@
     {
       "path": "config/forgeChunkLoading.cfg",
       "sha256": "95b66df0da7df0be35ccbc51ad08962b7ddba14f593f0428096547d67fed2378"
+    },
+    {
+      "path": "config/jei/itemBlacklist.cfg",
+      "sha256": "07ca8d1be8d47e47445cb6977acd890d1b277f38b204e6ce1e9dfb9d08cee052"
+    },
+    {
+      "path": "config/jei/jei.cfg",
+      "sha256": "b607c01fd48c87512eb117db037f152a061047440930025196ce4e72aad1402d"
+    },
+    {
+      "path": "config/jei/searchColors.cfg",
+      "sha256": "7b83da77215a643a7e30c3fe102f8ef4530d31842751afcfd4d20cd9fa31c190"
+    },
+    {
+      "path": "config/jei/worldSettings.cfg",
+      "sha256": "856092b1eb04182bdcf8b4238d440555497b6def8fb12c9521239cd0fba82461"
     },
     {
       "path": "config/journeymap_server.cfg",
@@ -100,28 +76,66 @@
       "sha256": "ac352c70f21193f6b67438e52934427873fdd217e39b7edc54c7da64a1b582db"
     },
     {
-      "path": "config/jei/itemBlacklist.cfg",
-      "sha256": "07ca8d1be8d47e47445cb6977acd890d1b277f38b204e6ce1e9dfb9d08cee052"
-    },
-    {
-      "path": "config/jei/jei.cfg",
-      "sha256": "b607c01fd48c87512eb117db037f152a061047440930025196ce4e72aad1402d"
-    },
-    {
-      "path": "config/jei/searchColors.cfg",
-      "sha256": "7b83da77215a643a7e30c3fe102f8ef4530d31842751afcfd4d20cd9fa31c190"
-    },
-    {
-      "path": "config/jei/worldSettings.cfg",
-      "sha256": "856092b1eb04182bdcf8b4238d440555497b6def8fb12c9521239cd0fba82461"
-    },
-    {
       "path": "config/worldedit/worldedit.properties",
       "sha256": "d204c175eadfdde53f56ec16e3d552b110f66fc8174c299c80ce82a58004a0d6"
     },
     {
+      "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin-bomb.yml",
+      "sha256": "f6afe5d5b4031e4a6f060b20e48263beb5496f289d02136147d0428275b0e438",
+      "existingOnly": true
+    },
+    {
+      "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin.yml",
+      "sha256": "c6f1fc0eed40a0211edbdbef4d8eb038e15403d2153735ec0496619a4babe11f",
+      "existingOnly": true
+    },
+    {
+      "path": "mods/!!mixinbooter-10.7.jar",
+      "sha256": "8bb53080aede2d2b1e1c5f713bbf49a38f20add8caa3d52fabcdf8a536b55a18"
+    },
+    {
+      "path": "mods/WorldEdit-CUI-FE3-1.12.2-3.0.9.jar",
+      "sha256": "f6339650a40b6473d76e38d6c73bb82221a988918d319888c272580489f729da"
+    },
+    {
+      "path": "mods/brigo_forge-1.1.1+1.12.x.jar",
+      "sha256": "5f70e2a9c3ca6cd6fcca74405605a7fb2e10c55bfee1dd3abbee2797fe381662"
+    },
+    {
+      "path": "mods/elegant-networking-1.12-3.14.jar",
+      "sha256": "8b4c8bd7dc75c09fea910a6fe02dd451db337c8ce7da6f38f4eac3541e2233b8"
+    },
+    {
+      "path": "mods/foamfix-0.10.15-1.12.2.jar",
+      "sha256": "e6752973cf884f96fcd3835fe6c184b3b4180a27fd955ca07c561cf77e837dda"
+    },
+    {
+      "path": "mods/jei_1.12.2-4.16.1.302.jar",
+      "sha256": "9dbc2c0ec8c28821fdd5dca487909089501607ee25c0e8470c43c9fd0bd12053"
+    },
+    {
+      "path": "mods/journeymap-1.12.2-5.7.1p3.jar",
+      "sha256": "b72c9dd7e6dd0f7438c01ea8e440519bf4a3c0b47674810929a9c899dc98b406"
+    },
+    {
+      "path": "mods/mcheli-ce-1.5.1-rv.jar",
+      "sha256": "c3fd8a25c8124bc9ede55d4de65735d8be6c3115a22d1ec956e9eb0e161ee714"
+    },
+    {
+      "path": "mods/modularui-3.1.6.jar",
+      "sha256": "4c16829c70b322aab735e73f53608fcabbf1d14956d5365c0c2b911c4d4dca54"
+    },
+    {
+      "path": "mods/techguns-1.12.2-rv.jar",
+      "sha256": "fc8d6797101e76b4e05d96072ee5df0ff65d194645a405f8adfcbae342b66dca"
+    },
+    {
+      "path": "mods/worldedit-forge-mc1.12.2-6.1.10-dist.jar",
+      "sha256": "cd4768ded9e2b527e3fc093fdf4ce07f058187de7961bdc0d7fa821c1b756f75"
+    },
+    {
       "path": "resourcepacks/Warfare-Combat-Audio.zip",
-      "sha256": "d3cf2d9a029675436316e58d508f1ddd2875214cfb6e02ce0aafdde29b4a6670"
+      "sha256": "fb1478bcfcf7f45cd56402fd525cd86d7cc21b8b6d928246431c23fb8e4cab7b"
     },
     {
       "path": "resourcepacks/Warfare-UI-fixes.zip",
@@ -130,20 +144,6 @@
     {
       "path": "shaderpacks/BSL_v8.2.09p2.zip",
       "sha256": "5f1bad5c0c3b323b9ce753a1e3a7d138839a14bfa148a078204699a204a32a0b"
-    },
-    {
-      "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin.yml",
-      "sha256": "c6f1fc0eed40a0211edbdbef4d8eb038e15403d2153735ec0496619a4babe11f",
-      "existingOnly": true
-    },
-    {
-      "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin-bomb.yml",
-      "sha256": "f6afe5d5b4031e4a6f060b20e48263beb5496f289d02136147d0428275b0e438",
-      "existingOnly": true
-    },
-    {
-      "path": "READ-ME.md",
-      "sha256": "84895a6e4dc4c1231b6eae81ecc2743251a02951944289ef6158c0fbb981f977"
     }
   ],
   "managedModPatterns": [
