@@ -36,7 +36,7 @@ def read_status(folder, probe=process_identity):
         state = json.loads((folder / 'porthole-state.json').read_text(encoding='utf-8-sig'))
         pid = int(state['pid'])
         identity = probe(pid)
-        if state.get('state') != 'running' or not identity or pathlib.Path(identity['executable']).name.lower() != 'porthole-gnu.exe':
+        if state.get('state') != 'running' or not identity or pathlib.Path(identity['executable']).name.lower() not in ('porthole.exe', 'porthole-gnu.exe'):
             return {}
         started = float(state['startedAt'])
         if abs(started - identity['startedAt']) > 2:
@@ -49,7 +49,7 @@ def read_status(folder, probe=process_identity):
         identity_key = (pid, started, stat.st_ino, int(state.get('port', 25565)))
         cached = _sessions.get(key)
         if not cached or cached['identity'] != identity_key or stat.st_size < cached['offset']:
-            cached = {'identity': identity_key, 'offset': 0, 'partial': b'', 'session_ready': False, 'port_ready': False, 'result': {'pid': pid, 'port': identity_key[3], 'code': '', 'peerTarget': '', 'ready': False}}
+            cached = {'identity': identity_key, 'offset': 0, 'partial': b'', 'session_ready': False, 'port_ready': False, 'lobby_ready': False, 'result': {'pid': pid, 'port': identity_key[3], 'code': '', 'peerTarget': '', 'ready': False}}
             _sessions[key] = cached
         result = cached['result']
         with events.open('rb') as stream:
@@ -72,9 +72,12 @@ def read_status(folder, probe=process_identity):
                 result['peerTarget'] = 'peer:' + str(event['steam_id'])
             elif event.get('event') == 'ready':
                 cached['session_ready'] = True
+            elif event.get('event') == 'lobby_ready' and re.fullmatch(r'[1-9][0-9]{0,19}', str(event.get('lobby_id', ''))):
+                cached['lobby_ready'] = True
             elif event.get('event') == 'port_accepted' and event.get('port') == result['port'] and event.get('proto') == 'tcp':
                 cached['port_ready'] = True
-        result['ready'] = cached['session_ready'] and cached['port_ready']
+        exposed = state.get('exposeTarget') == 'tcp/127.0.0.1:' + str(result['port'])
+        result['ready'] = (cached['session_ready'] and cached['port_ready']) or (cached['lobby_ready'] and exposed and bool(result['code']) and bool(result['peerTarget']))
         return dict(result)
     except (OSError, ValueError, TypeError, KeyError, OverflowError):
         return {}

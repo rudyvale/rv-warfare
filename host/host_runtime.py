@@ -58,6 +58,18 @@ def memory_limit(settings, total=None):
     return max(2, min(8, int(total / 2), value))
 
 
+def server_port(folder):
+    path = Path(folder) / 'server.properties'
+    port = 25565
+    if path.is_file():
+        for line in path.read_text(encoding='utf-8-sig').splitlines():
+            if line.startswith('server-port='):
+                port = int(line.split('=', 1)[1].strip())
+    if not 1 <= port <= 65535:
+        raise ValueError('Invalid server port')
+    return port
+
+
 def server_status(folder=ROOT, probe=None):
     probe = probe or porthole.process_identity
     state = read_json(Path(folder) / 'server-state.json')

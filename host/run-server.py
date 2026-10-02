@@ -6,7 +6,7 @@ import subprocess
 import time
 import traceback
 
-from host_runtime import acquire_lock, java_arguments, porthole, read_json, server_status, write_json
+from host_runtime import acquire_lock, java_arguments, porthole, read_json, server_port, server_status, write_json
 
 
 def run(root):
@@ -26,16 +26,17 @@ def run(root):
     process = None
     try:
         arguments, memory = java_arguments(root, read_json(root / 'launcher-settings.json'))
+        port = server_port(root)
         with socket.socket() as port_check:
             if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
                 port_check.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
-            port_check.bind(('127.0.0.1', 25565))
+            port_check.bind(('127.0.0.1', port))
         commands_path.write_text('', encoding='utf-8')
         save()
         with (root / 'console.log').open('w', encoding='utf-8', buffering=1) as output:
             process = subprocess.Popen(arguments, cwd=root, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT, text=True, encoding='utf-8', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
             identity = porthole.process_identity(process.pid) or {}
-            state.update(pid=process.pid, processStartedAt=identity.get('startedAt'), port=25565, max_memory_gb=memory, phase='loading')
+            state.update(pid=process.pid, processStartedAt=identity.get('startedAt'), port=port, max_memory_gb=memory, phase='loading')
             save()
             offset = 0
             log_offset = 0
