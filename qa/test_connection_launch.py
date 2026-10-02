@@ -3,10 +3,11 @@ import json
 import os
 import shutil
 import subprocess
+import uuid
 from datetime import datetime
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / 'qa/connection-launch'
+BASE = ROOT / 'qa' / ('connection-launch-' + uuid.uuid4().hex)
 PS = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
 ENV = {key: value for key, value in os.environ.items() if key.lower() != 'psmodulepath'}
 ENV['VM_SKIP_UPDATE_CHECK'] = '1'
@@ -14,11 +15,13 @@ source = (ROOT / 'src/Play-Warfare.ps1').read_text(encoding='utf-8-sig')
 start = source.index('function Test-GameServer(')
 end = source.index('\ntry {', start)
 source = source[:start] + '''function Test-GameServer([string]$Address,[int]$ServerPort) {
+    if($scenario.unresponsive){return $null}
     if($scenario.stale -and $ServerPort -eq 30111){return $null}
-    return [PSCustomObject]@{version=[PSCustomObject]@{protocol=340};modinfo=[PSCustomObject]@{modList=@([PSCustomObject]@{modid='mcheli'},[PSCustomObject]@{modid='techguns'})}}
+    $modIds=if($scenario.wrongMods){@('other-mod')}else{@('mcheli','techguns')}
+    return [PSCustomObject]@{version=[PSCustomObject]@{protocol=[int]$scenario.protocol};modinfo=[PSCustomObject]@{modList=@($modIds|ForEach-Object{[PSCustomObject]@{modid=$_}})}}
 }
 ''' + source[end:]
-source = source.replace('.AddMinutes(10)', '.AddMilliseconds(200)').replace('Start-Sleep -Seconds 2', 'Start-Sleep -Milliseconds 10')
+source = source.replace('.AddMinutes(10)', '.AddMilliseconds(200)').replace('.AddSeconds(45)', '.AddMilliseconds(200)').replace('Start-Sleep -Seconds 2', 'Start-Sleep -Milliseconds 10')
 mocks = r'''
 $scenario=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'scenario.json') -Raw | ConvertFrom-Json
 $mockSteam=Join-Path $PSScriptRoot 'steam'
@@ -42,7 +45,12 @@ function Get-Process { param([string]$Name,[int]$Id,$ErrorAction)
         if($scenario.coldSteam -and -not $script:steamStarted){return $null}
         return [PSCustomObject]@{Name='steam'}
     }
-    if($Id -eq 41111){return (New-FakeProcess 41111 $mockPorthole)}
+    if($Id -eq 41111){
+        $oldProcess=New-FakeProcess 41111 $mockPorthole
+        if($scenario.identity -eq 'foreign-path'){$oldProcess.Path=Join-Path $PSScriptRoot 'unrelated.exe'}
+        if($scenario.identity -eq 'reused-pid'){$oldProcess.StartTime=$oldProcess.StartTime.AddHours(1)}
+        return $oldProcess
+    }
     throw 'Unexpected process lookup'
 }
 function Start-Process { param($FilePath,$ArgumentList,$WindowStyle,$WorkingDirectory,$RedirectStandardOutput,$RedirectStandardError,[switch]$PassThru)
@@ -69,7 +77,7 @@ function Start-Process { param($FilePath,$ArgumentList,$WindowStyle,$WorkingDire
 '''
 
 
-def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=False, fail=False, prepare=False, missing=False, partial=False, cold_steam=False, timeout=False):
+def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=False, fail=False, prepare=False, missing=False, partial=False, cold_steam=False, timeout=False, identity='', protocol=340, wrong_mods=False, unresponsive=False):
     game = BASE / name
     game.mkdir(parents=True, exist_ok=True)
     for filename in ['java-args.txt', 'tunnel-args.json', 'killed.txt', 'tunnel-state.json', 'install-requested.txt', 'steam-started.txt']:
@@ -86,7 +94,7 @@ def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=Fal
     settings = dict(nickname='QAPlayer', language='en', connectionMode=mode, connectionTarget=target, serverPort=port)
     (game / 'warfare-settings.json').write_text(json.dumps(settings))
     (game / 'installer-files.json').write_text(json.dumps(dict(classpath=[], mainClass='fixture', assetIndex='1.12')))
-    (game / 'scenario.json').write_text(json.dumps(dict(mode=mode, stale=stale, fail=fail, coldSteam=cold_steam, timeout=timeout)))
+    (game / 'scenario.json').write_text(json.dumps(dict(mode=mode, stale=stale, fail=fail, coldSteam=cold_steam, timeout=timeout, identity=identity, protocol=protocol, wrongMods=wrong_mods, unresponsive=unresponsive)))
     if old:
         ticks = str(int((datetime(2026, 10, 2, 1) - datetime(1, 1, 1)).total_seconds()) * 10_000_000)
         prior = dict(pid=41111, started=ticks, port=30111, target=old[0], remotePort=old[1])
@@ -100,7 +108,7 @@ def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=Fal
         command.append('-Prepare')
     result = subprocess.run(command, env=ENV, capture_output=True, timeout=15)
     status = json.loads((game / 'status.json').read_text(encoding='utf-8-sig'))
-    expected_error = fail or (not target and not prepare) or timeout
+    expected_error = fail or (not target and not prepare) or timeout or (not prepare and (protocol != 340 or wrong_mods or unresponsive))
     assert (result.returncode != 0) == expected_error, (name, result.returncode, status, result.stderr.decode(errors='replace'))
     java = (game / 'java-args.txt').read_text() if (game / 'java-args.txt').exists() else ''
     args = json.loads((game / 'tunnel-args.json').read_text()) if (game / 'tunnel-args.json').exists() else None
@@ -112,7 +120,7 @@ def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=Fal
     elif mode == 'direct':
         assert not args and f'--server {target}' in java and f'--port {port}' in java, (name, args, java)
     else:
-        reuse = bool(old and old == (target, port) and not stale)
+        reuse = bool(old and old == (target, port) and not stale and not identity)
         if reuse:
             assert not args and not killed and '--port 30111' in java, (name, args, killed, java)
         else:
@@ -120,8 +128,10 @@ def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=Fal
             assert args[3] == f'tcp/{port}' and args[5].startswith(f'{port}:'), (name, args)
             local = int(args[5].split(':')[1])
             assert 0 < local < 65536 and f'--port {local}' in java
-            if old:
+            if old and not identity:
                 assert '41111' in killed, (name, killed)
+            if identity:
+                assert '41111' not in killed, 'Unowned or reused PID was stopped: ' + name
     if missing or partial:
         assert (game / 'install-requested.txt').exists(), name
     if cold_steam:
@@ -135,6 +145,11 @@ run('reuse-matching-tunnel', old=('NEWCODE', 25570))
 run('changed-target', old=('OLDCODE', 25570))
 run('changed-remote-port', old=('NEWCODE', 25565))
 run('stale-tunnel', old=('NEWCODE', 25570), stale=True)
+run('foreign-process-is-not-stopped', old=('NEWCODE', 25570), identity='foreign-path')
+run('reused-pid-is-not-stopped', old=('NEWCODE', 25570), identity='reused-pid')
+run('wrong-server-protocol-no-game', protocol=47)
+run('wrong-server-mods-no-game', wrong_mods=True)
+run('listening-tunnel-without-Minecraft-no-game', unresponsive=True)
 run('empty-target', target='')
 run('failed-tunnel-no-game', fail=True)
 run('prepare-existing', prepare=True)
@@ -145,4 +160,4 @@ run('play-installs-Porthole', missing=True)
 run('prepare-timeout-no-game', prepare=True, missing=True, timeout=True)
 run('prepare-direct-no-Steam', mode='direct', target='changed.example', prepare=True)
 run('prepare-direct-empty-target', mode='direct', target='', prepare=True)
-print('16 connection launch integration tests passed')
+print('21 connection launch integration tests passed')
