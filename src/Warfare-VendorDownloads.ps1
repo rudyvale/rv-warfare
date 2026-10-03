@@ -112,7 +112,7 @@ function Open-WarfareVendorResponse {
     throw 'RV_VENDOR_REDIRECT'
 }
 function Receive-WarfareVendorFile {
-    param($File,[string]$PartPath,[Uri]$Uri,[string]$CancelPath,$ProgressAction,[int]$Index,[int]$Count)
+    param($File,[string]$PartPath,[Uri]$Uri,[string]$CancelPath,[scriptblock]$ProgressCallback,[int]$Index,[int]$Count)
     $offset=if (Test-Path -LiteralPath $PartPath -PathType Leaf) { (Get-Item -LiteralPath $PartPath).Length } else { 0L }
     if ($offset -ge [long]$File.size) { Remove-Item -LiteralPath $PartPath -Force; $offset=0L }
     $opened=$null; $downloadStream=$null; $output=$null
@@ -144,7 +144,7 @@ function Receive-WarfareVendorFile {
             $output.Write($buffer,0,$read)
             $received+=$read
             if (([DateTime]::UtcNow-$lastProgress).TotalMilliseconds -ge 250) {
-                Send-WarfareVendorProgress $ProgressAction $File $received ([long]$File.size) $Index $Count 'downloading'
+                Send-WarfareVendorProgress $ProgressCallback $File $received ([long]$File.size) $Index $Count 'downloading'
                 $lastProgress=[DateTime]::UtcNow
             }
         }
@@ -158,7 +158,7 @@ function Receive-WarfareVendorFile {
     }
 }
 function Save-WarfareVendorFiles {
-    param([string]$CatalogPath,[Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{64}$')][string]$ExpectedCatalogSha256,[string]$StageRoot,[string]$CacheRoot,[ValidateSet('client','server')][string]$Side='client',[string]$CancelPath,$ProgressAction)
+    param([string]$CatalogPath,[Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{64}$')][string]$ExpectedCatalogSha256,[string]$StageRoot,[string]$CacheRoot,[ValidateSet('client','server')][string]$Side='client',[string]$CancelPath,[scriptblock]$ProgressCallback)
     $selection=Get-WarfareVendorCatalog -CatalogPath $CatalogPath -Side $Side -ExpectedSha256 $ExpectedCatalogSha256
     $files=@($selection.files)
     $stageRoot=[IO.Path]::GetFullPath($StageRoot).TrimEnd('\')
@@ -189,8 +189,8 @@ function Save-WarfareVendorFiles {
     foreach ($item in $plan) {
         $index++
         Assert-WarfareVendorCancellation $CancelPath
-        if ($item.verified) { Send-WarfareVendorProgress $ProgressAction $item.file ([long]$item.file.size) ([long]$item.file.size) $index $plan.Count 'verified'; continue }
-        if (Test-WarfareVendorFile $item.cache ([long]$item.file.size) $item.file.sha256) { Send-WarfareVendorProgress $ProgressAction $item.file ([long]$item.file.size) ([long]$item.file.size) $index $plan.Count 'cached'; continue }
+        if ($item.verified) { Send-WarfareVendorProgress $ProgressCallback $item.file ([long]$item.file.size) ([long]$item.file.size) $index $plan.Count 'verified'; continue }
+        if (Test-WarfareVendorFile $item.cache ([long]$item.file.size) $item.file.sha256) { Send-WarfareVendorProgress $ProgressCallback $item.file ([long]$item.file.size) ([long]$item.file.size) $index $plan.Count 'cached'; continue }
         New-Item -ItemType Directory -Path (Split-Path -Parent $item.cache) -Force | Out-Null
         $part=$item.cache+'.part'
         Assert-WarfareVendorDirectory $part
@@ -202,7 +202,7 @@ function Save-WarfareVendorFiles {
             try {
                 if (-not (Test-WarfareVendorFile $part ([long]$item.file.size) $item.file.sha256)) {
                     $uri=Assert-WarfareVendorUrl $urls[$attempt % $urls.Count]
-                    Receive-WarfareVendorFile -File $item.file -PartPath $part -Uri $uri -CancelPath $CancelPath -ProgressAction $ProgressAction -Index $index -Count $plan.Count
+                    Receive-WarfareVendorFile -File $item.file -PartPath $part -Uri $uri -CancelPath $CancelPath -ProgressCallback $ProgressCallback -Index $index -Count $plan.Count
                 }
                 if (-not (Test-WarfareVendorFile $part ([long]$item.file.size) $item.file.sha256)) { throw 'RV_VENDOR_DIGEST' }
                 Assert-WarfareVendorCancellation $CancelPath
@@ -214,7 +214,7 @@ function Save-WarfareVendorFiles {
                 if ($lastError -eq 'RV_VENDOR_CANCELLED') { throw }
                 if ($lastError -in @('RV_VENDOR_RANGE','RV_VENDOR_DIGEST','RV_VENDOR_SIZE','RV_VENDOR_ENCODING') -and (Test-Path -LiteralPath $part)) { Remove-Item -LiteralPath $part -Force }
                 if ($attempt -lt 2) {
-                    Send-WarfareVendorProgress $ProgressAction $item.file 0 ([long]$item.file.size) $index $plan.Count 'retrying'
+                    Send-WarfareVendorProgress $ProgressCallback $item.file 0 ([long]$item.file.size) $index $plan.Count 'retrying'
                     for ($delay=0;$delay -lt 10*($attempt+1);$delay++) { Assert-WarfareVendorCancellation $CancelPath; Start-Sleep -Milliseconds 100 }
                 }
             }
@@ -243,7 +243,7 @@ function Save-WarfareVendorFiles {
                     $written.Add($item.target)
                 } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
             }
-            Send-WarfareVendorProgress $ProgressAction $item.file ([long]$item.file.size) ([long]$item.file.size) 0 $plan.Count 'ready'
+            Send-WarfareVendorProgress $ProgressCallback $item.file ([long]$item.file.size) ([long]$item.file.size) 0 $plan.Count 'ready'
         }
     } catch {
         foreach ($path in $written) { if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force } }
@@ -253,7 +253,7 @@ function Save-WarfareVendorFiles {
     } finally { if ($cacheGuard) { $cacheGuard.Dispose() } }
 }
 function Initialize-WarfareVendorStage {
-    param([string]$CatalogPath,[Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{64}$')][string]$ExpectedCatalogSha256,[string]$InstallRoot,[string]$StageRoot,[string]$CacheRoot,[string]$CancelPath,$ProgressAction)
+    param([string]$CatalogPath,[Parameter(Mandatory=$true)][ValidatePattern('^[a-f0-9]{64}$')][string]$ExpectedCatalogSha256,[string]$InstallRoot,[string]$StageRoot,[string]$CacheRoot,[string]$CancelPath,[scriptblock]$ProgressCallback)
     $selection=Get-WarfareVendorCatalog -CatalogPath $CatalogPath -Side client -ExpectedSha256 $ExpectedCatalogSha256
     $oldPath=Join-Path $InstallRoot 'installed-manifest.json'
     $old=$null
@@ -276,7 +276,7 @@ function Initialize-WarfareVendorStage {
         Copy-Item -LiteralPath $item.source -Destination $item.target
         if (-not (Test-WarfareVendorFile $item.target ([long]$item.file.size) $item.file.sha256)) { throw 'RV_VENDOR_DIGEST' }
     }
-    return Save-WarfareVendorFiles -CatalogPath $CatalogPath -ExpectedCatalogSha256 $ExpectedCatalogSha256 -StageRoot $StageRoot -CacheRoot $CacheRoot -Side client -CancelPath $CancelPath -ProgressAction $ProgressAction
+    return Save-WarfareVendorFiles -CatalogPath $CatalogPath -ExpectedCatalogSha256 $ExpectedCatalogSha256 -StageRoot $StageRoot -CacheRoot $CacheRoot -Side client -CancelPath $CancelPath -ProgressCallback $ProgressCallback
 }
 function Get-WarfareVendorError([string]$Message,[ValidateSet('ru','en')][string]$Language='en') {
     $ru=$Language -eq 'ru'

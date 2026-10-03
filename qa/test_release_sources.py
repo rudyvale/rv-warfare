@@ -10,12 +10,55 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from release_contract import write_candidate
+from release_contract import client_source_names, write_candidate
 from verify_release import verify_host_map, verify_sources
 
 
 class ReleaseSourceTests(unittest.TestCase):
     MAP = json.dumps({'schema': 1, 'mcheliSha256': 'a' * 64, 'resources': {'assets/mcheli/models/planes/rv_fp1.mqo': 'b' * 64}}).encode()
+
+    def client_fixture(self, root, missing=None, changed=None):
+        files = {name: ('frozen source ' + name).encode() for name in client_source_names('2.0.0')}
+        files['release.json'] = b'{"version":"2.0.0"}'
+        for name, data in files.items():
+            path = root / 'src' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        for name in ('READ-ME.md', 'server-defaults.json', 'THIRD-PARTY-NOTICES.md', 'vendor-catalog.json'):
+            files[name] = ('frozen pack ' + name).encode()
+            path = root / 'pack' / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(files[name])
+        (root / 'assets').mkdir()
+        (root / 'assets/code.ico').write_bytes(b'icon fixture')
+        files['code.ico'] = b'icon fixture'
+        for name in ('package-manifest.json', 'installer-files.json', 'payload.zip', 'runtime.zip', 'INSTALL.cmd', '\u0423\u0421\u0422\u0410\u041d\u041e\u0412\u0418\u0422\u042c.cmd', 'Play.cmd'):
+            files[name] = b'package fixture'
+        stream = io.BytesIO()
+        with zipfile.ZipFile(stream, 'w') as archive:
+            for name, data in files.items():
+                if name != missing:
+                    archive.writestr('RV-Setup/' + name, b'stale helper' if name == changed else data)
+        stream.seek(0)
+        return zipfile.ZipFile(stream)
+
+    def test_rv2_client_sources_match_checkout(self):
+        with tempfile.TemporaryDirectory(prefix='rv2-sources-') as temporary:
+            with self.client_fixture(Path(temporary)) as archive:
+                verify_sources(archive, Path(temporary), True)
+
+    def test_rv2_cannot_omit_controls_or_connection_profiles(self):
+        for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            with self.subTest(name=name), tempfile.TemporaryDirectory(prefix='rv2-sources-') as temporary:
+                with self.client_fixture(Path(temporary), missing=name) as archive:
+                    with self.assertRaisesRegex(ValueError, 'Missing packaged source: ' + name):
+                        verify_sources(archive, Path(temporary), True)
+
+    def test_rv2_stale_controls_rejected(self):
+        with tempfile.TemporaryDirectory(prefix='rv2-sources-') as temporary:
+            with self.client_fixture(Path(temporary), changed='Warfare-ClientControls.ps1') as archive:
+                with self.assertRaisesRegex(ValueError, 'frozen checkout: Warfare-ClientControls.ps1'):
+                    verify_sources(archive, Path(temporary), True)
 
     def host_archive(self, changed=None, extra=None, missing=None):
         files = {name: ROOT / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}

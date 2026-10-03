@@ -22,7 +22,7 @@ try {
         $plan=$prepared|ConvertFrom-Json
     }
     $progress={param($value) Write-Progress -Activity $value.name -Status $value.state -PercentComplete ([Math]::Min(100,[int](100*$value.received/[Math]::Max(1,$value.total))))}
-    $saved=@(Save-WarfareVendorFiles -CatalogPath $plan.catalogPath -ExpectedCatalogSha256 $plan.catalogSha256 -StageRoot $plan.stage -CacheRoot $CacheRoot -Side server -CancelPath $CancelPath -ProgressAction $progress)
+    $saved=@(Save-WarfareVendorFiles -CatalogPath $plan.catalogPath -ExpectedCatalogSha256 $plan.catalogSha256 -StageRoot $plan.stage -CacheRoot $CacheRoot -Side server -CancelPath $CancelPath -ProgressCallback $progress)
     if ($saved.Count -ne $plan.files) { throw 'RV_VENDOR_CATALOG' }
     if ($StageOnly) { [PSCustomObject]@{state='staged';files=$saved.Count}|ConvertTo-Json -Compress; exit 0 }
     $arguments=@('-X','utf8',$worker,'apply','--server-root',$ServerRoot,'--stage',$plan.stage)

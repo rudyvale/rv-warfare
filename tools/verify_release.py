@@ -6,7 +6,7 @@ from pathlib import Path
 import urllib.request
 import zipfile
 from download_release_base import safe_entries
-from release_contract import checksums, load_addon_map, managed_hashes, managed_policies, require_source_asset, required_mods, retirement_policy, validate_addon_resources
+from release_contract import checksums, client_source_names, load_addon_map, managed_hashes, managed_policies, require_source_asset, required_mods, retirement_policy, validate_addon_resources
 from third_party_sources import load_registry, verify_bundle, verify_vendor_manifest, verify_vendor_payload
 
 
@@ -17,15 +17,15 @@ def require(condition, message):
 
 def verify_sources(archive, tracked_root, client):
     prefix = 'RV-Setup/' if client else ''
+    metadata = json.loads((tracked_root / 'src/release.json').read_text(encoding='utf-8-sig'))
     if client:
-        sources = {name: tracked_root / 'src' / name for name in ('Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json')}
+        sources = {name: tracked_root / 'src' / name for name in client_source_names(metadata['version'])}
         sources['READ-ME.md'] = tracked_root / 'pack/READ-ME.md'
         sources['server-defaults.json'] = tracked_root / 'pack/server-defaults.json'
     else:
         sources = {name: tracked_root / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
         sources.update({name: tracked_root / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
     sources['THIRD-PARTY-NOTICES.md'] = tracked_root / 'pack/THIRD-PARTY-NOTICES.md'
-    metadata = json.loads((tracked_root / 'src/release.json').read_text(encoding='utf-8-sig'))
     if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
         sources['vendor-catalog.json'] = tracked_root / 'pack/vendor-catalog.json'
         sources['Warfare-VendorDownloads.ps1'] = tracked_root / 'src/Warfare-VendorDownloads.ps1'

@@ -104,7 +104,9 @@ def contract(root):
         if registry.get('schema') != 1 or not isinstance(registry.get('mods'), list):
             raise ValueError('RV_VENDOR_OWNERSHIP')
         for item in registry['mods']:
-            if not record_valid(item) or item['id'] != 'rvcompat' or item.get('side') != 'both' or item['id'] in ids or str(target(root, item.get('path'))).casefold() in paths:
+            if not record_valid(item) or item['id'] not in ('rvcompat', 'rvexperience') or item.get('side') != 'both' or item['id'] in ids or str(target(root, item.get('path'))).casefold() in paths:
+                raise ValueError('RV_VENDOR_OWNERSHIP')
+            if item['id'] == 'rvexperience' and (item.get('path') != 'mods/rv-experience-2.0.0.jar' or item.get('fileVersion') != '2.0.0' or item.get('fml') != {'rvexperience': '2.0.0'} or release.get('requiredMods', {}).get('rvexperience') != '2.0.0'):
                 raise ValueError('RV_VENDOR_OWNERSHIP')
             selected.append(dict(item, delivery='host-owned'))
             ids.add(item['id'])

@@ -7,7 +7,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / '.local/player-guide'
 TRIGGER = '/trigger wbook set 1'
-EDITION = 3
+EDITION = 4
 MARKER = '{Inventory:[{id:"minecraft:written_book",tag:{rvGuide:1b,rvGuideVersion:' + str(EDITION) + '}}]}'
 OBJECTIVES = {'wbook': 'trigger', 'wbOnce': 'dummy', 'wbPending': 'dummy', 'wbWait': 'dummy', 'wbUsed': 'dummy', 'wbHas': 'dummy', 'wbEdition': 'dummy'}
 
@@ -41,11 +41,13 @@ def page(title, *paragraphs):
 def pages(language):
     if language == 'ru':
         return [
-            page('RV · Начало', 'T — чат\nE — инвентарь\nJ — карта', 'Меню:\n/trigger menu set 1', 'Потерял книгу?\nМеню → «Книга»\n' + TRIGGER),
+            page('RV · Начало', 'T — чат\nE — инвентарь\nJ — карта', 'F7 — меню игры', 'Потерял книгу?\nF7 → «Книга»\n' + TRIGGER),
             page('Первый запуск', 'В «Играть» выбери мышь и клавиатуру либо USB-пульт.', 'Для пульта выбери устройство и проверь оси. Затем выбери сервер.', 'Настройку можно повторить в лаунчере.'),
             page('Спавн', 'Общая площадка:\nX: 0\nY: 65\nZ: -210', 'Вернуться:\n/trigger spawn set 1', 'Для всех игроков. Команду выбери в меню.'),
-            page('Снаряжение', 'Меню → Набор\n/trigger kit set 1', 'M4, боеприпасы, еда, броня, планшет.', 'До 3 боевых FPV; по одному Герань и FP-1.'),
-            page('Пополнение', '/trigger drone set 1\nДо 3 боевых FPV.', '/trigger wing set 1\nГерань и FP-1.', 'Нужны свободные слоты. После выдачи подожди 5 секунд.'),
+            page('Снаряжение', 'F7 → Снаряжение', 'Выбери оружие, магазины, еду, броню и дроны.', 'Проверь набор, затем подтверди выдачу. Можно оставить свои вещи.'),
+            page('Пополнение', 'Полный инвентарь? Освободи место: набор выдаётся целиком.', 'Повторная выдача — через 10 секунд.', 'Проверь магазины. Патроны разных модов не подходят друг к другу.'),
+            page('Режим игры', 'F7 → Режим', 'Свободная игра — без раунда. Тренировка — для полётов и стрельбы.', 'Для командного раунда выбери команду и снаряжение.'),
+            page('Начало раунда', 'Подтверди набор или оставь свои вещи. Нажми «Готов».', 'Старт — по голосам готовых игроков. Нужны обе команды.', 'До конца отсчёта старт можно отменить.'),
             page('Оружие', 'ЛКМ — огонь\nПКМ — прицел\nR — перезарядка', 'Не сработало? Проверь назначения в Настройки → Управление.'),
             page('Танк', 'ПКМ — сесть.\nW/A/S/D — ехать.\nМышь — навести.\nЛКМ — выстрел.', 'G / СКМ — оружие.\nZ — приближение.\nY — выйти.', 'По умолчанию.\nТекущие — на HUD.'),
             page('Боекомплект', 'R — перезарядка.\nI — груз техники.', 'Проверь боекомплект и выбранное оружие на HUD.', 'Пассажирское место может не управлять пушкой.'),
@@ -72,11 +74,13 @@ def pages(language):
         ]
     if language == 'en':
         return [
-            page('RV · Start here', 'T — chat\nE — inventory\nJ — map', 'Menu:\n/trigger menu set 1', 'Lost this book?\nMenu → Book\n' + TRIGGER),
+            page('RV · Start here', 'T — chat\nE — inventory\nJ — map', 'F7 — game menu', 'Lost this book?\nF7 → Book\n' + TRIGGER),
             page('First launch', 'In Play, choose mouse and keyboard or a USB controller.', 'Select your device and check its axes. Then choose a server.', 'Repeat setup in launcher settings.'),
             page('Spawn', 'Shared lobby:\nX: 0\nY: 65\nZ: -210', 'Return:\n/trigger spawn set 1', 'Everyone can use it. Choose your team in the menu.'),
-            page('Equipment', 'Menu → Kit\n/trigger kit set 1', 'M4, ammo, food, armour, tablet.', 'Up to 3 impact FPVs; one Geran and one FP-1.'),
-            page('Resupply', '/trigger drone set 1\nUp to 3 impact FPVs.', '/trigger wing set 1\nGeran and FP-1.', 'Keep free slots. Wait 5 seconds after a successful request.'),
+            page('Equipment', 'F7 → Equipment', 'Choose your weapon, magazines, food, armour and drones.', 'Check the preview, then confirm. You can keep your existing gear.'),
+            page('Resupply', 'Inventory full? Make room: the whole kit must fit.', 'Wait 10 seconds before requesting another kit.', 'Check magazines. Ammo from different mods does not interchange.'),
+            page('Game mode', 'F7 → Mode', 'Free play has no round. Training is for flying and shooting.', 'For a team round, choose your team and equipment.'),
+            page('Starting a round', 'Confirm a kit or keep your gear. Press Ready.', 'Ready players vote to start. Both teams are required.', 'You can cancel before the countdown ends.'),
             page('Weapons', 'Left click — fire\nRight click — aim\nR — reload', 'No response? Check your key bindings in Options → Controls.'),
             page('Tank', 'Right click — enter.\nW/A/S/D — drive.\nMouse — aim.\nLeft click — fire.', 'G / middle click — weapon.\nZ — zoom.\nY — exit.', 'Default keys.\nCurrent keys: HUD.'),
             page('Ammunition', 'R — reload.\nI — vehicle cargo.', 'Check your ammunition and selected weapon on the HUD.', 'A passenger seat may not control the cannon.'),
@@ -173,7 +177,7 @@ Copy warfare/book_*.mcfunction into the world's data/functions/warfare folder wh
 
 Run `function warfare:book_setup` from the server console once per world. Re-running setup preserves all scores; existing-objective messages are harmless. The base package owns the existing `wlang` objective: 1 = Russian, 2 = English. A missing, zero or unsupported language waits for a selection.
 
-Append `function warfare:book_tick` to the existing `warfare:tick` function AFTER language-selection handlers and starting-kit grants. Do not replace gameLoopFunction or the existing tick. The tick function runs in server context and discovers both existing and new players. Its first check is immediate, then pending requests retry every 20 game ticks (about one second at 20 TPS).
+Append `function warfare:book_tick` to the existing `warfare:tick` function AFTER language-selection handlers. Joining must not grant a combat kit: players choose and confirm equipment in the RV experience menu. Do not replace gameLoopFunction or the existing tick. The tick function runs in server context and discovers both existing and new players. Its first check is immediate, then pending requests retry every 20 game ticks (about one second at 20 TPS).
 
 Optional welcome hook: `function warfare:book_welcome` after starting-kit grants, with @s bound to the joining player. This queues the initial book only if wbOnce is zero; the regular tick also handles discovery without the hook.
 

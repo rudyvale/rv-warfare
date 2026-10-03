@@ -73,7 +73,7 @@ function Quote-Argument([string]$Value) {
 }
 function Has-Package {
     if (-not $script:packageRoot) { return $false }
-    foreach ($name in @('Install-Warfare.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','payload.zip','runtime.zip','package-manifest.json','installer-files.json')) {
+    foreach ($name in (Get-VmPackageFiles (Get-VmLocalVersion $script:packageRoot))) {
         if (-not (Test-Path -LiteralPath (Join-Path $script:packageRoot $name) -PathType Leaf)) { return $false }
     }
     return $true
@@ -271,10 +271,9 @@ function Start-Worker([string]$Mode,[string]$Script,[string[]]$Arguments) {
 function Start-Install {
     Save-Settings
     if (-not (Has-Package)) {
-        $picker = [Windows.Forms.OpenFileDialog]::new()
-        $picker.Title = L 'Выбери Install-Warfare.ps1 в распакованном пакете' 'Choose Install-Warfare.ps1 in the extracted package'
-        $picker.Filter = 'RV installer|Install-Warfare.ps1'
-        try { if ($picker.ShowDialog($form) -ne 'OK') { return }; $script:packageRoot = Split-Path -Parent $picker.FileName } finally { $picker.Dispose() }
+        $status.Text=L 'Загрузка установщика…' 'Downloading the installer…'
+        Start-Worker 'recover' (Join-Path $PSScriptRoot 'Check-WarfareUpdate.ps1') @('-Root',$InstallRoot,'-CurrentVersion','0.0.0','-Download')
+        return
     }
     if (-not (Has-Package)) { throw (L 'Нужен полный актуальный установщик RV. Распакуй новый архив целиком.' 'Use the complete current RV installer. Extract the entire new archive.') }
     Assert-VmUpgrade $script:packageRoot $InstallRoot
@@ -479,7 +478,7 @@ $timer.Add_Tick({
             if ($mode -eq 'prepare') { $script:ready = $true }
             Refresh-Text; return
         }
-        if ($mode -eq 'download') {
+        if ($mode -in @('download','recover')) {
             $update = Get-Content -LiteralPath (Join-Path $InstallRoot '.updates\status.json') -Raw -Encoding UTF8 | ConvertFrom-Json
             if ($update.state -eq 'current') {
                 $script:remoteRelease = $null

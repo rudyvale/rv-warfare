@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import shutil
 import zipfile
-from release_contract import load_addon_map, required_mods, validate_base, validate_output, write_candidate
+from release_contract import client_source_names, load_addon_map, required_mods, validate_base, validate_output, write_candidate
 from third_party_sources import verify_bundle, verify_vendor_manifest
 
 root = Path(__file__).resolve().parents[1]
@@ -51,23 +51,17 @@ if tuple(map(int, version.split('.'))) >= (1, 1, 0):
         raise ValueError('RV 1.1.0 requires a frozen addon resource map')
     mcheli_sha = next(entry['sha256'] for entry in manifest['managedFiles'] if entry['path'] == 'mods/mcheli-ce-1.5.1-rv.jar')
     load_addon_map(addon_map, mcheli_sha)
-scripts = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
-if vendor_catalog is not None:
-    for name in ('Warfare-VendorDownloads.ps1', 'Warfare-Ambience.ps1', 'Warfare-ClientMods.ps1'):
-        if not (root / 'src' / name).is_file():
-            raise ValueError('RV 1.2.0 requires ' + name)
-        scripts.append(name)
+scripts = list(client_source_names(version))
+for name in scripts:
+    if not (root / 'src' / name).is_file():
+        raise ValueError('RV ' + version + ' requires ' + name)
 performance = root / 'src/Warfare-Performance.ps1'
-if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not performance.is_file():
-    raise ValueError('RV 1.1.0 requires Warfare-Performance.ps1')
-if performance.is_file():
+if performance.is_file() and 'Warfare-Performance.ps1' not in scripts:
     scripts.append('Warfare-Performance.ps1')
 first_play = ['Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1']
 for name in first_play:
     source = root / 'src' / name
-    if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not source.is_file():
-        raise ValueError('RV 1.1.0 requires ' + name)
-    if source.is_file():
+    if source.is_file() and name not in scripts:
         scripts.append(name)
 host_scripts = ['README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
 if vendor_catalog is not None:

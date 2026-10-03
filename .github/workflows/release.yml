@@ -71,6 +71,10 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_release_sources.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_managed_payload.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          python -X utf8 qa/test_vendor_catalog.py
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_third_party_sources.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_payload_repack.py
