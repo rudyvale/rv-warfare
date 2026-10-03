@@ -31,7 +31,7 @@ foreach($id in @('mcheli','techguns','firstaid','creativecore','enhancedvisuals'
 }
 'All five vendor duplicates are detected across Forge mod directories with relative paths and no file changes: PASS'
 $extra=Join-Path $root 'mods/1.12.2/second.jar';Jar $extra '{"modList":[{"modid":"firstaid"}]}'
-foreach($name in @('Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-ClientMods.ps1','Warfare-Ambience.ps1','Warfare-Performance.ps1','Warfare-Updates.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
+foreach($name in @('Play-Warfare.ps1','Warfare-Connection.ps1','Warfare-ClientMods.ps1','Warfare-Ambience.ps1','Warfare-Performance.ps1','Warfare-Updates.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1','Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
 New-Item -ItemType Directory -Path (Join-Path $root 'runtime/bin'),(Join-Path $root 'natives') -Force|Out-Null
 [IO.File]::WriteAllText((Join-Path $root 'runtime/bin/java.exe'),'must not be launched')
 [IO.File]::WriteAllText((Join-Path $root 'natives/lwjgl64.dll'),'fixture')

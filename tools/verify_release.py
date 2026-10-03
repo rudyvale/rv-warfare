@@ -26,6 +26,9 @@ def verify_sources(archive, tracked_root, client):
         sources = {name: tracked_root / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
         sources.update({name: tracked_root / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
     sources['THIRD-PARTY-NOTICES.md'] = tracked_root / 'pack/THIRD-PARTY-NOTICES.md'
+    if not client and tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 0):
+        for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            sources[name] = tracked_root / 'src' / name
     if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
         sources['vendor-catalog.json'] = tracked_root / 'pack/vendor-catalog.json'
         sources['Warfare-VendorDownloads.ps1'] = tracked_root / 'src/Warfare-VendorDownloads.ps1'

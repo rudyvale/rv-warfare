@@ -150,6 +150,9 @@ with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as a
     for name in first_play:
         if (package / name).is_file():
             archive.write(package / name, name)
+    if tuple(map(int, version.split('.'))) >= (2, 0, 0):
+        for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            archive.write(package / name, name)
     if tuple(map(int, version.split('.'))) >= (1, 1, 0):
         archive.write(package / 'Warfare-Connection.ps1', 'Warfare-Connection.ps1')
         archive.write(package / 'THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.md')

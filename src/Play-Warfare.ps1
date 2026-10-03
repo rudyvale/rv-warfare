@@ -191,7 +191,7 @@ try {
     Assert-WarfareUniqueMods $gameRoot
     if ($Check) {
         $installed = Get-Content -LiteralPath (Join-Path $gameRoot 'installed-manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        foreach ($entry in $installed.managedFiles | Where-Object { $_.path -notlike 'config/*' }) {
+        foreach ($entry in $installed.managedFiles | Where-Object { $_.path -notlike 'config/*' -and $_.path -cne 'ModularWarfare/mod_config.json' }) {
             $full = [IO.Path]::GetFullPath((Join-Path $gameRoot $entry.path))
             if (-not $full.StartsWith($gameRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid installed file path.' }
             if ($entry.existingOnly -and -not (Test-Path -LiteralPath (Join-Path $gameRoot 'mcheli_addons\default') -PathType Container)) { continue }

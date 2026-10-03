@@ -51,9 +51,9 @@ The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. N
 
 ## RV 2 development preview
 
-The RV 2 player menu is under development. This original first-join screenshot was captured in an isolated client with preliminary module SHA-256 `57d8b18f71f3d59bd1aebc9e94030d72e534438bb4b3bdea7212a1af78caa5e0`. It demonstrates the visible menu; server actions, equipment delivery and multiplayer session behavior still require verification on the corrected build. Stable RV 1.2.1 remains available above.
+The RV 2 player menu is under development. This original first-join screenshot was captured in an isolated client with preliminary module SHA-256 `65ae42b5f627a37d4d1d401a1e99f7fa80c97a79ebe4d538243baadabf832e31`. It demonstrates the visible menu; server actions, equipment delivery and multiplayer session behavior still require verification on the corrected build. Stable RV 1.2.1 remains available above.
 
-![RV 2 first-join player menu in Russian, showing session, equipment and controls tabs](assets/gameplay/rv2-first-join-preview.png)
+![RV 2 first-join player menu in Russian, showing session, equipment and controls tabs](docs/gallery/rv2-menu-preview.png)
 
 ## In game
 
