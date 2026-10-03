@@ -1,5 +1,13 @@
 # Verification scope
 
+## RV 2 Preview verification
+
+The final preview module `7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969` was loaded by both an actual Forge client and dedicated server. Their public projections contain only owned module identities and loaded JAR digests. All 21 build source digests match the committed bytes; the compilation-only GUI API is excluded from the production JAR.
+
+Native checks with one ordinary isolated player confirmed equipment preview versus delivery, existing-item preservation, readiness then cancellation, RU and EN edition-4 guides with 30 pages each, and training/lobby travel. The accepted captures have readable native buttons at 960 × 600 and GUI scale 2. Controller screens were opened without a physical USB device.
+
+Packaging checks include 91 targeted cases, recursive vendor and invitation privacy inspection, source agreement, ZIP paths/CRC, immutable outputs and preview publication policy. Nine world package regressions verify that server authority guards survive staging. Component and fixture results do not establish native multiplayer behavior. Two-player voting, full-inventory rollback, physical controllers, new vendor combat and a full performance matrix remain unverified for RV 2. Historical acceptance below applies to its named earlier releases.
+
 RV is developed on Windows using Windows PowerShell 5.1. Automated checks live in `qa`; the [Windows checks workflow](https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml) shows the result for each pushed source revision.
 
 | Area | Checks |

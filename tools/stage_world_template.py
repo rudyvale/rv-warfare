@@ -33,6 +33,16 @@ def stage(template, functions, output):
     target.mkdir(parents=True)
     for path in sorted(functions.glob('*.mcfunction')):
         shutil.copy2(path, target / path.name)
+    decoration = template / 'data/functions/rvmap'
+    if decoration.is_dir():
+        expected = {'tree_' + str(number).zfill(2) + '.mcfunction' for number in range(1, 13)} | {'plants.mcfunction'}
+        supplied = {path.name for path in decoration.iterdir()}
+        if supplied != expected:
+            raise ValueError('Curated RV map decoration functions are incomplete')
+        destination = world / 'data/functions/rvmap'
+        destination.mkdir(parents=True)
+        for name in sorted(expected):
+            shutil.copy2(decoration / name, destination / name)
     objectives = {}
     for path in sorted(target.glob('*.mcfunction')):
         for name, criteria in re.findall(r'^scoreboard objectives add (\w+) (\w+)', path.read_text(encoding='utf-8'), flags=re.MULTILINE):
@@ -41,11 +51,7 @@ def stage(template, functions, output):
             objectives[name] = criteria
     score = Compound({'Objectives': List[Compound]([Compound({'Name': String(name), 'CriteriaName': String(criteria), 'DisplayName': String('Kills' if name == 'kills' else name)}) for name, criteria in sorted(objectives.items())]), 'PlayerScores': List[Compound]([]), 'Teams': List[Compound]([Compound({'Name': String(name), 'DisplayName': String(name.title()), 'Prefix': String(prefix), 'Suffix': String('§r'), 'AllowFriendlyFire': Byte(0), 'SeeFriendlyInvisibles': Byte(1), 'NameTagVisibility': String('always'), 'DeathMessageVisibility': String('always'), 'CollisionRule': String('always'), 'TeamColor': Byte(color), 'Players': List[String]([])}) for name, color, prefix in [('blue', 9, '§9'), ('red', 12, '§c')]]), 'DisplaySlots': Compound({'slot_1': String('kills')})})
     File({'data': score, 'DataVersion': Int(1343)}).save(world / 'data/scoreboard.dat', gzipped=True)
-    for name in ('blue', 'red'):
-        position = ' '.join(str(value) for value in manifest[name])
-        path = target / (name + '.mcfunction')
-        path.write_text('scoreboard teams join ' + name + ' @s\ntp @s ' + position + '\nspawnpoint @s ' + position + '\nscoreboard players set @s ' + name + ' 0\nfunction warfare:help\n', encoding='utf-8')
-    manifest.update(functionsIncluded=True, playerBookIncluded=True, scoreboardIncluded=True, gameLoopFunction='warfare:tick', bootFunction='warfare:boot', scoreboardPlayerEntries=0, functionCount=len(list(target.glob('*.mcfunction'))), spawn=[0,65,-210], spawnRadius=0)
+    manifest.update(functionsIncluded=True, playerBookIncluded=True, scoreboardIncluded=True, gameLoopFunction='warfare:tick', bootFunction='warfare:boot', scoreboardPlayerEntries=0, functionCount=len(list((world / 'data/functions').rglob('*.mcfunction'))), spawn=[0,65,-210], spawnRadius=0)
     manifest['files'] = {path.relative_to(output).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(world.rglob('*')) if path.is_file()}
     (output / 'world-template-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     (output / 'INSTALL-NEW-WORLD.md').write_text('Extract the world folder into your Forge 1.12.2 server and set level-name=Battlefield-Extended in server.properties. Use the matching RV server mods. Start the server; scoreboard objectives, teams, menus and guide delivery are already initialized. Run function warfare:boot once from the console when using a custom runner. Keep server view-distance=6. Never replace a live world with this template; back it up and merge missing chunks separately. The template contains no player accounts or operator policy.\n', encoding='utf-8')

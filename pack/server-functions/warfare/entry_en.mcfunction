@@ -1,1 +1,1 @@
-tellraw @s [{"text": "RV: ", "color": "gold"}, {"text": "[Menu] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/trigger menu set 1"}}, {"text": "[Book] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/trigger wbook set 1"}, "hoverEvent": {"action": "show_text", "value": "Make one free inventory slot if full."}}]
+rvx open

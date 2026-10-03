@@ -7,6 +7,14 @@ function Get-VmVersion([string]$Value) {
     if ($Value -notmatch '^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Invalid release version.' }
     return [version]($Value.TrimStart('v'))
 }
+function Get-VmPackageFiles([string]$Version) {
+    $names=@('Install-Warfare.ps1','Warfare-Launcher.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Connection.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','package-manifest.json','installer-files.json','payload.zip','runtime.zip','release.json','code.ico')
+    $parsed=Get-VmVersion $Version
+    if($parsed -ge [version]'1.1.0'){$names+=@('Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','THIRD-PARTY-NOTICES.md')}
+    if($parsed -ge [version]'1.2.0'){$names+=@('Warfare-Ambience.ps1','Warfare-ClientMods.ps1','Warfare-VendorDownloads.ps1','vendor-catalog.json','rv-managed-mods.json')}
+    if($parsed -ge [version]'2.0.0'){$names+=@('Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1','READ-ME.md')}
+    return $names
+}
 function Get-VmLocalVersion([string]$Root) {
     try { return [string](Get-Content -LiteralPath (Join-Path $Root 'release.json') -Raw -Encoding UTF8 | ConvertFrom-Json).version } catch { return '0.0.0' }
 }
@@ -90,6 +98,7 @@ function Expand-VmPackage([string]$Archive, [string]$Destination, [string]$Versi
             }
             if ($metadata.requiredMods -isnot [PSCustomObject] -or $metadata.requiredMods.mcheli -isnot [string] -or $metadata.requiredMods.mcheli -cnotmatch '^\S{1,128}$') { throw 'Package server protocol version is missing.' }
         }
+        if((Get-VmVersion $Version) -ge [version]'2.0.0'){foreach($name in Get-VmPackageFiles $Version){if(-not $zip.GetEntry('RV-Setup/'+$name)){throw ('Incomplete package: '+$name)}}}
     } finally { $zip.Dispose() }
     [IO.Compression.ZipFile]::ExtractToDirectory($Archive, $Destination)
     return Join-Path $Destination 'RV-Setup'

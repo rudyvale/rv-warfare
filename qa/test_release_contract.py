@@ -118,6 +118,17 @@ class ReleaseContractTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Invalid required mod'):
                 required_mods({'version': '1.1.0', 'requiredMods': {'mcheli': value}})
 
+    def test_rv2_requires_experience_and_bound_owned_proof(self):
+        metadata = {'version': '2.0.0', 'requiredMods': {'mcheli': 'fixture'}, 'clientRequiredMods': {'mcheli': 'fixture'}, 'vendorCatalogSha256': 'a' * 64}
+        with self.assertRaisesRegex(ValueError, 'shared experience module'):
+            required_mods(metadata)
+        metadata['requiredMods']['rvexperience'] = '2.0.0'
+        metadata['clientRequiredMods']['rvexperience'] = '2.0.0'
+        with self.assertRaisesRegex(ValueError, 'native proof digest'):
+            required_mods(metadata)
+        metadata['managedModsSha256'] = 'b' * 64
+        self.assertEqual(required_mods(metadata), metadata['requiredMods'])
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

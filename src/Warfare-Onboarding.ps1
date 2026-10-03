@@ -1,6 +1,8 @@
 ﻿function Get-WarfareSetupText([string]$Language,[string]$Ru,[string]$En) {
     if ($Language -eq 'en') { return $En }; return $Ru
 }
+. (Join-Path $PSScriptRoot 'Warfare-ClientControls.ps1')
+. (Join-Path $PSScriptRoot 'Warfare-ConnectionProfiles.ps1')
 function Initialize-WarfareSetupUI {
     if(-not ('RvSetupDpi' -as [type])){
         Add-Type @'
@@ -99,6 +101,7 @@ function Show-WarfareOnboarding {
     $profileBefore=if(Test-Path -LiteralPath $profilePath){[IO.File]::ReadAllBytes($profilePath)}else{$null}
     $draft=if($settings.firstPlayDraft){$settings.firstPlayDraft}else{$saved}
     if($draft -and $draft.inputMode -in @('easy','radio','gamepad')){$state.mode=$draft.inputMode}
+    if(-not $Owner -and -not $draft -and (Test-WarfareKeyboardDefaultsReady $Root)){$state.page=2}
     $dialog=[Windows.Forms.Form]::new()
     $dialog.SuspendLayout()
     $dialog.Name='firstPlay';$dialog.Text='RV';$dialog.StartPosition='CenterParent';$dialog.ShowInTaskbar=$false
@@ -162,7 +165,17 @@ function Show-WarfareOnboarding {
     $portLabel=Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Порт' 'Port') 220 26;$portLabel.SetBounds(400,220,160,26)
     $targetInput=[Windows.Forms.TextBox]::new();$targetInput.Name='setupTarget';$targetInput.MaxLength=300;$targetInput.SetBounds(24,252,360,28);$pages[2].Controls.Add($targetInput)
     $portInput=[Windows.Forms.NumericUpDown]::new();$portInput.Name='setupPort';$portInput.Minimum=1;$portInput.Maximum=65535;$portInput.SetBounds(400,252,160,28);$pages[2].Controls.Add($portInput)
-    [void](Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Вставь код подключения от хозяина. Его можно заменить в настройках.' 'Paste the connection code from the host. You can change it in Settings.') 308 92)
+    $importInvite=[RvSetupButton]::new();$importInvite.Name='setupImportInvite';$importInvite.SetBounds(24,298,536,36);$importInvite.Text=Get-WarfareSetupText $Language 'Открыть приглашение' 'Open invitation';$pages[2].Controls.Add($importInvite)
+    $inviteHint=Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Выбери файл .rvinvite от хозяина или введи код подключения.' 'Open the host .rvinvite file or enter a connection code.') 350 64
+    $importInvite.Add_Click({
+        $picker=[Windows.Forms.OpenFileDialog]::new();$picker.Filter='RV invitation|*.rvinvite'
+        try{
+            if($picker.ShowDialog($dialog) -ne 'OK'){return}
+            $invite=ConvertFrom-WarfareInvite -Path $picker.FileName
+            $serverBox.SelectedIndex=$serverChoices.Count-1;$modeBox.SelectedIndex=0;$targetInput.Text=$invite.connection.connectionTarget;$portInput.Value=$invite.connection.serverPort
+            $inviteHint.Text=$invite.label+' · RV '+$invite.version
+        }catch{$errorLabel.Text=Get-WarfareSetupText $Language 'Приглашение повреждено или не подходит для RV.' 'This invitation is damaged or incompatible with RV.'}finally{$picker.Dispose()}
+    })
     $updateServerFields={
         $selected=$serverChoices[$serverBox.SelectedIndex].connection
         $manual=$null -eq $selected
@@ -213,7 +226,7 @@ function Show-WarfareOnboarding {
     $next.Add_Click({try{
         if($state.page -eq 0){
             $state.mode=if($inputChoices[1].Checked){'radio'}elseif($inputChoices[2].Checked){'gamepad'}else{'easy'}
-            if($state.mode -eq 'easy'){if($Owner){& $beginTask 'Keyboard'}else{$state.page=2;& $showPage};return}
+            if($state.mode -eq 'easy'){if($Owner){if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}}else{$state.page=2;& $showPage};return}
             $state.page=1;$state.verified=$null;$deviceBox.Items.Clear();$state.devices=@()
             $brandBox.Items.Clear()
             if($state.mode -eq 'radio'){
@@ -231,7 +244,7 @@ function Show-WarfareOnboarding {
         }elseif($state.page -eq 1){if($Owner){& $completeSetup}else{$state.page=2;& $showPage}}
         elseif($state.mode -eq 'easy'){
             [void](ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString())
-            & $beginTask 'Keyboard'
+            if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}
         }else{& $completeSetup}
     }catch{$errorLabel.Text=Get-WarfareConnectionError $_.Exception.Message $Language}})
     foreach($radio in $inputChoices){$radio.Add_CheckedChanged({& $updateButtons})}

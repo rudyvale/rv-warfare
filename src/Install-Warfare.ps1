@@ -6,6 +6,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $packageRoot = $PSScriptRoot
 . (Join-Path $packageRoot 'Warfare-Connection.ps1')
 . (Join-Path $packageRoot 'Warfare-Performance.ps1')
+if(Test-Path -LiteralPath (Join-Path $packageRoot 'Warfare-ClientControls.ps1')){. (Join-Path $packageRoot 'Warfare-ClientControls.ps1')}
 $defaultsPath = Join-Path $packageRoot 'server-defaults.json'
 $connectionDefaults = if (Test-Path -LiteralPath $defaultsPath) { Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 if (-not $InstallRoot) { $InstallRoot = Join-Path $env:LOCALAPPDATA 'Warfare-1.12.2' }
@@ -50,7 +51,7 @@ if (-not $Nickname) {
     }
 }
 if ($Nickname -notmatch '^[A-Za-z0-9_]{3,16}$') { throw 'Nickname must contain 3–16 letters, numbers or _.' }
-$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($InstallRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
+$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-WarfareGameProcess $_.CommandLine $InstallRoot }
 if ($activeGame) { throw 'Close RV before installing an update / Закрой RV перед обновлением.' }
 New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 $installLock = $null
@@ -79,7 +80,7 @@ if ($release.vendorCatalogSha256) {
         Set-InstallStatus 'installing' $message
     }
     try {
-        $vendors=@(Initialize-WarfareVendorStage -CatalogPath $vendorCatalogPath -ExpectedCatalogSha256 $release.vendorCatalogSha256 -InstallRoot $InstallRoot -StageRoot $stage -CacheRoot (Join-Path $InstallRoot '.vendor-cache') -CancelPath $CancelPath -ProgressAction $vendorProgress)
+        $vendors=@(Initialize-WarfareVendorStage -CatalogPath $vendorCatalogPath -ExpectedCatalogSha256 $release.vendorCatalogSha256 -InstallRoot $InstallRoot -StageRoot $stage -CacheRoot (Join-Path $InstallRoot '.vendor-cache') -CancelPath $CancelPath -ProgressCallback $vendorProgress)
         foreach ($vendor in $vendors) {
             $managed=@($manifest.managedFiles|Where-Object {$_.path -ceq $vendor.path -and $_.sha256 -ceq $vendor.sha256})
             if ($managed.Count -ne 1) { throw 'RV_VENDOR_CATALOG' }
@@ -285,6 +286,7 @@ if ($initialPerformance) {
     Backup-File (Join-Path $InstallRoot 'config\rv-client.properties') 'config/rv-client.properties'
     Set-WarfarePerformanceProfile -Root $InstallRoot -Language $Language -LanguageOnly -Installer
 }
+if(Get-Command Initialize-WarfareClientControls -ErrorAction SilentlyContinue){$null=Initialize-WarfareClientControls -Root $InstallRoot -ReleasePath (Join-Path $packageRoot 'release.json')}
 $settings = if ($previousSettings) { $previousSettings } else { [PSCustomObject]@{} }
 $connection = Get-WarfareConnection -Settings $settings -Defaults $connectionDefaults
 $settings = Set-WarfareConnection -Settings $settings -Connection $connection
@@ -307,6 +309,12 @@ if (Test-Path -LiteralPath $defaultsPath) {
     Copy-Item -LiteralPath $defaultsPath -Destination (Join-Path $InstallRoot 'server-defaults.json') -Force
 }
 Backup-File $oldManifestPath 'installed-manifest.json'
+if([version]$release.version -ge [version]'2.0.0'){
+    foreach($name in @('Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){
+        Backup-File (Join-Path $InstallRoot $name) $name
+        Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
+    }
+}
 Copy-Item -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Destination $oldManifestPath -Force
 } catch {
     for ($index=$rollback.Count-1; $index -ge 0; $index--) {

@@ -1,8 +1,10 @@
-# RV player guide
+# RV 2 Preview player guide
+
+This preview requires an RV 2 client and matching RV 2 server. The stable download and automatic update target remain RV 1.2.1. Multiplayer sessions, physical controllers and combat with the new vendor content still need broader testing.
 
 Extract the entire **RV-Setup.zip**, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation.
 
-On the first **Play**, choose **Mouse and keyboard**, **FPV radio** or **Gamepad**. For a controller, select the actual connected device, check its axes and complete calibration. Then choose your server. RV saves your choice; setup remains available in the launcher.
+On the first **Play**, RV configures missing keyboard controls automatically. Choose a server or import the host's `.rvinvite` file. For an FPV radio or gamepad, select the actual connected device, check its axes and complete calibration in setup. Saved choices remain available in the launcher.
 
 ## Connect and update
 
@@ -17,9 +19,11 @@ If RV reports duplicate gameplay mods, use the relative paths shown in the error
 
 ## Menu and equipment
 
-**T** opens chat, **E** opens inventory and **J** opens the map. Use `/trigger menu set 1` for the RV menu. Restore the field guide through **Menu → Book** or `/trigger wbook set 1`.
+The player menu opens when you join an RV 2 world. **Session** selects a mode and team, confirms readiness and shows the current vote. **Gear** previews equipment before **Equip selection**; **Keep my gear** retains your existing inventory. The server validates these actions.
 
-On an RV server, **Kit** or `/trigger kit set 1` supplies weapons, ammunition, food, armour, a tablet and medical supplies. `/trigger drone set 1` replenishes up to three combat FPV drones; `/trigger wing set 1` supplies Geran and FP-1. Leave free inventory slots and wait five seconds between requests. Use **Spawn** or `/trigger spawn set 1` to return to the shared spawn.
+**Controls** contains device, axis and flight-feel settings. Use **Guide** to request the 30-page field guide in the menu's selected language. **Training** and **Lobby** move you to the world's designated destinations without replacing your gear. Reopen the menu with `/trigger menu set 1` or `/rvx open`.
+
+**T** opens chat, **E** opens inventory and **J** opens the map. Leave enough free slots before confirming equipment. Older kit and team triggers route through the RV 2 server menu and its checks.
 
 ## FPV quadcopter
 

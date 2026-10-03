@@ -6,6 +6,20 @@ import re
 ASSETS = {'RV-Setup.zip', 'RV-Host-Tools.zip', 'RV-World-Template.zip', 'RV-Third-Party-Sources.zip', 'SHA256SUMS.txt'}
 
 
+def client_source_names(version):
+    if not isinstance(version, str) or not re.fullmatch(r'(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)', version):
+        raise ValueError('Invalid release version')
+    number = tuple(map(int, version.split('.')))
+    names = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
+    if number >= (1, 1, 0):
+        names.extend(('Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1'))
+    if number >= (1, 2, 0):
+        names.extend(('Warfare-VendorDownloads.ps1', 'Warfare-Ambience.ps1', 'Warfare-ClientMods.ps1'))
+    if number >= (2, 0, 0):
+        names.extend(('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'))
+    return tuple(names)
+
+
 def require_source_asset(assets, version):
     if tuple(map(int, version.split('.'))) >= (1, 1, 0) and 'RV-Third-Party-Sources.zip' not in assets:
         raise ValueError('RV 1.1.0 requires the original third-party source asset')
@@ -32,6 +46,9 @@ def required_mods(metadata):
             raise ValueError('Invalid RV managed mod proof digest')
         if len((json.dumps(metadata, ensure_ascii=False, indent=2) + '\n').encode('utf-8')) + 3 > 4096:
             raise ValueError('Release metadata exceeds the immutable older updater limit')
+    if tuple(map(int, version.split('.'))) >= (2, 0, 0):
+        if not mods.get('rvexperience') or not metadata.get('managedModsSha256'):
+            raise ValueError('RV 2.0.0 requires the shared experience module and its source/binary/native proof digest')
     return mods
 
 

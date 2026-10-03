@@ -41,6 +41,10 @@ function New-Instance([string]$Name,$Settings=@{},$Defaults=$null){
 }
 function Read-Settings([string]$Root){Get-Content -LiteralPath (Join-Path $Root 'warfare-settings.json') -Raw -Encoding UTF8|ConvertFrom-Json}
 function Find-Control($Window,[string]$Name){@($Window.Controls.Find($Name,$true))[0]}
+function Open-ControlChoice($Window){
+    if((Find-Control $Window 'setupPage2').Visible){(Find-Control $Window 'setupBack').PerformClick()}
+    if(-not(Find-Control $Window 'setupPage0').Visible){throw 'Control choice page is not visible'}
+}
 function Assert-SetupBounds($Window){
     foreach($page in 0..2){
         $panel=Find-Control $Window ('setupPage'+$page)
@@ -86,7 +90,7 @@ function Capture-Window($Window,[string]$Name){
 try {
     $personal=@{nickname='Tester';language='ru';memoryMB=2560;unknown=@{text='личное'};connectionMode='direct';connectionTarget='saved.example';serverPort=25570}
     $root=New-Instance 'Отмена' $personal
-    $result=Run-Wizard $root {param($w);Capture-Window $w 'first-play-ru.png';(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupCancel').PerformClick()}
+    $result=Run-Wizard $root {param($w);Open-ControlChoice $w;Capture-Window $w 'first-play-ru.png';(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupCancel').PerformClick()}
     $saved=Read-Settings $root
     if($result.completed -or $saved.firstPlay -or $saved.firstPlayDraft.inputMode -ne 'radio' -or $saved.memoryMB -ne 2560 -or $saved.unknown.text -ne 'личное' -or $saved.connectionTarget -ne 'saved.example'){throw 'Cancel changed saved state'}
     Record 'Cancel stores a draft and preserves connection and unknown preferences'
@@ -96,9 +100,8 @@ try {
     $root=New-Instance 'Keyboard public' @{nickname='Tester';unknown='retain'}
     $result=Run-Wizard $root {param($w)
         $next=Find-Control $w 'setupNext'
-        if($script:step -eq 0){if(-not (Find-Control $w 'inputEasy').Checked){throw 'Keyboard is not default'};$next.PerformClick();$script:step++;return}
-        if(-not (Find-Control $w 'setupPage2').Visible){return}
-        if($script:step -eq 1){
+        if($script:step -eq 0){
+            if(-not (Find-Control $w 'inputEasy').Checked -or -not (Find-Control $w 'setupPage2').Visible){throw 'Fresh keyboard setup did not start at the server choice'}
             if((Find-Control $w 'setupServer').Items.Count -ne 1 -or (Find-Control $w 'setupTarget').Text){throw 'Public setup has private defaults'}
             $next.PerformClick()
             if((Find-Control $w 'setupStatus').Text -ne 'Укажи сервер в настройках.'){throw 'Empty target not rejected'}
@@ -107,8 +110,8 @@ try {
         (Find-Control $w 'setupTarget').Text='abcd12';$next.PerformClick()
     }
     $saved=Read-Settings $root
-    if(-not $result.completed -or $saved.firstPlay.inputMode -ne 'easy' -or $saved.connectionTarget -ne 'ABCD12' -or $saved.unknown -ne 'retain' -or -not(Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt'))){throw 'Keyboard/public setup failed'}
-    Record 'Keyboard uses the bridge, validates an empty public target and saves the current code'
+    if(-not $result.completed -or $saved.firstPlay.inputMode -ne 'easy' -or $saved.connectionTarget -ne 'ABCD12' -or $saved.unknown -ne 'retain' -or (Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt')) -or (Test-Path -LiteralPath (Join-Path $root 'config/vm-controller.properties'))){throw 'Keyboard/public setup failed'}
+    Record 'Fresh keyboard defaults skip the bridge, validate an empty public target and save the current code'
     $script:called=$false
     $result=Show-WarfareOnboarding -Root $root -Parent $parent
     if(-not $result.completed -or @([Windows.Forms.Application]::OpenForms|Where-Object Name -eq firstPlay).Count){throw 'Completed setup reopened'}
@@ -116,6 +119,15 @@ try {
     $result=Run-Wizard $root {param($w);(Find-Control $w 'setupCancel').PerformClick()} -Reconfigure
     if($result.completed -or -not(Read-Settings $root).firstPlay.completed){throw 'Reconfigure cancel destroyed completed setup'}
     Record 'Reconfigure remains available and cancelling retains the previous setup'
+    $root=New-Instance 'Keyboard from radio' $personal
+    $profile=Join-Path $root 'config/vm-controller.properties'
+    [IO.File]::WriteAllText($profile,"enabled=true`r`nkeyboardFlight=pro`r`n",[Text.UTF8Encoding]::new($false))
+    $result=Run-Wizard $root {param($w)
+        if((Find-Control $w 'setupPage0').Visible){(Find-Control $w 'inputEasy').Checked=$true;(Find-Control $w 'setupNext').PerformClick();return}
+        if((Find-Control $w 'setupPage2').Visible -and (Find-Control $w 'setupNext').Enabled){(Find-Control $w 'setupNext').PerformClick()}
+    }
+    if(-not $result.completed -or $result.settings.firstPlay.inputMode -ne 'easy' -or -not(Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt')) -or [IO.File]::ReadAllText($profile) -cne 'enabled=false'){throw 'Existing radio profile did not use the Keyboard bridge'}
+    Record 'Switching an existing radio profile to keyboard applies the explicit Keyboard bridge'
     $root=New-Instance 'Keyboard cancelled profile' (@{firstPlay=@{schema=1;completed=$true;scope='client';inputMode='radio';device='old-device'};connectionMode='direct';connectionTarget='saved.example';serverPort=25565})
     $profile=Join-Path $root 'config/vm-controller.properties';[IO.File]::WriteAllText($profile,"enabled=true`r`nroll.axis=3`r`nunknown=личное`r`n",[Text.UTF8Encoding]::new($false));$before=[IO.File]::ReadAllBytes($profile)
     $result=Run-Wizard $root {param($w)
@@ -137,7 +149,7 @@ try {
     Record 'Private friend default is preselected and both languages fit without overlap'
     $root=New-Instance 'No device' $personal
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputGamepad').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputGamepad').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1 -and (Find-Control $w 'setupPage1').Visible -and (Find-Control $w 'setupRescan').Enabled){
             if((Find-Control $w 'setupDevice').Items.Count -ne 0 -or (Find-Control $w 'setupNext').Enabled -or (Find-Control $w 'setupCalibrate').Enabled){throw 'Nonexistent device accepted'}
             if((Find-Control $w 'setupStatus').Text -notmatch 'не найдено'){throw 'Missing-device message absent'}
@@ -154,7 +166,7 @@ try {
         $script:inputKind=$kind
         $result=Run-Wizard $root {param($w)
             $next=Find-Control $w 'setupNext';$calibrate=Find-Control $w 'setupCalibrate'
-            if($script:step -eq 0){(Find-Control $w $(if($script:inputKind -eq 'radio'){'inputRadio'}else{'inputGamepad'})).Checked=$true;$next.PerformClick();$script:step++;return}
+            if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w $(if($script:inputKind -eq 'radio'){'inputRadio'}else{'inputGamepad'})).Checked=$true;$next.PerformClick();$script:step++;return}
             if((Find-Control $w 'setupPage2').Visible){$next.PerformClick();return}
             if(-not $calibrate.Enabled){return}
             if($script:step -eq 1){
@@ -173,7 +185,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $root 'fixture-devices.json'),'[{"id":"test|device|4","name":"USB test controller","kind":"radio","axisCount":4}]')
     [IO.File]::WriteAllText((Join-Path $root 'fixture-behavior.txt'),'saved')
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1 -and (Find-Control $w 'setupCalibrate').Enabled){(Find-Control $w 'setupCalibrate').PerformClick();$script:step++;return}
         if($script:step -eq 2 -and (Find-Control $w 'setupNext').Enabled){(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 3 -and (Find-Control $w 'setupPage2').Visible){(Find-Control $w 'setupCancel').PerformClick()}
@@ -201,7 +213,7 @@ while(-not (Test-Path -LiteralPath $CancelPath)){Start-Sleep -Milliseconds 100}
     [IO.File]::WriteAllText((Join-Path $root 'Configure-Controller.ps1'),$hung,[Text.UTF8Encoding]::new($true))
     $cancelStart=[DateTime]::UtcNow
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1){if(-not (Find-Control $w 'setupCancel').Enabled){throw 'Cannot cancel a running scan'};(Find-Control $w 'setupCancel').PerformClick();$script:step++}
     }
     if($result.completed -or ([DateTime]::UtcNow-$cancelStart).TotalSeconds -gt 6){throw 'Scan cancellation did not finish promptly'}
@@ -210,7 +222,7 @@ while(-not (Test-Path -LiteralPath $CancelPath)){Start-Sleep -Milliseconds 100}
     [IO.File]::WriteAllText((Join-Path $root 'Configure-Controller.ps1'),'param($ReportPath,$CancelPath);while($true){Start-Sleep -Milliseconds 100}',[Text.UTF8Encoding]::new($true))
     $timeoutStart=[DateTime]::UtcNow
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++}
     }
     $elapsed=([DateTime]::UtcNow-$timeoutStart).TotalSeconds
     if($result.completed -or $elapsed -lt 20 -or $elapsed -gt 25){throw 'Hung scan was not bounded'}

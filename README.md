@@ -37,7 +37,7 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 | **Aircraft** | A quadcopter, combat FPV, Geran and FP-1 with distinct models and flight behaviour |
 | **Combat** | Techguns and MC Heli CE, tank controls, server-confirmed damage feedback and combat audio |
 | **Medical care** | First Aid wounds and timed healing, with configurable visual effects |
-| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, new roads and buildings, equipment menus and a 28-page book in each language |
+| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, roads and buildings; a 28-page guide in stable RV 1.2.1 and a 30-page guide in RV 2 Preview, in each language |
 | **First-play setup** | Actual device selection, calibration and server selection; cancelled setup preserves saved choices |
 | **Graphics profiles** | Low, Balanced and Quality applied explicitly; language changes preserve graphics settings |
 | **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
@@ -48,6 +48,23 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 RV 1.2 adds AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles with IAV and VEB, ModularWarfare and MCglTF. The installer downloads the eight exact vendor files from their official sources and verifies SHA-256 before changing the installation. Those files are not rehosted in this repository or its releases. See the [compatibility notes](docs/COMPATIBILITY.md) for versions, dependencies and download rights.
 
 The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content: cross-mod damage, cannon firing and physical audio direction are not fully verified.
+
+## RV 2 Preview
+
+RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with equipment previews, explicit confirmation, readiness and server validation. The installer configures missing keyboard controls automatically and can import a host's local invitation. Use matching RV 2 client and server versions. Stable RV 1.2.1 remains the automatic update target.
+
+![RV 2 player equipment menu in English, with weapon choices and explicit equipment confirmation](docs/gallery/rv2-gear.png)
+
+<details>
+<summary>Flight-feel controls and session readiness</summary>
+
+![RV 2 flight-feel controls for deadzone, expo, turn speed and smoothing](docs/gallery/rv2-controls.png)
+
+![RV 2 session menu after cancelling readiness](docs/gallery/rv2-session.png)
+
+</details>
+
+These are original captures from the final preview module, tested with one isolated ordinary player and a dedicated Forge server. Equipment confirmation, readiness cancellation, both guide languages and travel destinations passed native checks. Two-player sessions, physical controllers, full-inventory rollback and new vendor combat remain outside that acceptance. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
 
 ## In game
 

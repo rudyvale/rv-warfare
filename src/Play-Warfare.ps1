@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $gameRoot = $PSScriptRoot
 . (Join-Path $gameRoot 'Warfare-Connection.ps1')
 . (Join-Path $gameRoot 'Warfare-Performance.ps1')
+if(Test-Path -LiteralPath (Join-Path $gameRoot 'Warfare-ClientControls.ps1')){. (Join-Path $gameRoot 'Warfare-ClientControls.ps1')}
 . (Join-Path $gameRoot 'Warfare-Updates.ps1')
 if (-not $Check -and -not $Prepare) { Start-VmUpdateCheck $gameRoot $gameRoot }
 $script:language = 'ru'
@@ -190,7 +191,7 @@ try {
     Assert-WarfareUniqueMods $gameRoot
     if ($Check) {
         $installed = Get-Content -LiteralPath (Join-Path $gameRoot 'installed-manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
-        foreach ($entry in $installed.managedFiles | Where-Object { $_.path -notlike 'config/*' }) {
+        foreach ($entry in $installed.managedFiles | Where-Object { $_.path -notlike 'config/*' -and $_.path -cne 'ModularWarfare/mod_config.json' }) {
             $full = [IO.Path]::GetFullPath((Join-Path $gameRoot $entry.path))
             if (-not $full.StartsWith($gameRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid installed file path.' }
             if ($entry.existingOnly -and -not (Test-Path -LiteralPath (Join-Path $gameRoot 'mcheli_addons\default') -PathType Container)) { continue }
@@ -203,6 +204,7 @@ try {
     try { $launchLock = [IO.File]::Open((Join-Path $gameRoot '.launch.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw (Text 'Запуск уже выполняется. Подожди.' 'A launch is already in progress. Please wait.') }
     $activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-WarfareGameProcess $_.CommandLine $gameRoot }
     if ($activeGame) { Set-Status 'running' (Text 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'); exit 0 }
+    if(Get-Command Initialize-WarfareClientControls -ErrorAction SilentlyContinue){$null=Initialize-WarfareClientControls -Root $gameRoot}
     $requiredMods=if(-not $Prepare){Get-WarfareRequiredMods $gameRoot}else{$null}
     $defaults = $null
     $defaultsFile = Join-Path $gameRoot 'server-defaults.json'
@@ -277,7 +279,12 @@ try {
         if(-not $response){throw 'timeout'}
     } elseif (-not $Prepare) {
         Set-Status 'connecting' (Text 'Проверка адреса сервера…' 'Checking server address…')
-        $response = Test-GameServer $Server $Port
+        $directDeadline=[DateTime]::UtcNow.AddSeconds(45)
+        do{
+            $response = Test-GameServer $Server $Port
+            if($response){break}
+            if([DateTime]::UtcNow -lt $directDeadline){Start-Sleep -Milliseconds 500}
+        }while([DateTime]::UtcNow -lt $directDeadline)
         if (-not $response) { throw 'server_offline' }
     }
     if ($Prepare) { Set-Status 'ready' (Text 'Готово к запуску.' 'Ready to play.'); exit 0 }

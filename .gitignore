@@ -33,5 +33,6 @@ whitelist.json
 server.properties
 *.log
 *.lock
+*.rvinvite
 docs/coordination-*.md
 host/porthole-events.jsonl

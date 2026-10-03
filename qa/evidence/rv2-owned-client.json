@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "mods": {
+    "rvcompat": "1.2.0",
+    "rvexperience": "2.0.0"
+  },
+  "artifacts": {
+    "mods/rv-experience-2.0.0.jar": "7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969",
+    "mods/rv-vehicle-compat-1.2.0.jar": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4"
+  }
+}

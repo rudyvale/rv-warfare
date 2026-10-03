@@ -4,34 +4,72 @@
     {
       "id": "rvcompat",
       "path": "mods/rv-vehicle-compat-1.2.0.jar",
-      "size": 4941,
-      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4",
       "fileVersion": "1.2.0",
       "side": "both",
-      "expectedModIds": [
-        "rvcompat"
-      ],
       "fml": {
         "rvcompat": "1.2.0"
       },
-      "nativeReceiptSha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11",
       "sourceFiles": {
         "patches/compat/RVVehicleCompat.java": "043e2876ecaf8efaced6f11da0edcc3ab4fb4c4207a48fda0ebd4fa446f7aff9",
         "patches/compat/NOTICE.txt": "b1bfc61a38efbb0e5791b3e7f70b2ce15e4df64173b5cf9ad8c34c5735b9d7cf",
         "tools/build_vehicle_compat.py": "55b9b7c8c75fb609c6640e9eeaa1dbd253ecff3ac987450f31d218a8d08044db"
-      }
+      },
+      "size": 4941,
+      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4",
+      "expectedModIds": [
+        "rvcompat"
+      ],
+      "nativeReceiptSha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
+    },
+    {
+      "id": "rvexperience",
+      "path": "mods/rv-experience-2.0.0.jar",
+      "fileVersion": "2.0.0",
+      "side": "both",
+      "fml": {
+        "rvexperience": "2.0.0"
+      },
+      "sourceFiles": {
+        "patches/experience/client/ClientProxy.java": "167e2d7af6e1a74882ad12ce47d0e2e2314dd5bcd149e894a59374408bee4653",
+        "patches/experience/client/ClientSnapshotHandler.java": "6b74df14c9a076fb8bc0a0c64d82a4fe51671dc6b3c3412261ac827a65004c07",
+        "patches/experience/client/ClientState.java": "04bd86aff4dcfb381336a719eecb1541534ee1ef1b9406ae2367cf1809591ad0",
+        "patches/experience/client/ControlDraft.java": "4b750b9912e5e43103a78b5dd0c356360a8b692a1e9915e611399188947ea5d3",
+        "patches/experience/client/ExperienceScreen.java": "44a3d620ee26ef8228164eae38d7eeee30423880ae61f380582ea4205729b9f3",
+        "patches/experience/client/Native.java": "96cffad6faa8c606a1df4b24e3213e23b807da3e012678e6094e4ce2214636d1",
+        "patches/experience/protocol/ExperienceProtocol.java": "b3083fe7a74663e14b2243eef3572d80a671844c5a72d3096fa47cadadb19422",
+        "patches/experience/protocol/SessionRequest.java": "349d503c5dbb17db2af1b7dc54946a33787e7fb45187044790ec1b2676e6975b",
+        "patches/experience/protocol/SessionSnapshot.java": "a06740fddf7623bae83938c556cc1275477dd22f751d6f3ecc7190021d648e85",
+        "patches/experience/RVExperience.java": "8c1285832530b5f3f4f9d6f466faa7fc76ef90510ebc0b10353e5ba7e5805ac8",
+        "patches/experience/server/CommonProxy.java": "f960ea91df3e83487f01541117cab5e11aefe7a7cec8151abcee4dec4a0a3f6f",
+        "patches/experience/server/ExperienceServer.java": "b85098213986f462d54e7d04babfc1a5386037f5e826eebf36cd5b3426a91f1c",
+        "patches/experience/server/GearCatalog.java": "8c674cd7f69fa124ca53c399931b4f32b65364633b30a54a7ae73d7bd3b8cbb6",
+        "patches/experience/server/GearChoices.java": "2d9c0e6550d915a267c90a45b2cca49bcd91ea638c69e1a63aceb83b49f7b5c1",
+        "patches/experience/server/MinecraftInventory.java": "d058932784c2b9647c15a894b1d582fa5e2cad39e09fad6940d8b9e39bbf218b",
+        "patches/experience/server/Reflect.java": "eaf0ad090aecd90132793c3ae038103fa5f95bdc91473125280fe375837a3479",
+        "patches/experience/server/ServerRequestHandler.java": "9eb45b0f967132c334c7732e4bdbb7b1b05ab5c0b157ba05cc17ec807b322ab7",
+        "patches/experience/server/SessionEngine.java": "af135e45b5c0300dc4601ac88aac4683183e2aa0c4731ef63d04e6997f32c4fe",
+        "patches/experience/NOTICE.txt": "9bf3957aabefc248ca7bb0c581dbe8750a95c3e9403f4cb2ce90637ed1278a5f",
+        "tools/build_experience.py": "2211a67507473185a6e0d1790788aa88d65734b8212febf9c24384030d3fc915",
+        "patches/experience-api/net/minecraft/client/gui/GuiScreen.java": "f65d729c524604130ae114070b437038eca656151859dd1f1ca05553b2216b81"
+      },
+      "size": 79371,
+      "sha256": "7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969",
+      "expectedModIds": [
+        "rvexperience"
+      ],
+      "nativeReceiptSha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
     }
   ],
   "nativeReceipts": [
     {
       "side": "client",
-      "path": "qa/evidence/rv-compat-client.json",
-      "sha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11"
+      "path": "qa/evidence/rv2-owned-client.json",
+      "sha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
     },
     {
       "side": "server",
-      "path": "qa/evidence/rv-compat-server.json",
-      "sha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11"
+      "path": "qa/evidence/rv2-owned-server.json",
+      "sha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
     }
   ]
 }

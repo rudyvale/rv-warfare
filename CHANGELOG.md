@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.0.0 Preview
+
+- Adds a native player menu for sessions, equipment and controls, with decisions validated by the server.
+- Previews equipment before confirmation, preserves existing items, and supports withdrawing readiness.
+- Configures missing keyboard controls automatically and supports local connection profiles and host invitations.
+- Delivers the 30-page RU or EN field guide through the ordinary player's selected language.
+- Binds owned modules to exact sources and actual client/server loaded-artifact digests; public archives reject private invitations and connection defaults.
+- Publishes as a preview while stable 1.2.1 remains the update target. Two-player sessions, full-inventory rollback, physical controllers and new vendor combat require further testing.
+
 ## 1.2.1
 
 - Fix server startup preparation so stock addon updates and pending graphics profiles run before the runner publishes its starting state. The vendor download mutex, port reservation and stop handling remain active.
