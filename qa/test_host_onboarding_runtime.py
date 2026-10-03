@@ -30,7 +30,7 @@ actual = root / 'actual-host'
 actual.mkdir(parents=True)
 for name in ('Join-Server.ps1', 'Launch-Warfare.ps1', 'host_runtime.py', 'porthole-status.py'):
     shutil.copy2(ROOT / 'host' / name, actual / name)
-for name in ('Configure-Controller.ps1', 'Configure-FirstPlay.ps1', 'Warfare-Onboarding.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1'):
+for name in ('Configure-Controller.ps1', 'Configure-FirstPlay.ps1', 'Warfare-Onboarding.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
     shutil.copy2(ROOT / 'src' / name, actual / name)
 host_runtime.write_json(actual / 'server-state.json', production_before)
 host_runtime.write_json(root / 'server-state.json', production_before)
@@ -39,7 +39,7 @@ game = fake_appdata / '.minecraft/versions/Warfare-1.12.2'
 (game / 'mods').mkdir(parents=True)
 (game / 'config').mkdir()
 shutil.copy2(args.candidate, game / 'mods/mcheli.jar')
-for name in ('Configure-Controller.ps1', 'Configure-FirstPlay.ps1', 'Warfare-Onboarding.ps1', 'Warfare-Connection.ps1'):
+for name in ('Configure-Controller.ps1', 'Configure-FirstPlay.ps1', 'Warfare-Onboarding.ps1', 'Warfare-Connection.ps1', 'Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
     if args.missing_helper and name == 'Configure-Controller.ps1':
         continue
     shutil.copy2(ROOT / 'src' / name, game / name)

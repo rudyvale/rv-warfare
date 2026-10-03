@@ -18,7 +18,7 @@ public final class MinecraftInventory implements SessionEngine.Inventory {
     private int count(Object stack)throws Exception{return empty(stack)?0:((Number)Reflect.call(stack,new String[]{"getCount","func_190916_E"})).intValue();}
     private void count(Object stack,int value)throws Exception{Reflect.call(stack,new String[]{"setCount","func_190920_e"},value);}
     private int meta(Object stack)throws Exception{return ((Number)Reflect.call(stack,new String[]{"getMetadata","func_77960_j"})).intValue();}
-    private String registry(Object stack)throws Exception{return Reflect.call(Reflect.call(stack,new String[]{"getItem","func_77973_b"}),new String[]{"getRegistryName"}).toString();}
+    private String registry(Object stack)throws Exception{Object item=Reflect.call(stack,new String[]{"getItem","func_77973_b"});return Class.forName("net.minecraftforge.registries.IForgeRegistryEntry").getMethod("getRegistryName").invoke(item).toString();}
     private Object copy(Object stack)throws Exception{return Reflect.call(stack,new String[]{"copy","func_77946_l"});}
     private Object create(GearCatalog.Entry e,int count)throws Exception{Class<?> itemClass=Class.forName("net.minecraft.item.Item"),stackClass=Class.forName("net.minecraft.item.ItemStack");return stackClass.getConstructor(itemClass,int.class,int.class).newInstance(item(e.item),count,e.metadata);}
     private boolean matches(Object stack,GearCatalog.Entry entry)throws Exception{return !empty(stack)&&registry(stack).equals(entry.item)&&(entry.stack==1||meta(stack)==entry.metadata);}

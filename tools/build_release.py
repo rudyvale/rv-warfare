@@ -64,6 +64,7 @@ for name in first_play:
     if source.is_file() and name not in scripts:
         scripts.append(name)
 host_scripts = ['README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
+host_scripts.append('invitations.py')
 if vendor_catalog is not None:
     for name in ('server_vendors.py', 'Install-ServerVendors.ps1', 'Warfare-VendorDownloads.ps1'):
         if not (root / 'host' / name).is_file():
@@ -186,7 +187,7 @@ if args.world_template:
 if vendor_catalog is not None:
     from audit_public_archives import audit_archives
     paths = [output / line.split('  ', 1)[1] for line in checksums.splitlines()]
-    audit = audit_archives(paths, vendor_catalog)
+    audit = audit_archives(paths, vendor_catalog, public=not args.private)
     (output.parent / (output.name + '-vendor-public-audit.json')).write_text(json.dumps(audit, indent=2) + '\n', encoding='utf-8')
     if audit.get('passed') is not True:
         raise ValueError('RV 1.2.0 vendor archive audit failed')

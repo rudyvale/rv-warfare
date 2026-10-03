@@ -8,6 +8,8 @@
 
 Closing the panel leaves the server running. The connection code becomes available to copy after Porthole is ready. Process launches, network checks and state reads run outside the interface thread.
 
+**Invite friends** saves a small `.rvinvite` file after the server and Porthole are ready. Send it to a friend and import it in RV connection setup. The file contains the current connection destination, port and RV version; it contains no account credentials or world data. It is created only when you click the action and choose a destination. Public packages contain no invitation or private destination.
+
 Settings include language, controller configuration, automatic update checks and a server heap limit of 2–8 GB, additionally capped at half the physical memory. Defaults are 2 GB below 12 GB of RAM, 3 GB below 20 GB, otherwise 4 GB. Initial Java heap is 512 MB. Heap is only part of the process's memory use; actual consumption depends on mods and the world.
 
 The Low, Balanced and Quality server profiles select 2, 3 and 4 GB with view distances of 4, 6 and 8 chunks. Selecting and saving a profile applies it at the next server start, after the server has stopped. A properties backup is retained. Client Auto memory reserves space for Windows and recognized local servers; an explicit client allocation is checked before launch.

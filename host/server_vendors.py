@@ -82,7 +82,7 @@ def contract(root):
     catalog = read(catalog_path)
     if catalog.get('schema') != 1 or catalog.get('state') != 'pinned' or catalog.get('minecraft') != '1.12.2' or catalog.get('loader') != 'forge' or catalog.get('javaMajor') != 8 or not isinstance(catalog.get('files'), list):
         raise ValueError('RV_VENDOR_CATALOG')
-    selected, ids, paths = [], set(), set()
+    selected, ids, paths, owned_ids = [], set(), set(), set()
     for item in catalog['files']:
         if not record_valid(item) or item.get('side') not in ('both', 'server', 'client') or item.get('delivery') not in ('bundle', 'official-download', 'manual'):
             raise ValueError('RV_VENDOR_CATALOG')
@@ -109,8 +109,14 @@ def contract(root):
             if item['id'] == 'rvexperience' and (item.get('path') != 'mods/rv-experience-2.0.0.jar' or item.get('fileVersion') != '2.0.0' or item.get('fml') != {'rvexperience': '2.0.0'} or release.get('requiredMods', {}).get('rvexperience') != '2.0.0'):
                 raise ValueError('RV_VENDOR_OWNERSHIP')
             selected.append(dict(item, delivery='host-owned'))
+            owned_ids.add(item['id'])
             ids.add(item['id'])
             paths.add(str(target(root, item['path'])).casefold())
+    required = release.get('requiredMods', {})
+    if not isinstance(required, dict):
+        raise ValueError('RV_VENDOR_OWNERSHIP')
+    if (str(release.get('version', '')).startswith('2.') or required.get('rvexperience') is not None) and (required.get('rvexperience') != '2.0.0' or 'rvexperience' not in owned_ids or not managed_digest):
+        raise ValueError('RV_VENDOR_OWNERSHIP')
     return expected, digest(release_path), selected
 
 

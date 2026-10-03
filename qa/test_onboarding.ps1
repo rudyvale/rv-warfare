@@ -41,6 +41,10 @@ function New-Instance([string]$Name,$Settings=@{},$Defaults=$null){
 }
 function Read-Settings([string]$Root){Get-Content -LiteralPath (Join-Path $Root 'warfare-settings.json') -Raw -Encoding UTF8|ConvertFrom-Json}
 function Find-Control($Window,[string]$Name){@($Window.Controls.Find($Name,$true))[0]}
+function Open-ControlChoice($Window){
+    if((Find-Control $Window 'setupPage2').Visible){(Find-Control $Window 'setupBack').PerformClick()}
+    if(-not(Find-Control $Window 'setupPage0').Visible){throw 'Control choice page is not visible'}
+}
 function Assert-SetupBounds($Window){
     foreach($page in 0..2){
         $panel=Find-Control $Window ('setupPage'+$page)
@@ -86,7 +90,7 @@ function Capture-Window($Window,[string]$Name){
 try {
     $personal=@{nickname='Tester';language='ru';memoryMB=2560;unknown=@{text='личное'};connectionMode='direct';connectionTarget='saved.example';serverPort=25570}
     $root=New-Instance 'Отмена' $personal
-    $result=Run-Wizard $root {param($w);Capture-Window $w 'first-play-ru.png';(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupCancel').PerformClick()}
+    $result=Run-Wizard $root {param($w);Open-ControlChoice $w;Capture-Window $w 'first-play-ru.png';(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupCancel').PerformClick()}
     $saved=Read-Settings $root
     if($result.completed -or $saved.firstPlay -or $saved.firstPlayDraft.inputMode -ne 'radio' -or $saved.memoryMB -ne 2560 -or $saved.unknown.text -ne 'личное' -or $saved.connectionTarget -ne 'saved.example'){throw 'Cancel changed saved state'}
     Record 'Cancel stores a draft and preserves connection and unknown preferences'
@@ -145,7 +149,7 @@ try {
     Record 'Private friend default is preselected and both languages fit without overlap'
     $root=New-Instance 'No device' $personal
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputGamepad').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputGamepad').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1 -and (Find-Control $w 'setupPage1').Visible -and (Find-Control $w 'setupRescan').Enabled){
             if((Find-Control $w 'setupDevice').Items.Count -ne 0 -or (Find-Control $w 'setupNext').Enabled -or (Find-Control $w 'setupCalibrate').Enabled){throw 'Nonexistent device accepted'}
             if((Find-Control $w 'setupStatus').Text -notmatch 'не найдено'){throw 'Missing-device message absent'}
@@ -162,7 +166,7 @@ try {
         $script:inputKind=$kind
         $result=Run-Wizard $root {param($w)
             $next=Find-Control $w 'setupNext';$calibrate=Find-Control $w 'setupCalibrate'
-            if($script:step -eq 0){(Find-Control $w $(if($script:inputKind -eq 'radio'){'inputRadio'}else{'inputGamepad'})).Checked=$true;$next.PerformClick();$script:step++;return}
+            if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w $(if($script:inputKind -eq 'radio'){'inputRadio'}else{'inputGamepad'})).Checked=$true;$next.PerformClick();$script:step++;return}
             if((Find-Control $w 'setupPage2').Visible){$next.PerformClick();return}
             if(-not $calibrate.Enabled){return}
             if($script:step -eq 1){
@@ -181,7 +185,7 @@ try {
     [IO.File]::WriteAllText((Join-Path $root 'fixture-devices.json'),'[{"id":"test|device|4","name":"USB test controller","kind":"radio","axisCount":4}]')
     [IO.File]::WriteAllText((Join-Path $root 'fixture-behavior.txt'),'saved')
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1 -and (Find-Control $w 'setupCalibrate').Enabled){(Find-Control $w 'setupCalibrate').PerformClick();$script:step++;return}
         if($script:step -eq 2 -and (Find-Control $w 'setupNext').Enabled){(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 3 -and (Find-Control $w 'setupPage2').Visible){(Find-Control $w 'setupCancel').PerformClick()}
@@ -209,7 +213,7 @@ while(-not (Test-Path -LiteralPath $CancelPath)){Start-Sleep -Milliseconds 100}
     [IO.File]::WriteAllText((Join-Path $root 'Configure-Controller.ps1'),$hung,[Text.UTF8Encoding]::new($true))
     $cancelStart=[DateTime]::UtcNow
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++;return}
         if($script:step -eq 1){if(-not (Find-Control $w 'setupCancel').Enabled){throw 'Cannot cancel a running scan'};(Find-Control $w 'setupCancel').PerformClick();$script:step++}
     }
     if($result.completed -or ([DateTime]::UtcNow-$cancelStart).TotalSeconds -gt 6){throw 'Scan cancellation did not finish promptly'}
@@ -218,7 +222,7 @@ while(-not (Test-Path -LiteralPath $CancelPath)){Start-Sleep -Milliseconds 100}
     [IO.File]::WriteAllText((Join-Path $root 'Configure-Controller.ps1'),'param($ReportPath,$CancelPath);while($true){Start-Sleep -Milliseconds 100}',[Text.UTF8Encoding]::new($true))
     $timeoutStart=[DateTime]::UtcNow
     $result=Run-Wizard $root {param($w)
-        if($script:step -eq 0){(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++}
+        if($script:step -eq 0){Open-ControlChoice $w;(Find-Control $w 'inputRadio').Checked=$true;(Find-Control $w 'setupNext').PerformClick();$script:step++}
     }
     $elapsed=([DateTime]::UtcNow-$timeoutStart).TotalSeconds
     if($result.completed -or $elapsed -lt 20 -or $elapsed -gt 25){throw 'Hung scan was not bounded'}

@@ -235,6 +235,7 @@ class PlayerGuideTests(unittest.TestCase):
             self.assertLessEqual(len(book['title']), 32)
             self.assertEqual(book['rvGuide'], 1)
             self.assertEqual(book['rvGuideVersion'], builder.EDITION)
+            self.assertEqual(book['rvGuideLang'], 1 if language == 'ru' else 2)
             self.assertEqual(book['author'], 'RV')
             self.assertEqual(len(book['pages']), 30)
             for encoded in book['pages']:
@@ -321,12 +322,53 @@ class PlayerGuideTests(unittest.TestCase):
         player = Player('AlreadyUpgraded')
         player.scores = {'wlang': 1, 'wbOnce': 1}
         player.fill()
-        player.inventory[-106] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': builder.EDITION}}
+        player.inventory[-106] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': builder.EDITION, 'rvGuideLang': 1}}
         before = deepcopy(player.inventory)
         model = Model([player])
         model.tick(100)
         self.assertEqual(player.inventory, before)
         self.assertEqual((model.gives, player.scores['wbEdition'], player.scores['wbPending']), (0, builder.EDITION, 0))
+
+    def test_explicit_other_language_preserves_books_and_does_not_repeat(self):
+        player = Player('Translation')
+        model = Model([player])
+        model.tick()
+        original = deepcopy(player.inventory[0])
+        player.scores['wlang'] = 2
+        model.tick(40)
+        self.assertEqual(model.gives, 1)
+        model.request(player)
+        model.tick()
+        self.assertEqual(player.inventory[0], original)
+        self.assertEqual([book['tag']['rvGuideLang'] for book in player.books()], [1, 2])
+        for language in (2, 1, 2):
+            player.scores['wlang'] = language
+            model.request(player)
+            model.tick()
+        self.assertEqual(model.gives, 2)
+        self.assertEqual(player.dropped, [])
+
+    def test_other_language_full_inventory_waits_across_restart(self):
+        player = Player('FullTranslation')
+        model = Model([player])
+        model.tick()
+        original = deepcopy(player.inventory[0])
+        player.fill()
+        player.inventory[0] = original
+        before = deepcopy(player.inventory)
+        player.scores['wlang'] = 2
+        model.request(player)
+        model.tick(40)
+        self.assertEqual(player.inventory, before)
+        self.assertEqual(player.scores['wbPending'], 1)
+        self.assertEqual(player.dropped, [])
+        rejoined = deepcopy(player)
+        restarted = Model([rejoined])
+        del rejoined.inventory[35]
+        restarted.tick(20)
+        self.assertEqual(rejoined.inventory[0], original)
+        self.assertEqual(rejoined.inventory[35]['tag']['rvGuideLang'], 2)
+        self.assertEqual(rejoined.dropped, [])
 
     def test_each_of_36_free_main_slots_is_usable(self):
         for slot in range(36):
@@ -450,16 +492,22 @@ class PlayerGuideTests(unittest.TestCase):
             model.tick()
         self.assertEqual((model.gives, len(player.books())), (2, 1))
 
-    def test_existing_book_offhand_and_locale_change_do_not_duplicate(self):
+    def test_existing_offhand_book_is_preserved_when_requesting_other_locale(self):
         player = Player('Offhand')
         model = Model([player])
         model.tick()
         player.inventory[-106] = player.inventory.pop(0)
+        original = deepcopy(player.inventory[-106])
         player.scores['wlang'] = 2
         model.request(player)
         model.tick()
-        self.assertEqual(model.gives, 1)
-        self.assertEqual(len(player.books()), 1)
+        self.assertEqual(model.gives, 2)
+        self.assertEqual(len(player.books()), 2)
+        self.assertEqual(player.inventory[-106], original)
+        self.assertEqual(player.inventory[0]['tag']['rvGuideLang'], 2)
+        model.request(player)
+        model.tick()
+        self.assertEqual(model.gives, 2)
 
     def test_reissue_with_full_inventory_waits(self):
         player = Player('Reissue')
@@ -516,6 +564,9 @@ def vanilla_check(vanilla_jar, java):
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{title:"RV"}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:book",Count:1b,tag:{rvGuide:1b}}]}', 'result': False},
     ]}
+    for language in (1, 2):
+        for actual_language in (1, 2):
+            payload['matches'].append({'expected': builder.LANGUAGE_MARKERS[language], 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:' + str(builder.EDITION) + ',rvGuideLang:' + str(actual_language) + 'b}}]}', 'result': language == actual_language})
     script = '''var Files=Java.type('java.nio.file.Files'), Paths=Java.type('java.nio.file.Paths');
 var data=JSON.parse(new java.lang.String(Files.readAllBytes(Paths.get(arguments[0])), 'UTF-8'));
 var Parser=Java.type('gp'), Util=Java.type('gj'), Book=Java.type('akf');

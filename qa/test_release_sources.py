@@ -63,6 +63,7 @@ class ReleaseSourceTests(unittest.TestCase):
 
     def host_archive(self, changed=None, extra=None, missing=None, root=ROOT):
         files = {name: root / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
+        files['invitations.py'] = root / 'host/invitations.py'
         files.update({name: root / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
         files['THIRD-PARTY-NOTICES.md'] = root / 'pack/THIRD-PARTY-NOTICES.md'
         files['code.ico'] = root / 'assets/code.ico'

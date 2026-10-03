@@ -18,7 +18,7 @@ for source in [args.baseline, args.book]:
 
 
 def write(name, commands):
-    (root / (name + '.mcfunction')).write_text('\n'.join(commands) + '\n', encoding='utf-8')
+    (root / (name + '.mcfunction')).write_text('\n'.join(commands) + '\n', encoding='utf-8', newline='\n')
 
 
 def message(text, color='green', actionbar=False):
@@ -159,7 +159,7 @@ setup += ['scoreboard objectives add kills playerKillCount Kills']
 setup += ['scoreboard objectives add ' + key + ' trigger' for key in sorted(set(triggers + ['loadout', 'ui_admin']))]
 setup += ['function warfare:book_setup', 'scoreboard teams add blue Blue', 'scoreboard teams add red Red', 'scoreboard teams option blue color blue', 'scoreboard teams option red color red', 'scoreboard teams option blue friendlyfire false', 'scoreboard teams option red friendlyfire false', 'scoreboard objectives setdisplay sidebar kills', 'gamerule keepInventory true', 'gamerule doMobSpawning false', 'gamerule doFireTick true', 'gamerule mobGriefing true', 'gamerule spawnRadius 0', 'setworldspawn 0 65 -210', 'gamerule gameLoopFunction warfare:tick', 'worldborder center 0 0', 'worldborder set 1280']
 write('boot', setup)
-(args.output / 'setup-commands.txt').write_text('\n'.join(setup) + '\n', encoding='utf-8')
+(args.output / 'setup-commands.txt').write_text('\n'.join(setup) + '\n', encoding='utf-8', newline='\n')
 print(json.dumps({'functions': len(list(root.glob('*.mcfunction'))), 'generated': str(root)}))
 
 write('welcome', ['execute @s[tag=!w_ui2] ~ ~ ~ function warfare:init_ui', 'scoreboard players add @s wlang 0', 'scoreboard players add @s kills 0', 'scoreboard players tag @s add w_seen', 'rvx open'])
@@ -175,4 +175,4 @@ for name, action in [('blue', 'team 1'), ('red', 'team 2'), ('lobby', 'lobby'), 
 boot_path = root / 'boot.mcfunction'
 boot_commands = [line.replace('worldborder set 1280', 'worldborder set 2560') for line in boot_path.read_text(encoding='utf-8').splitlines()]
 write('boot', boot_commands)
-(args.output / 'setup-commands.txt').write_text('\n'.join(boot_commands) + '\n', encoding='utf-8')
+(args.output / 'setup-commands.txt').write_text('\n'.join(boot_commands) + '\n', encoding='utf-8', newline='\n')

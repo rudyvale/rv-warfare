@@ -9,10 +9,11 @@ import subprocess
 import threading
 import time
 import tkinter as tk
-from tkinter import ttk
+from tkinter import filedialog, ttk
 import webbrowser
 
 from host_runtime import SERVER_PROFILES, memory_limit, porthole, read_json, server_status, write_json
+from invitations import export_invite
 
 ROOT = Path(__file__).resolve().parent
 RELEASE_URL = 'https://github.com/rudyvale/rv-warfare/releases/latest'
@@ -39,6 +40,7 @@ TEXTS = {
         'keys': 'F11 — полный экран   ·   Esc — выйти из полного экрана',
         'language': 'Язык', 'saved': 'Настройки сохранены.', 'version': 'Версия',
         'controller': 'Настроить контроллер', 'controller_open': 'Калибровка открыта. В игре её можно вызвать клавишей F8.',
+        'invite': 'Пригласить друзей', 'invite_saved': 'Приглашение сохранено. Отправь этот файл друзьям для подключения.', 'invite_error': 'Приглашение не сохранено. Проверь готовность сервера и Porthole.',
     },
     'en': {
         'play': 'PLAY', 'start': 'START SERVER', 'stop': 'STOP SERVER',
@@ -62,6 +64,7 @@ TEXTS = {
         'keys': 'F11 — full screen   ·   Esc — leave full screen',
         'language': 'Language', 'saved': 'Settings saved.', 'version': 'Version',
         'controller': 'Configure controller', 'controller_open': 'Calibration opened. You can also press F8 in the game.',
+        'invite': 'Invite friends', 'invite_saved': 'Invitation saved. Send the file to your friends to connect.', 'invite_error': 'Invitation was not saved. Check that the server and Porthole are ready.',
     },
 }
 
@@ -100,6 +103,7 @@ class Launcher:
         self.server_job = None
         self.client_job = False
         self.controller_job = False
+        self.invite_job = False
         self.client_running = False
         self.update_available = False
         self.status_key = 'intro'
@@ -176,6 +180,9 @@ class Launcher:
         self.copy_button = self.button(self.network_row, self.copy_code)
         self.copy_button.configure(pady=8, font=('Segoe UI', 10))
         self.copy_button.pack(side='right')
+        self.invite_button = self.button(self.network_row, self.save_invite)
+        self.invite_button.configure(pady=8, font=('Segoe UI', 10))
+        self.invite_button.pack(side='right', padx=8)
         self.retry_button = self.button(self.network_row, lambda: self.run_action('tunnel'))
         self.retry_button.configure(pady=8, font=('Segoe UI', 10))
         self.footer = tk.Frame(self.window, bg='#0d1319', padx=36, pady=18)
@@ -189,7 +196,7 @@ class Launcher:
         self.main.bind('<Configure>', lambda event: self.status.configure(wraplength=max(500, event.width - 104)))
 
     def translate(self):
-        for button, key in [(self.play_button, 'play'), (self.settings_button, 'settings'), (self.copy_button, 'copy'), (self.stop_button, 'stop'), (self.log_button, 'logs'), (self.retry_button, 'retry')]:
+        for button, key in [(self.play_button, 'play'), (self.settings_button, 'settings'), (self.copy_button, 'copy'), (self.invite_button, 'invite'), (self.stop_button, 'stop'), (self.log_button, 'logs'), (self.retry_button, 'retry')]:
             button.configure(text=self.t(key))
         self.hint.configure(text=self.t('close_note') + '\n' + self.t('keys'))
         self.render()
@@ -211,6 +218,7 @@ class Launcher:
             network_key = 'network_off'
         self.network_label.configure(text=self.t('network') + ': ' + (code or self.t(network_key)), wraplength=780, justify='left')
         self.copy_button.configure(state='normal' if code else 'disabled')
+        self.invite_button.configure(state='normal' if ready and self.connection.get('ready') and not self.invite_job and not self.server_job else 'disabled')
         if ready and not code:
             self.copy_button.pack_forget()
             self.retry_button.pack(side='right')
@@ -328,6 +336,22 @@ class Launcher:
             self.window.clipboard_append(self.connection['code'])
             self.status_key = 'copied'
             self.render()
+
+    def save_invite(self):
+        if self.invite_job:
+            return
+        path = filedialog.asksaveasfilename(parent=self.window, title=self.t('invite'), initialfile='RV.rvinvite', defaultextension='.rvinvite', filetypes=[('RV', '*.rvinvite')])
+        if not path:
+            return
+        self.invite_job = True
+        self.render()
+        def work():
+            try:
+                export_invite(self.folder, path)
+                self.events.put(('invite', 'invite_saved'))
+            except (OSError, ValueError):
+                self.events.put(('invite', 'invite_error'))
+        threading.Thread(target=work, daemon=True).start()
 
     def open_log(self):
         path = self.folder / 'launcher.log'
@@ -479,6 +503,9 @@ class Launcher:
                     self.server, self.connection, self.client_running, self.update_available = value
                 elif event == 'controller':
                     self.controller_job = False
+                    self.status_key = value
+                elif event == 'invite':
+                    self.invite_job = False
                     self.status_key = value
                 elif event == 'phase' and value[0] == self.server_generation and self.server_job == 'start':
                     self.server_job = value[1]

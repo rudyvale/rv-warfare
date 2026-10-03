@@ -16,6 +16,8 @@ The asset names and `RV-Setup/` directory remain compatible with older RV update
 
 A new shared mod requires matching client and server versions. Keep the current stable package available while the new host is being validated. A review draft or prerelease must not replace the stable update target; GitHub excludes drafts and prereleases from its latest release selection. See [GitHub release parameters](https://docs.github.com/en/rest/releases/releases#create-a-release).
 
+`tools/publish_release.py --prerelease` stages a Preview draft. Adding `--publish` makes that verified preview downloadable with `make_latest=false`; it does not replace the stable update target. `tools/verify_release.py --remote --prerelease` verifies its public preview status, all five asset digests and that it is excluded from latest. A preview's notes must state the tested scope and outstanding gameplay or visual issues.
+
 Public packages contain empty connection defaults. Host invitations and personal connection profiles are generated and stored locally. Account records, private peers, tokens, logs and used worlds are excluded from public assets.
 
 ## First-party modules

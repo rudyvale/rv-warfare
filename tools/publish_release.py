@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--directory', type=Path, default=root / 'dist')
 parser.add_argument('--notes', type=Path, required=True)
 parser.add_argument('--publish', action='store_true')
+parser.add_argument('--prerelease', action='store_true')
 args = parser.parse_args()
 metadata = json.loads((root / 'src/release.json').read_text())
 repository = metadata['repository']
@@ -56,7 +57,9 @@ def api(method, path, data=None, content_type='application/json', allow_missing=
 prefix = '/repos/' + repository
 release = api('GET', prefix + '/releases/tags/' + tag, allow_missing=True)
 if release is None:
-    release = api('POST', prefix + '/releases', {'tag_name': tag, 'target_commitish': commit, 'name': 'RV Warfare ' + metadata['version'], 'body': args.notes.read_text(encoding='utf-8'), 'draft': True, 'prerelease': False})
+    release = api('POST', prefix + '/releases', {'tag_name': tag, 'target_commitish': commit, 'name': 'RV Warfare ' + metadata['version'] + (' Preview' if args.prerelease else ''), 'body': args.notes.read_text(encoding='utf-8'), 'draft': True, 'prerelease': args.prerelease, 'make_latest': 'false'})
+if release['prerelease'] != args.prerelease:
+    raise SystemExit('Existing release preview status differs from the requested publication mode')
 assets = [line.split('  ', 1)[1] for line in (directory / 'SHA256SUMS.txt').read_text().splitlines()] + ['SHA256SUMS.txt']
 if any(asset['name'] not in assets for asset in release['assets']):
     raise SystemExit('Draft contains unexpected assets; review it before publishing')
@@ -84,8 +87,8 @@ validate_candidate(directory, metadata['version'])
 if len(release['assets']) != len(assets) or {asset['name'] for asset in release['assets']} != set(assets):
     raise SystemExit('Release asset list differs from verified local files')
 if args.publish and release['draft']:
-    release = api('PATCH', prefix + '/releases/' + str(release['id']), {'draft': False, 'make_latest': 'true'})
+    release = api('PATCH', prefix + '/releases/' + str(release['id']), {'draft': False, 'prerelease': args.prerelease, 'make_latest': 'false' if args.prerelease else 'true'})
 if not release['draft']:
-    subprocess.run(['python', str(root / 'tools/verify_release.py'), '--directory', str(directory), '--tag', tag, '--remote'], check=True)
+    subprocess.run(['python', str(root / 'tools/verify_release.py'), '--directory', str(directory), '--tag', tag, '--remote'] + (['--prerelease'] if args.prerelease else []), check=True)
     mark_published(directory, metadata['version'], commit, release['html_url'])
-print(json.dumps({'url': release['html_url'], 'tag': tag, 'draft': release['draft']}))
+print(json.dumps({'url': release['html_url'], 'tag': tag, 'draft': release['draft'], 'prerelease': release['prerelease']}))

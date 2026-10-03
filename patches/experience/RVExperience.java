@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -28,6 +29,8 @@ public final class RVExperience {
     public static CommonProxy proxy;
     @Mod.EventHandler
     public void init(FMLInitializationEvent event){network=NetworkRegistry.INSTANCE.newSimpleChannel(ExperienceProtocol.CHANNEL);network.registerMessage(ServerRequestHandler.class,SessionRequest.class,0,Side.SERVER);proxy.init(network);MinecraftForge.EVENT_BUS.register(this);}
+    @Mod.EventHandler
+    public void before(FMLServerAboutToStartEvent event)throws Exception{ExperienceServer.registerCommand(Reflect.call(event,new String[]{"getServer"}));}
     @Mod.EventHandler
     public void start(FMLServerStartingEvent event)throws Exception{ExperienceServer.start(event);}
     @Mod.EventHandler

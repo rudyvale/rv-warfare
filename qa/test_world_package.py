@@ -1,14 +1,17 @@
 import gzip
+import importlib.util
 import hashlib
 import json
 from pathlib import Path
 import sys
+import shutil
 import tempfile
 import unittest
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from package_world_template import package
+from stage_world_template import stage
 
 
 class WorldPackageTests(unittest.TestCase):
@@ -103,6 +106,31 @@ class WorldPackageTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'Unexpected world stage file'):
                     package(self.stage, self.root / 'bad.zip')
                 path.unlink()
+
+    @unittest.skipUnless(importlib.util.find_spec('nbtlib'), 'Run with the world build dependencies')
+    def test_staging_and_packaging_preserve_authoritative_team_functions(self):
+        import nbtlib
+        nbtlib.File({'Data': nbtlib.Compound({'GameRules': nbtlib.Compound({})})}).save(self.world / 'level.dat', gzipped=True)
+        functions = self.root / 'supplied-functions'
+        functions.mkdir()
+        for source in (self.world / 'data/functions/warfare').glob('*.mcfunction'):
+            shutil.copy2(source, functions / source.name)
+        canonical = Path(__file__).resolve().parents[1] / 'pack/server-functions/warfare'
+        supplied = {name: (canonical / (name + '.mcfunction')).read_bytes() for name in ('blue', 'red')}
+        for name, data in supplied.items():
+            self.assertIn(b'rvx team ', data)
+            self.assertNotIn(b'tp @s', data)
+            self.assertNotIn(b'spawnpoint @s', data)
+            (functions / (name + '.mcfunction')).write_bytes(data)
+        frozen = self.root / 'frozen-world'
+        stage(self.world, functions, frozen)
+        archive = self.root / 'authority-preserved.zip'
+        package(frozen, archive)
+        with zipfile.ZipFile(archive) as content:
+            for name, data in supplied.items():
+                relative = self.name + '/data/functions/warfare/' + name + '.mcfunction'
+                self.assertEqual((frozen / relative).read_bytes(), data)
+                self.assertEqual(content.read(relative), data)
 
 
 if __name__ == '__main__':
