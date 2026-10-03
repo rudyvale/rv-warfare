@@ -6,6 +6,8 @@ import subprocess
 import time
 import traceback
 
+from server_vendors import install_for_runner
+
 from host_runtime import acquire_lock, apply_pending_profile, java_arguments, porthole, read_json, server_port, server_status, update_stock_addons, write_json
 
 
@@ -25,6 +27,10 @@ def run(root):
 
     process = None
     try:
+        commands_path.write_text('', encoding='utf-8')
+        vendor_meta = read_json(root / 'release.json')
+        if vendor_meta.get('vendorCatalogSha256'):
+            save()
         settings = read_json(root / 'launcher-settings.json')
         arguments, memory = java_arguments(root, settings)
         port = server_port(root)
@@ -32,9 +38,21 @@ def run(root):
             if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
                 port_check.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             port_check.bind(('127.0.0.1', port))
+            def vendor_wait():
+                state['phase'] = 'vendors'
+                save()
+                return any(line.strip() == 'stop' for line in commands_path.read_text(encoding='utf-8').splitlines())
+            install_for_runner(root, vendor_wait if vendor_meta.get('vendorCatalogSha256') else None)
+            if any(line.strip() == 'stop' for line in commands_path.read_text(encoding='utf-8').splitlines()):
+                state.update(state='stopped', ready=False, phase='stopped')
+                save()
+                return
         update_stock_addons(root)
         apply_pending_profile(root, settings)
-        commands_path.write_text('', encoding='utf-8')
+        if any(line.strip() == 'stop' for line in commands_path.read_text(encoding='utf-8').splitlines()):
+            state.update(state='stopped', ready=False, phase='stopped')
+            save()
+            return
         save()
         with (root / 'console.log').open('w', encoding='utf-8', buffering=1) as output:
             process = subprocess.Popen(arguments, cwd=root, stdin=subprocess.PIPE, stdout=output, stderr=subprocess.STDOUT, text=True, encoding='utf-8', creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
@@ -91,6 +109,10 @@ def run(root):
             state.update(state='stopped' if process.returncode == 0 else 'failed', ready=False, exit_code=process.returncode, phase='stopped')
             save()
     except Exception:
+        if process is None and 'RV_VENDOR_CANCELLED' in traceback.format_exc():
+            state.update(state='stopped', ready=False, phase='stopped')
+            save()
+            return
         state.update(state='failed', ready=False, error=traceback.format_exc())
         try:
             save()

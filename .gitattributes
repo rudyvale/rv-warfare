@@ -13,3 +13,11 @@
 *.zip binary
 *.jar binary
 pack/config/** whitespace=-blank-at-eol,-blank-at-eof,cr-at-eol
+pack/rv-managed-mods.json -text whitespace=cr-at-eol
+pack/vendor-catalog.json -text whitespace=cr-at-eol
+src/vendor-catalog.json -text whitespace=cr-at-eol
+pack/ModularWarfare/mod_config.json -text whitespace=cr-at-eol
+pack/config/MouseTweaks.cfg -text whitespace=cr-at-eol
+qa/evidence/rv-compat-client.json -text whitespace=cr-at-eol
+qa/evidence/rv-compat-server.json -text whitespace=cr-at-eol
+qa/evidence/rv-native-vehicle-weapons.json -text whitespace=cr-at-eol

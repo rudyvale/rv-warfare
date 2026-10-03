@@ -79,6 +79,31 @@ class WorldPackageTests(unittest.TestCase):
             package(self.stage, output)
         self.assertEqual(output.read_bytes(), b'keep')
 
+    def test_only_complete_curated_decoration_functions_are_allowed(self):
+        directory = self.world / 'data/functions/rvmap'
+        directory.mkdir()
+        for name in ['tree_' + str(number).zfill(2) for number in range(1, 13)] + ['plants']:
+            (directory / (name + '.mcfunction')).write_text('fixture\n')
+        self.manifest['functionCount'] = 19
+        self.refresh()
+        package(self.stage, self.root / 'curated.zip')
+        (directory / 'tree_12.mcfunction').unlink()
+        self.manifest['functionCount'] = 18
+        self.refresh()
+        with self.assertRaisesRegex(ValueError, 'decoration functions are incomplete'):
+            package(self.stage, self.root / 'incomplete.zip')
+
+    def test_arbitrary_map_function_namespace_or_tree_is_rejected(self):
+        for name in ('data/functions/rvmap/tree_13.mcfunction', 'data/functions/rvmap/arbitrary.mcfunction', 'data/functions/unrelated/plants.mcfunction'):
+            with self.subTest(name=name):
+                path = self.world / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('fixture\n')
+                self.refresh()
+                with self.assertRaisesRegex(ValueError, 'Unexpected world stage file'):
+                    package(self.stage, self.root / 'bad.zip')
+                path.unlink()
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

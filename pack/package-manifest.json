@@ -1,9 +1,9 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "75d47be3187f269b90113c6bf5e4051aed9164f408b762d7ac97392bb136c9d0"
+      "sha256": "11020eb2e5afc9cee4649b72d91942e9e3a854476b5cad154c41cf9432ec5af3"
     },
     {
       "path": "runtime.zip",
@@ -13,7 +13,7 @@
   "managedFiles": [
     {
       "path": "READ-ME.md",
-      "sha256": "9c640dd189f2174f3e18fccdf5e5351a66c616c432b64b17451beb63967a78c4"
+      "sha256": "fb36be1463af5573bd79a5a80de865782ca05a8a6d9c779410e899138913c241"
     },
     {
       "path": "THIRD-PARTY-NOTICES.md",
@@ -258,7 +258,7 @@
     },
     {
       "path": "resourcepacks/Warfare-Combat-Audio.zip",
-      "sha256": "5fddd87a99455edbd85005dd24851591862ab7d065e405597d2def4bc66d1937"
+      "sha256": "af8349de0ca964fb39cdfac76b5a32789684c78b1b1b03ecc7b41d4d4d2f1cf5"
     },
     {
       "path": "resourcepacks/Warfare-UI-fixes.zip",
@@ -267,6 +267,62 @@
     {
       "path": "shaderpacks/BSL_v8.2.09p2.zip",
       "sha256": "5f1bad5c0c3b323b9ce753a1e3a7d138839a14bfa148a078204699a204a32a0b"
+    },
+    {
+      "path": "config/MouseTweaks.cfg",
+      "sha256": "a66d877d4ce701314ba77d9faaa773d9a08858fb7f9bcdcd6a9fa3a2c1081619"
+    },
+    {
+      "path": "mods/rv-vehicle-compat-1.2.0.jar",
+      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4"
+    },
+    {
+      "path": "mods/AmbientSounds_v3.1.7_mc1.12.2.jar",
+      "sha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed"
+    },
+    {
+      "path": "mods/MouseTweaks-2.10.1-mc1.12.2.jar",
+      "sha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575"
+    },
+    {
+      "path": "mods/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
+      "sha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908"
+    },
+    {
+      "path": "mods/Immersive Vehicles-1.12.2-24.0.0.jar",
+      "sha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b"
+    },
+    {
+      "path": "mods/IAV-1.1.11-1.12.2.jar",
+      "sha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47"
+    },
+    {
+      "path": "mods/VEB-1.1.11-1.12.2.jar",
+      "sha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565"
+    },
+    {
+      "path": "mods/MCglTF-1.12.2-Forge-2.0.3.0.jar",
+      "sha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f"
+    },
+    {
+      "path": "mods/modularwarfare-2.4.2f.jar",
+      "sha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc"
+    },
+    {
+      "path": "ModularWarfare/mod_config.json",
+      "sha256": "5e7b479c275f0ae714d6f4d39afd424190b91c8dfb7523b0b260557e23b84feb"
+    },
+    {
+      "path": "config/mtsconfigclient.json",
+      "sha256": "1709d7b281f613b6638a1923d1489461e3590ffde820fe0af254066e94b4dc6d"
+    },
+    {
+      "path": "PRESETS/options-ru.txt",
+      "sha256": "5e5c575ffec80146ce028ce779b6550fa049c58760c816d3a16dbeabe177cde7"
+    },
+    {
+      "path": "PRESETS/options-en.txt",
+      "sha256": "b84ffb190a3869b6cf10309fa2942aaece9088a0f25046259f0c0798f7342e84"
     }
   ],
   "managedModPatterns": [

@@ -20,6 +20,18 @@ def required_mods(metadata):
         raise ValueError('Invalid required mod versions')
     if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not mods.get('mcheli'):
         raise ValueError('RV 1.1.0 requires the advertised mcheli protocol version')
+    if tuple(map(int, version.split('.'))) >= (1, 2, 0):
+        client = metadata.get('clientRequiredMods')
+        if not isinstance(client, dict) or any(not re.fullmatch(r'[a-z0-9_]+', name) or not isinstance(value, str) or not value or len(value) > 128 or any(character.isspace() for character in value) for name, value in client.items()):
+            raise ValueError('Invalid client mod versions')
+        if any(client.get(name) != value for name, value in mods.items()):
+            raise ValueError('Client mod versions must include all shared protocol versions')
+        if not re.fullmatch('[a-f0-9]{64}', str(metadata.get('vendorCatalogSha256', ''))):
+            raise ValueError('RV 1.2.0 requires the frozen vendor catalog digest')
+        if 'managedModsSha256' in metadata and not re.fullmatch('[a-f0-9]{64}', str(metadata['managedModsSha256'])):
+            raise ValueError('Invalid RV managed mod proof digest')
+        if len((json.dumps(metadata, ensure_ascii=False, indent=2) + '\n').encode('utf-8')) + 3 > 4096:
+            raise ValueError('Release metadata exceeds the immutable older updater limit')
     return mods
 
 

@@ -18,10 +18,17 @@ class ReleaseSourceTests(unittest.TestCase):
     MAP = json.dumps({'schema': 1, 'mcheliSha256': 'a' * 64, 'resources': {'assets/mcheli/models/planes/rv_fp1.mqo': 'b' * 64}}).encode()
 
     def host_archive(self, changed=None, extra=None, missing=None):
-        files = {name: ROOT / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
+        files = {name: ROOT / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
         files.update({name: ROOT / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
         files['THIRD-PARTY-NOTICES.md'] = ROOT / 'pack/THIRD-PARTY-NOTICES.md'
         files['code.ico'] = ROOT / 'assets/code.ico'
+        metadata = json.loads((ROOT / 'src/release.json').read_text())
+        if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
+            files['vendor-catalog.json'] = ROOT / 'pack/vendor-catalog.json'
+            for name in ('server_vendors.py', 'Install-ServerVendors.ps1', 'Warfare-VendorDownloads.ps1'):
+                files[name] = ROOT / 'host' / name
+            if metadata.get('managedModsSha256'):
+                files['rv-managed-mods.json'] = ROOT / 'pack/rv-managed-mods.json'
         stream = io.BytesIO()
         with zipfile.ZipFile(stream, 'w') as archive:
             for name, file in files.items():
@@ -29,6 +36,10 @@ class ReleaseSourceTests(unittest.TestCase):
                     continue
                 archive.writestr(name, b'old launcher' if name == changed else file.read_bytes())
             archive.writestr('rv-addon-assets.json', self.MAP)
+            if metadata.get('managedModsSha256'):
+                owned = json.loads((ROOT / 'pack/rv-managed-mods.json').read_text())
+                for entry in owned['mods']:
+                    archive.writestr('host-owned/' + entry['path'], b'owned mod source fixture')
             if extra:
                 archive.writestr(extra, b'private local state')
         stream.seek(0)

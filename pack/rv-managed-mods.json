@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "mods": [
+    {
+      "id": "rvcompat",
+      "path": "mods/rv-vehicle-compat-1.2.0.jar",
+      "size": 4941,
+      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4",
+      "fileVersion": "1.2.0",
+      "side": "both",
+      "expectedModIds": [
+        "rvcompat"
+      ],
+      "fml": {
+        "rvcompat": "1.2.0"
+      },
+      "nativeReceiptSha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11",
+      "sourceFiles": {
+        "patches/compat/RVVehicleCompat.java": "043e2876ecaf8efaced6f11da0edcc3ab4fb4c4207a48fda0ebd4fa446f7aff9",
+        "patches/compat/NOTICE.txt": "b1bfc61a38efbb0e5791b3e7f70b2ce15e4df64173b5cf9ad8c34c5735b9d7cf",
+        "tools/build_vehicle_compat.py": "55b9b7c8c75fb609c6640e9eeaa1dbd253ecff3ac987450f31d218a8d08044db"
+      }
+    }
+  ],
+  "nativeReceipts": [
+    {
+      "side": "client",
+      "path": "qa/evidence/rv-compat-client.json",
+      "sha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11"
+    },
+    {
+      "side": "server",
+      "path": "qa/evidence/rv-compat-server.json",
+      "sha256": "be2ec22ac8455b97147823b55c6dcdb42920d880ac38b7a8b1ab6306db9e7c11"
+    }
+  ]
+}

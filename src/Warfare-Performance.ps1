@@ -1,4 +1,5 @@
-﻿function Get-WarfareClientPreferences([string]$Root) {
+﻿. (Join-Path $PSScriptRoot 'Warfare-Ambience.ps1')
+function Get-WarfareClientPreferences([string]$Root) {
     $values = @{schema='1';profile='balanced';language='en';hudHints='true';hitFeedback='true'}
     $path = Join-Path $Root 'config\rv-client.properties'
     if (Test-Path -LiteralPath $path) {
@@ -126,6 +127,9 @@ function Set-WarfarePerformanceProfile {
             $options = Join-Path $Root 'options.txt'
             $contents = if (Test-Path -LiteralPath $options) { [IO.File]::ReadAllText($options) } else { '' }
             $changes[$options] = Update-WarfarePreferenceLines $contents $profiles[$Profile] ':'
+            $ambienceChanges=Get-WarfareAmbienceChanges -Root $Root -Profile $Profile
+            foreach($ambiencePath in $ambienceChanges.Keys){$changes[$ambiencePath]=$ambienceChanges[$ambiencePath]}
+            if($ambienceChanges.Count){$changes[$options]=Add-WarfareAmbiencePack $changes[$options]}
             $shaders = Join-Path $Root 'optionsshaders.txt'
             $contents = if (Test-Path -LiteralPath $shaders) { [IO.File]::ReadAllText($shaders) } else { '' }
             $changes[$shaders] = Update-WarfarePreferenceLines $contents ([ordered]@{shaderPack='OFF'}) '='
@@ -180,6 +184,7 @@ function Get-WarfarePreferenceError([string]$Message, [string]$Language) {
         'RV_MEMORY_INVALID' { if($ru){return 'Память: авто или от 2048 до 8192 МБ. Проверь настройки.'}; return 'Memory must be Auto or 2048 to 8192 MB. Check Settings.' }
         'RV_MEMORY_LOW' { if($ru){return 'Недостаточно ОЗУ для игры. Если на этом ПК запущен сервер, закрой его или уменьши его память.'}; return 'Not enough system memory for the game. If a local server is running, close it or reduce its memory allocation.' }
         'RV_MEMORY_BUDGET' { if($ru){return 'Выбрано слишком много памяти для игры. Поставь «Авто» или уменьши значение.'}; return 'The selected game memory exceeds the available budget. Choose Auto or reduce it.' }
+        'RV_AMBIENCE_CONFIG' { if($ru){return 'Проверь настройки AmbientSounds. Настройки не применены.'}; return 'Check the AmbientSounds settings. Settings were not applied.' }
         'RV_EFFECTS_CONFIG' { if($ru){return 'Проверь файл config/enhancedvisuals-client.json. Настройки не применены.'}; return 'Check config/enhancedvisuals-client.json. Settings were not applied.' }
         default { return $Message }
     }

@@ -47,4 +47,4 @@ gamerule spawnRadius 0
 setworldspawn 0 65 -210
 gamerule gameLoopFunction warfare:tick
 worldborder center 0 0
-worldborder set 1280
+worldborder set 2560

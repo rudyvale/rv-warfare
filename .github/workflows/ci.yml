@@ -27,9 +27,9 @@ jobs:
       - name: First-play setup transactions
         shell: powershell
         run: '& ./qa/test_onboarding.ps1'
-      - name: Launcher interface
+      - name: Launcher source syntax
         shell: powershell
-        run: '& ./qa/test_gui.ps1'
+        run: '& ./qa/check_launcher_source.ps1'
       - name: Launch flow and protocol
         run: |
           python -X utf8 qa/test_connection_launch.py

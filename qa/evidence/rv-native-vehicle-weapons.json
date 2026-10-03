@@ -1,0 +1,66 @@
+{
+  "success": true,
+  "scope": "Native component gameplay using synthetic public client input; no manual fire packets or direct damage calls",
+  "forge": "14.23.5.2860",
+  "java": 8,
+  "heapLimitMiB": 2048,
+  "mods": {
+    "mts": "24.0.0",
+    "modularwarfare": "2.4.2f",
+    "mcgltf": "1.12.2-Forge-2.0.3.0"
+  },
+  "MW": {
+    "gun": "modularwarfare:tcp.m4a4",
+    "reloadRounds": 30,
+    "spareMagazinesBefore": 3,
+    "spareMagazinesAfter": 2,
+    "hitHealthBefore": 200.0,
+    "hitHealthAfter": 111.43997,
+    "missHealthAfter": 111.43997,
+    "stoneWallHealthAfter": 111.43997
+  },
+  "IV": {
+    "vehicle": "mts:auweschvebm.auweschveb_vehicle_obj70_green",
+    "survivalPlacementConsumedItem": true,
+    "nestedPartsRetained": 10,
+    "engineAutostart": true,
+    "nativeDrivePositionChanged": true,
+    "nativeFuelConsumed": true,
+    "gun": "mts:auweschvebm.auweschveb_part_turret_125mm_1",
+    "selectedWithV": true,
+    "firedWithSpace": true,
+    "serverBulletsFired": 1
+  },
+  "audio": {
+    "profile": "Low",
+    "normalChannels": 29,
+    "streamingChannels": 3,
+    "maxNormalPlaying": 12,
+    "maxStreamingPlaying": 3,
+    "rifleDecodedChannels": 1,
+    "IVNativePlaying": [
+      "iav:deep_horn",
+      "iavm:ground_guns/125mmgun",
+      "iavm:ground_guns/125mmgunfar",
+      "iavm:ground_guns/125mmgun_recoil"
+    ]
+  },
+  "rawReceipts": {
+    "playing/mw-loaded.json": "7d8c9cbaae8720870b6aeeccb9996dbf12563de9710d2bf3c11ff0b2d62a934f",
+    "playing/mw-after-hit.json": "bcec0c18ab3e560addc6774a0852d8014ddadc2ba9c2c59059ed12f4a3a8089a",
+    "playing/mw-after-miss.json": "ee2068cdc943aa3d4cf0a0aa096456b8a9b10fd3a6e15b241fb285e0195780ad",
+    "playing/mw-after-wall.json": "59ac63e7e83539337f0c5336747bbdf0d1b25fdd41e6a6097105b362ad69c8bb",
+    "playing/tank-selected.json": "b69bc9db2726f22ba80aa9a700c85e3c6da4437ffa65074799084746df25fbec",
+    "playing/tank-after-fire.json": "5cefdeb67efd19ec759399b2775d5496153f4ad04387c86eb2b9ccfb2c743f42",
+    "client/audio-native-sources.json": "72b8aa7f5a92a00a80d93d91d3e9bffd6abcf696cebf5b5037c6f2232f88f4fa",
+    "client/audio-native-voices.json": "74738933c8d54372fa3c5e985407a9920500a65326b8472a0838b5ad3b638a05"
+  },
+  "unverified": [
+    "Physical USB controller or keyboard convenience",
+    "Stereo panning and distant observer audibility",
+    "Full map stress and weak computer performance",
+    "IV cannon target damage and repair/refill user route",
+    "FPV charge interaction with IV armor",
+    "Two-player First Aid limbs and health synchronization"
+  ]
+}

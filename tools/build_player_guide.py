@@ -7,7 +7,7 @@ import re
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / '.local/player-guide'
 TRIGGER = '/trigger wbook set 1'
-EDITION = 2
+EDITION = 3
 MARKER = '{Inventory:[{id:"minecraft:written_book",tag:{rvGuide:1b,rvGuideVersion:' + str(EDITION) + '}}]}'
 OBJECTIVES = {'wbook': 'trigger', 'wbOnce': 'dummy', 'wbPending': 'dummy', 'wbWait': 'dummy', 'wbUsed': 'dummy', 'wbHas': 'dummy', 'wbEdition': 'dummy'}
 
@@ -65,6 +65,10 @@ def pages(language):
             page('Качество', 'В лаунчере открой Настройки → Профиль.', 'Low — меньше эффектов.\nBalanced — обычный.\nQuality — подробнее.', 'Если мало FPS, начни с Low.'),
             page('Если мало FPS', 'Выключи шейдеры. Начни с дальности 4–6 чанков, частицы — уменьшенные.', 'Проверь FPS через F3. Меняй настройки по одной.', 'Закрой лишние приложения.'),
             page('FPS или сервер?', 'Картинка идёт рывками, FPS падает — снижай графику.', 'Картинка плавная, но блоки возвращаются и действия запаздывают — проверь связь и сервер.'),
+            page('Звуки окружения', 'Фон природы задаёт AmbientSounds. Громкость зависит от профиля лаунчера.', 'Если фон мешает слышать мотор и выстрелы, начни с Low.', 'Громкость игры:\nНастройки → Звуки'),
+            page('Инвентарь', 'Mouse Tweaks помогает перекладывать вещи в инвентаре.', 'Закрой его перед полётом, стрельбой или лечением.', 'Для нового набора нужны свободные слоты.'),
+            page('ModularWarfare', 'ЛКМ — огонь\nПКМ — прицел\nR — перезарядка\nV — режим огня', 'N — осмотреть оружие.\nU — извлечь магазин.\nF6 — фонарь.', 'Это клавиши новой оружейной системы.'),
+            page('Магазины', 'Для ModularWarfare нужны свои магазины и патроны.', 'Патроны Techguns к этому оружию не подходят.', 'Если R не работает, проверь нужный магазин в инвентаре.'),
         ]
     if language == 'en':
         return [
@@ -92,6 +96,10 @@ def pages(language):
             page('Quality', 'Open Settings → Profile in the launcher.', 'Low — fewer effects.\nBalanced — standard.\nQuality — more detail.', 'Start with Low if FPS is low.'),
             page('Low FPS?', 'Turn shaders off. Start with 4–6 chunks of render distance and reduce particles.', 'Check FPS with F3. Change one setting at a time.', 'Close unused apps.'),
             page('FPS or server?', 'Choppy picture and low FPS? Lower graphics settings.', 'Smooth picture, but blocks return or actions are delayed? Check the connection and server.'),
+            page('Ambient sounds', 'AmbientSounds adds nature sounds. The launcher profile sets their volume.', 'Start with Low if the background masks engines or gunfire.', 'Game volume:\nOptions → Sounds'),
+            page('Inventory', 'Mouse Tweaks helps move items while your inventory is open.', 'Close inventory before flying, firing or healing.', 'Keep free slots before requesting a kit.'),
+            page('ModularWarfare', 'Left click — fire\nRight click — aim\nR — reload\nV — fire mode', 'N — inspect.\nU — unload magazine.\nF6 — flashlight.', 'These keys belong to the new weapon system.'),
+            page('Magazines', 'ModularWarfare uses its own magazines and ammunition.', 'Techguns ammunition does not fit these weapons.', 'If R does nothing, check for a compatible magazine in inventory.'),
         ]
     raise ValueError('Language must be ru or en')
 
@@ -159,7 +167,7 @@ def functions():
 
 
 def integration():
-    return '''# RV player book integration
+    return f'''# RV player book integration
 
 Copy warfare/book_*.mcfunction into the world's data/functions/warfare folder while the server is stopped, then reload functions or restart.
 
@@ -175,7 +183,7 @@ Only book_setup and book_tick may run directly in console context. All other boo
 
 The seven objectives are wbook (trigger), wbOnce, wbPending, wbWait, wbUsed, wbHas and wbEdition (dummy). Names fit the 1.12.2 limit. wbOnce is the persistent completion marker: do not reset it on login, death, startup or upgrades. Pending state is persistent, too. wbEdition records the latest confirmed edition. Run book_setup on an existing world to add wbEdition without resetting old scores.
 
-Edition 2 is delivered once to existing players with wbOnce=1 and wbEdition below 2. Older books and other inventory items remain intact; a full inventory waits for one free main slot. A current edition in main inventory or offhand confirms the upgrade without another copy. After confirmation, losing this edition does not trigger an automatic replacement; use the explicit request instead. The item marker is rvGuide:1b with rvGuideVersion:2.
+Edition {EDITION} is delivered once to existing players with wbOnce=1 and wbEdition below {EDITION}. Older books and other inventory items remain intact; a full inventory waits for one free main slot. A current edition in main inventory or offhand confirms the upgrade without another copy. After confirmation, losing this edition does not trigger an automatic replacement; use the explicit request instead. The item marker is rvGuide:1b with rvGuideVersion:{EDITION}.
 
 Delivery counts occupied main slots 0–35; armour and offhand are not free main slots. The give command runs only with at least one empty main slot. After give, the item marker is read back before setting wbOnce=1 or clearing wbPending. No inventory clearing or replacement is used. Full inventories do not receive dropped books. After confirmed delivery, no inventory scan runs until another explicit request.
 
@@ -185,8 +193,8 @@ Run `python qa/test_player_guide.py`. For vanilla 1.12.2 parser and NBT matching
 
 def build(output=OUTPUT):
     output = Path(output).resolve()
-    if output != OUTPUT.resolve():
-        raise ValueError('Only .local/player-guide is an allowed build destination')
+    if not output.is_relative_to((ROOT / '.local').resolve()):
+        raise ValueError('Player-guide output must remain inside the workspace .local directory')
     destination = output / 'warfare'
     destination.mkdir(parents=True, exist_ok=True)
     rendered = functions()
@@ -199,5 +207,7 @@ def build(output=OUTPUT):
 
 
 if __name__ == '__main__':
-    argparse.ArgumentParser(description='Build isolated RV player-book functions for Minecraft 1.12.2.').parse_args()
-    print(build())
+    parser = argparse.ArgumentParser(description='Build isolated RV player-book functions for Minecraft 1.12.2.')
+    parser.add_argument('--output', type=Path, default=OUTPUT)
+    arguments = parser.parse_args()
+    print(build(arguments.output))

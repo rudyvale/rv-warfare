@@ -115,7 +115,7 @@ def run(name, mode='porthole', target='NEWCODE', port=25570, old=None, stale=Fal
         if old_steam:
             prior['steamPid'] = 39999
         (game / 'tunnel-state.json').write_text(json.dumps(prior))
-    for filename in ['Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Updates.ps1']:
+    for filename in ['Warfare-Connection.ps1', 'Warfare-ClientMods.ps1', 'Warfare-Performance.ps1', 'Warfare-Ambience.ps1', 'Warfare-Updates.ps1']:
         shutil.copyfile(ROOT / 'src' / filename, game / filename)
     first, rest = source.split('\n', 1)
     (game / 'Play-Warfare.ps1').write_text(first + '\n' + mocks + '\n' + rest, encoding='utf-8-sig')

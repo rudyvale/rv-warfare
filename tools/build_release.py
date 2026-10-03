@@ -27,6 +27,16 @@ metadata = json.loads((root / 'src/release.json').read_text())
 required_mods(metadata)
 version = metadata['version']
 validate_output(output, version, args.private, args.replace_candidate)
+vendor_catalog = None
+first_party = {}
+if tuple(map(int, version.split('.'))) >= (1, 2, 0):
+    from vendor_catalog import first_party_proof_path, load_catalog, sha256_file, validate_release_catalog, verify_first_party_proof, verify_managed_delivery
+    catalog_path = root / 'pack/vendor-catalog.json'
+    vendor_catalog = load_catalog(catalog_path)
+    with zipfile.ZipFile(args.base / 'payload.zip') as payload:
+        first_party = verify_first_party_proof(first_party_proof_path(metadata, root), vendor_catalog, manifest, payload, root)
+        verify_managed_delivery(vendor_catalog, manifest, payload, 'client')
+    validate_release_catalog(vendor_catalog, metadata, sha256_file(catalog_path), first_party)
 if tuple(map(int, version.split('.'))) >= (1, 1, 0):
     if not args.third_party_sources:
         raise ValueError('RV 1.1.0 requires --third-party-sources')
@@ -42,6 +52,11 @@ if tuple(map(int, version.split('.'))) >= (1, 1, 0):
     mcheli_sha = next(entry['sha256'] for entry in manifest['managedFiles'] if entry['path'] == 'mods/mcheli-ce-1.5.1-rv.jar')
     load_addon_map(addon_map, mcheli_sha)
 scripts = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
+if vendor_catalog is not None:
+    for name in ('Warfare-VendorDownloads.ps1', 'Warfare-Ambience.ps1', 'Warfare-ClientMods.ps1'):
+        if not (root / 'src' / name).is_file():
+            raise ValueError('RV 1.2.0 requires ' + name)
+        scripts.append(name)
 performance = root / 'src/Warfare-Performance.ps1'
 if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not performance.is_file():
     raise ValueError('RV 1.1.0 requires Warfare-Performance.ps1')
@@ -54,7 +69,14 @@ for name in first_play:
         raise ValueError('RV 1.1.0 requires ' + name)
     if source.is_file():
         scripts.append(name)
-host_scripts = ['README.md', 'warfare-launcher.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
+host_scripts = ['README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
+if vendor_catalog is not None:
+    for name in ('server_vendors.py', 'Install-ServerVendors.ps1', 'Warfare-VendorDownloads.ps1'):
+        if not (root / 'host' / name).is_file():
+            raise ValueError('RV 1.2.0 requires the host source ' + name)
+        host_scripts.append(name)
+    if sha256_file(root / 'host/Warfare-VendorDownloads.ps1') != sha256_file(root / 'src/Warfare-VendorDownloads.ps1'):
+        raise ValueError('Host and client vendor download helpers differ')
 porthole = root / 'host/Porthole-Host.ps1'
 if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not porthole.is_file():
     raise ValueError('RV 1.1.0 requires Porthole-Host.ps1')
@@ -76,10 +98,16 @@ for name in scripts:
     data = source.read_text(encoding='utf-8-sig')
     (package / name).write_text(data, encoding='utf-8-sig' if source.suffix == '.ps1' else 'utf-8')
 pack_files = ['READ-ME.md']
+if vendor_catalog is not None:
+    pack_files.append('vendor-catalog.json')
+    if metadata.get('managedModsSha256'):
+        pack_files.append('rv-managed-mods.json')
 if tuple(map(int, version.split('.'))) >= (1, 1, 0):
     pack_files.append('THIRD-PARTY-NOTICES.md')
 for name in pack_files:
     shutil.copyfile(root / 'pack' / name, package / name)
+if vendor_catalog is not None and (package / 'release.json').stat().st_size > 4096:
+    raise ValueError('Packaged release metadata exceeds the immutable older updater limit')
 shutil.copyfile(args.base / 'installer-files.json', package / 'installer-files.json')
 shutil.copyfile(args.defaults if args.private else root / 'pack/server-defaults.json', package / 'server-defaults.json')
 shutil.copyfile(root / 'assets/code.ico', package / 'code.ico')
@@ -115,6 +143,14 @@ with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as a
         archive.write(root / 'host' / name, name)
     for name in ['Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Configure-Controller.ps1', 'release.json']:
         archive.write(root / 'src' / name, name)
+    if vendor_catalog is not None:
+        archive.write(root / 'pack/vendor-catalog.json', 'vendor-catalog.json')
+        if metadata.get('managedModsSha256'):
+            archive.write(root / 'pack/rv-managed-mods.json', 'rv-managed-mods.json')
+            owned = json.loads((root / 'pack/rv-managed-mods.json').read_text(encoding='utf-8'))
+            with zipfile.ZipFile(args.base / 'payload.zip') as payload:
+                for entry in owned['mods']:
+                    archive.writestr('host-owned/' + entry['path'], payload.read(entry['path']))
     if performance.is_file():
         archive.write(package / 'Warfare-Performance.ps1', 'Warfare-Performance.ps1')
     for name in first_play:
@@ -150,5 +186,12 @@ if args.world_template:
     with world.open('rb') as stream:
         checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-World-Template.zip\n'
 (output / 'SHA256SUMS.txt').write_text(checksums, encoding='ascii')
+if vendor_catalog is not None:
+    from audit_public_archives import audit_archives
+    paths = [output / line.split('  ', 1)[1] for line in checksums.splitlines()]
+    audit = audit_archives(paths, vendor_catalog)
+    (output.parent / (output.name + '-vendor-public-audit.json')).write_text(json.dumps(audit, indent=2) + '\n', encoding='utf-8')
+    if audit.get('passed') is not True:
+        raise ValueError('RV 1.2.0 vendor archive audit failed')
 write_candidate(output, version, args.private)
 print(json.dumps({'archive': str(archive_path), 'bytes': archive_path.stat().st_size, 'sha256': digest}))

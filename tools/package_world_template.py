@@ -25,7 +25,7 @@ def package(stage, output):
     files = {}
     regions = 0
     for relative, path in sorted(paths.items()):
-        allowed = relative in {name + '/level.dat', name + '/data/scoreboard.dat'} or re.fullmatch(re.escape(name) + r'/region/r\.-?\d+\.-?\d+\.mca', relative) or re.fullmatch(re.escape(name) + r'/data/functions/warfare/[A-Za-z0-9_]+\.mcfunction', relative)
+        allowed = relative in {name + '/level.dat', name + '/data/scoreboard.dat'} or re.fullmatch(re.escape(name) + r'/region/r\.-?\d+\.-?\d+\.mca', relative) or re.fullmatch(re.escape(name) + r'/data/functions/warfare/[A-Za-z0-9_]+\.mcfunction', relative) or re.fullmatch(re.escape(name) + r'/data/functions/rvmap/(tree_0[1-9]|tree_1[0-2]|plants)\.mcfunction', relative)
         if not allowed or path.is_symlink():
             raise ValueError('Unexpected world stage file: ' + relative)
         data = path.read_bytes()
@@ -46,6 +46,11 @@ def package(stage, output):
     for function in ('tick', 'boot', 'book_tick', 'book_setup', 'book_give_en', 'book_give_ru'):
         if prefix + function + '.mcfunction' not in files:
             raise ValueError('Missing world function: ' + function)
+    map_prefix = name + '/data/functions/rvmap/'
+    map_functions = {relative for relative in files if relative.startswith(map_prefix)}
+    required_map_functions = {map_prefix + 'tree_' + str(number).zfill(2) + '.mcfunction' for number in range(1, 13)} | {map_prefix + 'plants.mcfunction'}
+    if map_functions and map_functions != required_map_functions:
+        raise ValueError('Curated RV map decoration functions are incomplete')
     if sum(relative.endswith('.mcfunction') for relative in files) != manifest['functionCount']:
         raise ValueError('World function count differs from manifest')
     manifest['files'] = {relative: hashlib.sha256(data).hexdigest() for relative, data in sorted(files.items())}

@@ -279,7 +279,7 @@ function Start-Install {
     if (-not (Has-Package)) { throw (L 'Нужен полный актуальный установщик RV. Распакуй новый архив целиком.' 'Use the complete current RV installer. Extract the entire new archive.') }
     Assert-VmUpgrade $script:packageRoot $InstallRoot
     $status.Text = L 'Установка…' 'Installing…'
-    Start-Worker 'install' (Join-Path $script:packageRoot 'Install-Warfare.ps1') @('-Language',$script:language,'-Nickname',$nickname.Text.Trim(),'-InstallRoot',$InstallRoot,'-NoLaunch','-NoSteam')
+    Start-Worker 'install' (Join-Path $script:packageRoot 'Install-Warfare.ps1') @('-Language',$script:language,'-Nickname',$nickname.Text.Trim(),'-InstallRoot',$InstallRoot,'-NoLaunch','-NoSteam','-StatusFile',$script:statusPath)
 }
 function Start-Update {
     Save-Settings
@@ -471,7 +471,7 @@ $timer.Add_Tick({
         $exitCode = $script:process.ExitCode; $mode = $script:mode
         $script:process.Dispose(); $script:process = $null; Set-Busy $false
         if ($exitCode -ne 0) {
-            if (-not $script:lastStatus -or $mode -eq 'install') {
+            if (-not $script:lastStatus -or ($mode -eq 'install' -and $script:workerState -ne 'failed')) {
                 $details = @(); if (Test-Path -LiteralPath $script:errFile) { $details = @(Get-Content -LiteralPath $script:errFile -Encoding UTF8 | Where-Object { $_.Trim() }) }
                 $status.Text = if ($details.Count) { ($details | Select-Object -First 2) -join ' ' } else { L 'Не удалось завершить операцию. Открой «Журнал» и повтори попытку.' 'The operation did not complete. Open Log and try again.' }
             }

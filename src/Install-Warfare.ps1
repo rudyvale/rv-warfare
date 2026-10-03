@@ -1,4 +1,4 @@
-﻿param([ValidateSet('ru','en')][string]$Language, [string]$Nickname, [string]$InstallRoot, [switch]$NoShortcut, [switch]$NoSteam, [switch]$NoLaunch)
+﻿param([ValidateSet('ru','en')][string]$Language, [string]$Nickname, [string]$InstallRoot, [switch]$NoShortcut, [switch]$NoSteam, [switch]$NoLaunch, [string]$StatusFile, [string]$CancelPath)
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 [Net.ServicePointManager]::DefaultConnectionLimit = 16
@@ -30,7 +30,19 @@ if (-not $Language) {
         $Language = if ($choice -eq '2') { 'en' } else { 'ru' }
     }
 }
-function Say([string]$Russian, [string]$English) { if ($Language -eq 'ru') { Write-Host $Russian } else { Write-Host $English } }
+function Set-InstallStatus([string]$State,[string]$Message) {
+    if (-not $StatusFile) { return }
+    $temporary=$StatusFile+'.'+[Guid]::NewGuid().ToString('N')+'.tmp'
+    try {
+        [IO.File]::WriteAllText($temporary,([PSCustomObject]@{state=$State;message=$Message}|ConvertTo-Json -Compress),[Text.UTF8Encoding]::new($false))
+        Move-Item -LiteralPath $temporary -Destination $StatusFile -Force
+    } finally { if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force } }
+}
+function Say([string]$Russian, [string]$English) {
+    $message=if ($Language -eq 'ru') { $Russian } else { $English }
+    Write-Host $message
+    Set-InstallStatus 'installing' $message
+}
 if (-not $Nickname) {
     if ($previousSettings) { $Nickname = $previousSettings.nickname } else {
         Say 'Введи свой ник Minecraft (3–16 букв, цифр или _).' 'Enter your Minecraft nickname (3–16 letters, numbers or _).'
@@ -56,6 +68,28 @@ foreach ($entry in $manifest.archives) {
 Say 'Распаковка сборки и Java 8…' 'Extracting the modpack and Java 8…'
 [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $packageRoot 'payload.zip'), $stage)
 [IO.Compression.ZipFile]::ExtractToDirectory((Join-Path $packageRoot 'runtime.zip'), (Join-Path $stage 'runtime'))
+$release=Get-Content -LiteralPath (Join-Path $packageRoot 'release.json') -Raw -Encoding UTF8|ConvertFrom-Json
+$vendorCatalogPath=Join-Path $packageRoot 'vendor-catalog.json'
+if ($release.vendorCatalogSha256) {
+    . (Join-Path $packageRoot 'Warfare-VendorDownloads.ps1')
+    $vendorProgress={param($value)
+        $percent=[int](100*$value.received/[Math]::Max(1,$value.total))
+        $message=if ($Language -eq 'ru') { 'Загрузка: '+$value.name+' · '+$percent+'%' } else { 'Downloading: '+$value.name+' · '+$percent+'%' }
+        if ($value.state -eq 'retrying') { $message=if ($Language -eq 'ru') { 'Повтор загрузки: '+$value.name } else { 'Retrying: '+$value.name } }
+        Set-InstallStatus 'installing' $message
+    }
+    try {
+        $vendors=@(Initialize-WarfareVendorStage -CatalogPath $vendorCatalogPath -ExpectedCatalogSha256 $release.vendorCatalogSha256 -InstallRoot $InstallRoot -StageRoot $stage -CacheRoot (Join-Path $InstallRoot '.vendor-cache') -CancelPath $CancelPath -ProgressAction $vendorProgress)
+        foreach ($vendor in $vendors) {
+            $managed=@($manifest.managedFiles|Where-Object {$_.path -ceq $vendor.path -and $_.sha256 -ceq $vendor.sha256})
+            if ($managed.Count -ne 1) { throw 'RV_VENDOR_CATALOG' }
+        }
+    } catch {
+        Set-InstallStatus 'failed' (Get-WarfareVendorError $_.Exception.Message $Language)
+        throw
+    }
+} elseif ($release.version -match '^[0-9]+\.[0-9]+\.[0-9]+$' -and [version]$release.version -ge [version]'1.2.0') { throw 'RV_VENDOR_CATALOG' }
+
 foreach ($entry in $manifest.managedFiles) {
     Resolve-Inside $stage $entry.path | Out-Null
     Resolve-Inside $InstallRoot $entry.path | Out-Null
@@ -193,7 +227,7 @@ foreach ($entry in $manifest.managedFiles) {
     $target = Join-Path $InstallRoot $entry.path
     $source = Join-Path $stage $entry.path
     if ($entry.existingOnly -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'mcheli_addons\default') -PathType Container)) { continue }
-    if ($entry.path -like 'config/*' -and (Test-Path -LiteralPath $target)) { continue }
+    if (($entry.path -like 'config/*' -or $entry.path -ceq 'ModularWarfare/mod_config.json') -and (Test-Path -LiteralPath $target)) { continue }
     if ((Test-Path -LiteralPath $target) -and (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -eq $entry.sha256) { continue }
     Backup-File $target $entry.path
     New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
@@ -258,9 +292,15 @@ $settings | Add-Member -MemberType NoteProperty -Name language -Value $Language 
 $settings | Add-Member -MemberType NoteProperty -Name nickname -Value $Nickname -Force
 Backup-File $settingsPath 'warfare-settings.json'
 [IO.File]::WriteAllText($settingsPath, ($settings | ConvertTo-Json -Depth 32), [Text.UTF8Encoding]::new($false))
-foreach ($name in @('Play-Warfare.ps1','Play.cmd','installer-files.json','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico')) {
+foreach ($name in @('Play-Warfare.ps1','Play.cmd','installer-files.json','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Ambience.ps1','Warfare-ClientMods.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico')) {
     Backup-File (Join-Path $InstallRoot $name) $name
     Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
+}
+if ($release.vendorCatalogSha256) {
+    foreach($name in @('Warfare-VendorDownloads.ps1','vendor-catalog.json')) {
+        Backup-File (Join-Path $InstallRoot $name) $name
+        Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
+    }
 }
 if (Test-Path -LiteralPath $defaultsPath) {
     Backup-File (Join-Path $InstallRoot 'server-defaults.json') 'server-defaults.json'

@@ -1,0 +1,493 @@
+{
+  "schema": 1,
+  "state": "pinned",
+  "minecraft": "1.12.2",
+  "loader": "forge",
+  "javaMajor": 8,
+  "baseline": {
+    "version": "1.1.0",
+    "sourceCommit": "31f3f234ccb39688357e145debd3e38a242e06fd",
+    "setupSha256": "200ba57416c60deeccb8bb592d56c6ca3df4567fcc845b9f15f54127c7d71e12",
+    "files": [
+      {
+        "id": "mcheli",
+        "side": "both",
+        "fileVersion": "1.5.1-rv-controls3",
+        "expectedModIds": [
+          "mcheli"
+        ],
+        "fml": {
+          "mcheli": "1.5.1-rv-controls3"
+        },
+        "requires": []
+      },
+      {
+        "id": "techguns",
+        "side": "both",
+        "fileVersion": "2.0.2.0",
+        "expectedModIds": [
+          "techguns"
+        ],
+        "fml": {
+          "techguns": "2.0.2.0"
+        },
+        "requires": []
+      },
+      {
+        "id": "firstaid",
+        "side": "both",
+        "fileVersion": "1.6.22",
+        "expectedModIds": [
+          "firstaid"
+        ],
+        "fml": {
+          "firstaid": "1.6.22"
+        },
+        "requires": []
+      },
+      {
+        "id": "creativecore",
+        "side": "both",
+        "fileVersion": "1.10.71",
+        "expectedModIds": [
+          "creativecore"
+        ],
+        "fml": {
+          "creativecore": "1.10.0"
+        },
+        "requires": []
+      },
+      {
+        "id": "enhancedvisuals",
+        "side": "both",
+        "fileVersion": "1.4.4",
+        "expectedModIds": [
+          "enhancedvisuals"
+        ],
+        "fml": {
+          "enhancedvisuals": "1.3.0"
+        },
+        "requires": []
+      }
+    ]
+  },
+  "files": [
+    {
+      "id": "ambientsounds",
+      "name": "AmbientSounds",
+      "path": "mods/AmbientSounds_v3.1.7_mc1.12.2.jar",
+      "kind": "mod",
+      "side": "client",
+      "fileVersion": "3.1.7",
+      "projectId": 254284,
+      "fileId": 3516274,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/ambientsounds",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/ambientsounds/files/3516274",
+      "officialUrls": [
+        "https://edge.forgecdn.net/files/3516/274/AmbientSounds_v3.1.7_mc1.12.2.jar"
+      ],
+      "size": 76507814,
+      "sha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "ambientsounds"
+      ],
+      "fml": {
+        "ambientsounds": "3.0"
+      },
+      "requires": [
+        {
+          "id": "creativecore",
+          "fileVersion": "1.10.71",
+          "side": "client"
+        }
+      ],
+      "receipt": {
+        "owner": "2",
+        "artifactAuditSha256": "4eaf3962b577ef58d2531d2b3b292024d85cff3f661b0c202534ea6c32e41914",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e"
+      },
+      "rights": {
+        "license": "Historical binary redistribution not approved; official download only",
+        "reviewedSha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-metadata",
+            "url": "https://edge.forgecdn.net/files/3516/274/AmbientSounds_v3.1.7_mc1.12.2.jar",
+            "member": "mcmod.info",
+            "sha256": "ee00586389e7e1675d507260d2ae0027c0bc76a4729830769acd31364a65c857",
+            "appliesToSha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "mouse-tweaks",
+      "name": "Mouse Tweaks",
+      "path": "mods/MouseTweaks-2.10.1-mc1.12.2.jar",
+      "kind": "mod",
+      "side": "client",
+      "fileVersion": "2.10.1",
+      "projectId": 60089,
+      "fileId": 3359843,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/mouse-tweaks",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/mouse-tweaks/files/3359843",
+      "officialUrls": [
+        "https://edge.forgecdn.net/files/3359/843/MouseTweaks-2.10.1-mc1.12.2.jar"
+      ],
+      "size": 80528,
+      "sha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "mousetweaks"
+      ],
+      "fml": {
+        "mousetweaks": "2.10.1"
+      },
+      "requires": [],
+      "receipt": {
+        "owner": "2",
+        "artifactAuditSha256": "ab8ae913a064dd74efef23f777d77e29d6fad676d3abbe9ada4f932b95d0e0d1",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e"
+      },
+      "rights": {
+        "license": "Historical binary redistribution not approved; official download only",
+        "reviewedSha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-license",
+            "url": "https://edge.forgecdn.net/files/3359/843/MouseTweaks-2.10.1-mc1.12.2.jar",
+            "member": "META-INF/mods.toml",
+            "sha256": "e15b756c71d56f73780e80f0ea59cf9d6cc09209e518d1e1ddeb428296fb20f4",
+            "appliesToSha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575"
+          }
+        ]
+      }
+    },
+    {
+      "id": "biomes-o-plenty",
+      "name": "Biomes O' Plenty",
+      "path": "mods/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
+      "kind": "mod",
+      "side": "both",
+      "fileVersion": "7.0.1.2445",
+      "projectId": 220318,
+      "fileId": 3558882,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/biomes-o-plenty",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/biomes-o-plenty/files/3558882",
+      "officialUrls": [
+        "https://edge.forgecdn.net/files/3558/882/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
+        "https://cdn.modrinth.com/data/HXF82T3G/versions/e5wgKLKS/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar"
+      ],
+      "size": 4746208,
+      "sha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "biomesoplenty"
+      ],
+      "fml": {
+        "biomesoplenty": "7.0.1.2445"
+      },
+      "requires": [],
+      "receipt": {
+        "owner": "6",
+        "artifactAuditSha256": "96172d7102a291457707e342c16f0f30bd84af406775626fe20187832d78ecd3",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e",
+        "serverNativeReceiptSha256": "9472190ce22fe8deb2341ab11f8e103673e6d7eb797d46100d619f60707c41b0"
+      },
+      "rights": {
+        "license": "CC-BY-NC-ND-4.0 (Biomes O Plenty); MIT (bundled Mixin)",
+        "reviewedSha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-license",
+            "url": "https://edge.forgecdn.net/files/3558/882/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
+            "member": "LICENSE.txt",
+            "sha256": "83681d7cb9e651be6c79dd1e15899ed0340459bb4cddd4259a2d8920c555dcbb",
+            "appliesToSha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908"
+          }
+        ]
+      }
+    },
+    {
+      "id": "minecraft-transport-simulator",
+      "name": "Immersive Vehicles",
+      "path": "mods/Immersive Vehicles-1.12.2-24.0.0.jar",
+      "kind": "mod",
+      "side": "both",
+      "fileVersion": "24.0.0",
+      "projectId": 286703,
+      "fileId": 7926592,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/minecraft-transport-simulator",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/minecraft-transport-simulator/files/7926592",
+      "officialUrls": [
+        "https://mediafilez.forgecdn.net/files/7926/592/Immersive%20Vehicles-1.12.2-24.0.0.jar"
+      ],
+      "size": 6902260,
+      "sha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "mts"
+      ],
+      "fml": {
+        "mts": "24.0.0"
+      },
+      "requires": [],
+      "receipt": {
+        "owner": "3",
+        "artifactAuditSha256": "7fcffac12ddb32bcd34afb8f296fb25bccf44f7b69cbd8d6fc72751a25d35523",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e",
+        "serverNativeReceiptSha256": "9472190ce22fe8deb2341ab11f8e103673e6d7eb797d46100d619f60707c41b0"
+      },
+      "rights": {
+        "license": "Historical binary redistribution not approved; official download only",
+        "reviewedSha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-metadata",
+            "url": "https://mediafilez.forgecdn.net/files/7926/592/Immersive%20Vehicles-1.12.2-24.0.0.jar",
+            "member": "mcmod.info",
+            "sha256": "f08d03bbafa8db00c4bf8b5ab26447f33bc66fcd5fa195c2418b4fe2e1a3f4ef",
+            "appliesToSha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b"
+          }
+        ]
+      }
+    },
+    {
+      "id": "iav",
+      "name": "IAV",
+      "path": "mods/IAV-1.1.11-1.12.2.jar",
+      "kind": "content-pack",
+      "side": "both",
+      "fileVersion": "1.1.11",
+      "projectId": 422073,
+      "fileId": 7088380,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/iav",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/iav/files/7088380",
+      "officialUrls": [
+        "https://mediafilez.forgecdn.net/files/7088/380/IAV-1.1.11-1.12.2.jar"
+      ],
+      "size": 47013200,
+      "sha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47",
+      "delivery": "official-download",
+      "expectedModIds": [],
+      "fml": {},
+      "requires": [
+        {
+          "id": "minecraft-transport-simulator",
+          "fileVersion": "24.0.0",
+          "side": "both"
+        }
+      ],
+      "receipt": {
+        "owner": "3",
+        "artifactAuditSha256": "7fcffac12ddb32bcd34afb8f296fb25bccf44f7b69cbd8d6fc72751a25d35523",
+        "nativeLoaded": false
+      },
+      "rights": {
+        "license": "All Rights Reserved (binary META-INF/mods.toml)",
+        "reviewedSha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-license",
+            "url": "https://mediafilez.forgecdn.net/files/7088/380/IAV-1.1.11-1.12.2.jar",
+            "member": "META-INF/mods.toml",
+            "sha256": "cd55f8b6a8c1f6922661f0552ead074546529fdccaabe41b62ddeafc40ba7f62",
+            "appliesToSha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47"
+          }
+        ]
+      },
+      "definitionHashes": {
+        "assets/iav/packdefinition.json": "7be879cfae7b467a2bb6f6d5d7ccc343a3d4252fc3f0cc38065588d7d3f07f78",
+        "assets/iavm/packdefinition.json": "543db1b6f1cc88ee673994cf2903823f0b1cd479348890ceea5f8c3d8edbb524"
+      },
+      "contentPackIds": [
+        "iav",
+        "iavm"
+      ]
+    },
+    {
+      "id": "veb-aws",
+      "name": "VEB Automobilwerke Schwikau",
+      "path": "mods/VEB-1.1.11-1.12.2.jar",
+      "kind": "content-pack",
+      "side": "both",
+      "fileVersion": "1.1.11",
+      "projectId": 357497,
+      "fileId": 7088357,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/veb-aws",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/veb-aws/files/7088357",
+      "officialUrls": [
+        "https://mediafilez.forgecdn.net/files/7088/357/VEB-1.1.11-1.12.2.jar"
+      ],
+      "size": 65763032,
+      "sha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565",
+      "delivery": "official-download",
+      "expectedModIds": [],
+      "fml": {},
+      "requires": [
+        {
+          "id": "minecraft-transport-simulator",
+          "fileVersion": "24.0.0",
+          "side": "both"
+        },
+        {
+          "id": "iav",
+          "fileVersion": "1.1.11",
+          "side": "both"
+        }
+      ],
+      "receipt": {
+        "owner": "3",
+        "artifactAuditSha256": "7fcffac12ddb32bcd34afb8f296fb25bccf44f7b69cbd8d6fc72751a25d35523",
+        "nativeLoaded": false
+      },
+      "rights": {
+        "license": "All Rights Reserved (binary META-INF/mods.toml)",
+        "reviewedSha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-license",
+            "url": "https://mediafilez.forgecdn.net/files/7088/357/VEB-1.1.11-1.12.2.jar",
+            "member": "META-INF/mods.toml",
+            "sha256": "4f95b557f93b206e87bd02de7c364f6265c44f300d1cfe96bc42b19cb9ce8b7e",
+            "appliesToSha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565"
+          }
+        ]
+      },
+      "definitionHashes": {
+        "assets/auweschveb/packdefinition.json": "2953f62ae0c6d7d2e29b23ae8fcced58b59e55603f4032853cd2719f2cf3479e",
+        "assets/auweschvebh/packdefinition.json": "d61011a6bcb67ef58579fd542106a62cd0dc2f1034ef44fc9d92e677b7294e18",
+        "assets/auweschvebm/packdefinition.json": "b519128f9243c9012b6fddf8a037a786888e08b96d5d501924e38d5e1e076b5a",
+        "assets/auweschvebx/packdefinition.json": "ec001b06dbb58e4c500f170f2ea2739faf69fd88fd1051bb459e97c9878e3752"
+      },
+      "contentPackIds": [
+        "auweschveb",
+        "auweschvebh",
+        "auweschvebm",
+        "auweschvebx"
+      ]
+    },
+    {
+      "id": "mcgltf",
+      "name": "MCglTF",
+      "path": "mods/MCglTF-1.12.2-Forge-2.0.3.0.jar",
+      "kind": "mod",
+      "side": "client",
+      "fileVersion": "2.0.3.0",
+      "projectId": 591547,
+      "fileId": 4367036,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/mcgltf",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/mcgltf/files/4367036",
+      "officialUrls": [
+        "https://mediafilez.forgecdn.net/files/4367/36/MCglTF-1.12.2-Forge-2.0.3.0.jar"
+      ],
+      "size": 558870,
+      "sha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "mcgltf"
+      ],
+      "fml": {
+        "mcgltf": "1.12.2-Forge-2.0.3.0"
+      },
+      "requires": [],
+      "receipt": {
+        "owner": "3",
+        "artifactAuditSha256": "7fcffac12ddb32bcd34afb8f296fb25bccf44f7b69cbd8d6fc72751a25d35523",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e"
+      },
+      "rights": {
+        "license": "Historical binary redistribution not approved; official download only",
+        "reviewedSha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-metadata",
+            "url": "https://mediafilez.forgecdn.net/files/4367/36/MCglTF-1.12.2-Forge-2.0.3.0.jar",
+            "member": "mcmod.info",
+            "sha256": "5ae5757e1298a73b3cdd5d3783e1d7ff4bcbc2343da06fbf44e909598f6232c9",
+            "appliesToSha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f"
+          }
+        ]
+      }
+    },
+    {
+      "id": "modularwarfare",
+      "name": "ModularWarfare",
+      "path": "mods/modularwarfare-2.4.2f.jar",
+      "kind": "mod",
+      "side": "both",
+      "fileVersion": "2.4.2f",
+      "projectId": 350869,
+      "fileId": 4426196,
+      "projectUrl": "https://www.curseforge.com/minecraft/mc-mods/modularwarfare",
+      "filePageUrl": "https://www.curseforge.com/minecraft/mc-mods/modularwarfare/files/4426196",
+      "officialUrls": [
+        "https://mediafilez.forgecdn.net/files/4426/196/modularwarfare-2.4.2f.jar"
+      ],
+      "size": 77165196,
+      "sha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc",
+      "delivery": "official-download",
+      "expectedModIds": [
+        "modularwarfare"
+      ],
+      "fml": {
+        "modularwarfare": "2.4.2f"
+      },
+      "requires": [
+        {
+          "id": "mcgltf",
+          "fileVersion": "2.0.3.0",
+          "side": "client"
+        }
+      ],
+      "receipt": {
+        "owner": "3",
+        "artifactAuditSha256": "7fcffac12ddb32bcd34afb8f296fb25bccf44f7b69cbd8d6fc72751a25d35523",
+        "nativeLoaded": true,
+        "clientNativeReceiptSha256": "0e0cf267713e2d7d34cafd90256c4219c9bedb0985265bb07dc01c0e896d277e",
+        "serverNativeReceiptSha256": "9472190ce22fe8deb2341ab11f8e103673e6d7eb797d46100d619f60707c41b0"
+      },
+      "rights": {
+        "license": "Mixed code and embedded content rights; whole binary redistribution not approved",
+        "reviewedSha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc",
+        "rehostAllowed": false,
+        "evidence": [
+          {
+            "kind": "archive-license",
+            "url": "https://mediafilez.forgecdn.net/files/4426/196/modularwarfare-2.4.2f.jar",
+            "member": "LICENSE.txt",
+            "sha256": "1969da35a4ec9d24f82280fe693d656d890ad61a8b477144e8184d0969463b08",
+            "appliesToSha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc"
+          }
+        ]
+      },
+      "embedded": [
+        {
+          "member": "animated-2.4.2f-contentpack.zip",
+          "path": "modularwarfare/animated-2.4.2f-contentpack.zip",
+          "size": 47556630,
+          "sha256": "beb4a37f45e25b3aeee688d04244698aec20d9f6f3c3cb54eb682cc17a0a31fc"
+        },
+        {
+          "member": "prototype-2.4.2f-contentpack.zip",
+          "path": "modularwarfare/prototype-2.4.2f-contentpack.zip",
+          "size": 16174399,
+          "sha256": "13d6d8c6daa40aec05ff1e093308628e698f220452bbf30d6bf59d786d26137f"
+        }
+      ]
+    }
+  ]
+}

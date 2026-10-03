@@ -63,31 +63,9 @@ function Set-WarfareConnection($Settings,$Connection) {
     foreach ($key in @('connectionMode','connectionTarget','serverPort')) { $Settings | Add-Member -MemberType NoteProperty -Name $key -Value $Connection.$key -Force }
     return $Settings
 }
+. (Join-Path $PSScriptRoot 'Warfare-ClientMods.ps1')
 function Get-WarfareDuplicateMods([string]$Root) {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $known=@('mcheli','techguns','firstaid','creativecore','enhancedvisuals')
-    $found=@{}
-    foreach($directory in @((Join-Path $Root 'mods'),(Join-Path $Root 'mods/1.12.2'))){
-        if(-not(Test-Path -LiteralPath $directory -PathType Container)){continue}
-        foreach($file in @(Get-ChildItem -LiteralPath $directory -Filter '*.jar' -File|Where-Object {$_.Extension -ieq '.jar'})){
-            $archive=$null;$reader=$null
-            try{
-                $archive=[IO.Compression.ZipFile]::OpenRead($file.FullName)
-                $entry=$archive.GetEntry('mcmod.info')
-                if(-not $entry -or $entry.Length -gt 65536){continue}
-                $reader=[IO.StreamReader]::new($entry.Open(),[Text.Encoding]::UTF8)
-                $metadata=$reader.ReadToEnd()|ConvertFrom-Json
-                $records=if($metadata -is [PSCustomObject] -and $metadata.PSObject.Properties['modList']){$metadata.modList}else{$metadata}
-                foreach($record in $records){
-                    $id=[string]$record.modid
-                    if($id -cnotin $known){continue}
-                    if(-not $found.ContainsKey($id)){$found[$id]=[Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)}
-                    [void]$found[$id].Add($file.FullName)
-                }
-            }catch{}finally{if($reader){$reader.Dispose()};if($archive){$archive.Dispose()}}
-        }
-    }
-    foreach($id in @($found.Keys|Sort-Object)){if($found[$id].Count -gt 1){[PSCustomObject]@{modid=$id;paths=@($found[$id]|Sort-Object)}}}
+    Get-WarfareDuplicateClientMods $Root
 }
 function Assert-WarfareUniqueMods([string]$Root) {
     $conflicts=@(Get-WarfareDuplicateMods $Root)
@@ -95,7 +73,8 @@ function Assert-WarfareUniqueMods([string]$Root) {
     $rootPath=[IO.Path]::GetFullPath($Root).TrimEnd('\')+'\'
     $parts=@(foreach($conflict in $conflicts){
         $paths=@($conflict.paths|ForEach-Object {$_.Substring($rootPath.Length).Replace('\','/')})
-        $conflict.modid+': '+($paths -join ', ')
+        $identity=if($conflict.kind -ceq 'content-pack'){'content-pack '+$conflict.packId}else{$conflict.modid}
+        $identity+': '+($paths -join ', ')
     })
     throw ('duplicate_mods:'+($parts -join '; '))
 }

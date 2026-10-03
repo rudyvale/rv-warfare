@@ -52,7 +52,7 @@ jobs:
           powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./qa/test_duplicate_mods.ps1
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           & ./qa/test_onboarding.ps1
-          & ./qa/test_gui.ps1
+          & ./qa/check_launcher_source.ps1
           python -X utf8 qa/test_connection_launch.py
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           python -X utf8 qa/test_launcher.py

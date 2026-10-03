@@ -37,13 +37,17 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 | **Aircraft** | A quadcopter, combat FPV, Geran and FP-1 with distinct models and flight behaviour |
 | **Combat** | Techguns and MC Heli CE, tank controls, server-confirmed damage feedback and combat audio |
 | **Medical care** | First Aid wounds and timed healing, with configurable visual effects |
-| **World and guide** | A separate battlefield template with destructible props, equipment menus and a 24-page book in each language |
+| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, new roads and buildings, equipment menus and a 28-page book in each language |
 | **First-play setup** | Actual device selection, calibration and server selection; cancelled setup preserves saved choices |
 | **Graphics profiles** | Low, Balanced and Quality applied explicitly; language changes preserve graphics settings |
 | **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
 | **Quiet updates** | Checks GitHub in the background when opening, launching or installing |
 | **Your data** | Preserves worlds, nickname, language, connection details and user files; backs up replaced files |
 | **Interface** | English and Russian, Windows display scaling, a simple code icon |
+
+RV 1.2 adds AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles with IAV and VEB, ModularWarfare and MCglTF. The installer downloads the eight exact vendor files from their official sources and verifies SHA-256 before changing the installation. Those files are not rehosted in this repository or its releases. See the [compatibility notes](docs/COMPATIBILITY.md) for versions, dependencies and download rights.
+
+The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content: cross-mod damage, cannon firing and physical audio direction are not fully verified.
 
 ## In game
 

@@ -1,0 +1,3 @@
+RV Vehicle Compatibility is original first-party RV code. All rights are retained.
+The source and reproducible build recipe are published with RV for inspection.
+It uses public Immersive Vehicles APIs. No vendor classes, definitions, models or audio are included. Third-party components retain their own licenses.

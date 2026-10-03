@@ -1,11 +1,31 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "repository": "rudyvale/rv-warfare",
   "requiredMods": {
     "mcheli": "1.5.1-rv-controls3",
     "techguns": "2.0.2.0",
     "firstaid": "1.6.22",
     "creativecore": "1.10.0",
-    "enhancedvisuals": "1.3.0"
-  }
+    "enhancedvisuals": "1.3.0",
+    "biomesoplenty": "7.0.1.2445",
+    "mts": "24.0.0",
+    "modularwarfare": "2.4.2f",
+    "rvcompat": "1.2.0"
+  },
+  "clientRequiredMods": {
+    "mcheli": "1.5.1-rv-controls3",
+    "techguns": "2.0.2.0",
+    "firstaid": "1.6.22",
+    "creativecore": "1.10.0",
+    "enhancedvisuals": "1.3.0",
+    "ambientsounds": "3.0",
+    "mousetweaks": "2.10.1",
+    "biomesoplenty": "7.0.1.2445",
+    "mts": "24.0.0",
+    "mcgltf": "1.12.2-Forge-2.0.3.0",
+    "modularwarfare": "2.4.2f",
+    "rvcompat": "1.2.0"
+  },
+  "vendorCatalogSha256": "05528c1fee7f18bfcc66b8ab393d6978141e9424eecbb6145da03861be0653ae",
+  "managedModsSha256": "296716ab4d2bd125d7752d31d0e34a39d2dc1c030b4fa497c7fa201f84486ab3"
 }
