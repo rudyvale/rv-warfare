@@ -49,11 +49,22 @@ RV 1.2 adds AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles wi
 
 The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content: cross-mod damage, cannon firing and physical audio direction are not fully verified.
 
-## RV 2 development preview
+## RV 2 Preview
 
-The RV 2 player menu is under development. This original first-join screenshot was captured in an isolated client with preliminary module SHA-256 `65ae42b5f627a37d4d1d401a1e99f7fa80c97a79ebe4d538243baadabf832e31`. It demonstrates the visible menu; server actions, equipment delivery and multiplayer session behavior still require verification on the corrected build. Stable RV 1.2.1 remains available above.
+RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with equipment previews, explicit confirmation, readiness and server validation. The installer configures missing keyboard controls automatically and can import a host's local invitation. Use matching RV 2 client and server versions. Stable RV 1.2.1 remains the automatic update target.
 
-![RV 2 first-join player menu in Russian, showing session, equipment and controls tabs](docs/gallery/rv2-menu-preview.png)
+![RV 2 player equipment menu in English, with weapon choices and explicit equipment confirmation](docs/gallery/rv2-gear.png)
+
+<details>
+<summary>Flight-feel controls and session readiness</summary>
+
+![RV 2 flight-feel controls for deadzone, expo, turn speed and smoothing](docs/gallery/rv2-controls.png)
+
+![RV 2 session menu after cancelling readiness](docs/gallery/rv2-session.png)
+
+</details>
+
+These are original captures from the final preview module, tested with one isolated ordinary player and a dedicated Forge server. Equipment confirmation, readiness cancellation, both guide languages and travel destinations passed native checks. Two-player sessions, physical controllers, full-inventory rollback and new vendor combat remain outside that acceptance. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
 
 ## In game
 
