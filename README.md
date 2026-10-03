@@ -49,6 +49,12 @@ RV 1.2 adds AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles wi
 
 The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content: cross-mod damage, cannon firing and physical audio direction are not fully verified.
 
+## RV 2 development preview
+
+The RV 2 player menu is under development. This original first-join screenshot was captured in an isolated client with preliminary module SHA-256 `57d8b18f71f3d59bd1aebc9e94030d72e534438bb4b3bdea7212a1af78caa5e0`. It demonstrates the visible menu; server actions, equipment delivery and multiplayer session behavior still require verification on the corrected build. Stable RV 1.2.1 remains available above.
+
+![RV 2 first-join player menu in Russian, showing session, equipment and controls tabs](assets/gameplay/rv2-first-join-preview.png)
+
 ## In game
 
 These are unedited screenshots from the game. The aircraft views use optional BSL shaders; they do not represent the default graphics settings or an FPS guarantee.
