@@ -96,9 +96,8 @@ try {
     $root=New-Instance 'Keyboard public' @{nickname='Tester';unknown='retain'}
     $result=Run-Wizard $root {param($w)
         $next=Find-Control $w 'setupNext'
-        if($script:step -eq 0){if(-not (Find-Control $w 'inputEasy').Checked){throw 'Keyboard is not default'};$next.PerformClick();$script:step++;return}
-        if(-not (Find-Control $w 'setupPage2').Visible){return}
-        if($script:step -eq 1){
+        if($script:step -eq 0){
+            if(-not (Find-Control $w 'inputEasy').Checked -or -not (Find-Control $w 'setupPage2').Visible){throw 'Fresh keyboard setup did not start at the server choice'}
             if((Find-Control $w 'setupServer').Items.Count -ne 1 -or (Find-Control $w 'setupTarget').Text){throw 'Public setup has private defaults'}
             $next.PerformClick()
             if((Find-Control $w 'setupStatus').Text -ne 'Укажи сервер в настройках.'){throw 'Empty target not rejected'}
@@ -107,8 +106,8 @@ try {
         (Find-Control $w 'setupTarget').Text='abcd12';$next.PerformClick()
     }
     $saved=Read-Settings $root
-    if(-not $result.completed -or $saved.firstPlay.inputMode -ne 'easy' -or $saved.connectionTarget -ne 'ABCD12' -or $saved.unknown -ne 'retain' -or -not(Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt'))){throw 'Keyboard/public setup failed'}
-    Record 'Keyboard uses the bridge, validates an empty public target and saves the current code'
+    if(-not $result.completed -or $saved.firstPlay.inputMode -ne 'easy' -or $saved.connectionTarget -ne 'ABCD12' -or $saved.unknown -ne 'retain' -or (Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt')) -or (Test-Path -LiteralPath (Join-Path $root 'config/vm-controller.properties'))){throw 'Keyboard/public setup failed'}
+    Record 'Fresh keyboard defaults skip the bridge, validate an empty public target and save the current code'
     $script:called=$false
     $result=Show-WarfareOnboarding -Root $root -Parent $parent
     if(-not $result.completed -or @([Windows.Forms.Application]::OpenForms|Where-Object Name -eq firstPlay).Count){throw 'Completed setup reopened'}
@@ -116,6 +115,15 @@ try {
     $result=Run-Wizard $root {param($w);(Find-Control $w 'setupCancel').PerformClick()} -Reconfigure
     if($result.completed -or -not(Read-Settings $root).firstPlay.completed){throw 'Reconfigure cancel destroyed completed setup'}
     Record 'Reconfigure remains available and cancelling retains the previous setup'
+    $root=New-Instance 'Keyboard from radio' $personal
+    $profile=Join-Path $root 'config/vm-controller.properties'
+    [IO.File]::WriteAllText($profile,"enabled=true`r`nkeyboardFlight=pro`r`n",[Text.UTF8Encoding]::new($false))
+    $result=Run-Wizard $root {param($w)
+        if((Find-Control $w 'setupPage0').Visible){(Find-Control $w 'inputEasy').Checked=$true;(Find-Control $w 'setupNext').PerformClick();return}
+        if((Find-Control $w 'setupPage2').Visible -and (Find-Control $w 'setupNext').Enabled){(Find-Control $w 'setupNext').PerformClick()}
+    }
+    if(-not $result.completed -or $result.settings.firstPlay.inputMode -ne 'easy' -or -not(Test-Path -LiteralPath (Join-Path $root 'keyboard-applied.txt')) -or [IO.File]::ReadAllText($profile) -cne 'enabled=false'){throw 'Existing radio profile did not use the Keyboard bridge'}
+    Record 'Switching an existing radio profile to keyboard applies the explicit Keyboard bridge'
     $root=New-Instance 'Keyboard cancelled profile' (@{firstPlay=@{schema=1;completed=$true;scope='client';inputMode='radio';device='old-device'};connectionMode='direct';connectionTarget='saved.example';serverPort=25565})
     $profile=Join-Path $root 'config/vm-controller.properties';[IO.File]::WriteAllText($profile,"enabled=true`r`nroll.axis=3`r`nunknown=личное`r`n",[Text.UTF8Encoding]::new($false));$before=[IO.File]::ReadAllBytes($profile)
     $result=Run-Wizard $root {param($w)
