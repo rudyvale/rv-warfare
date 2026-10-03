@@ -37,7 +37,7 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 | **Aircraft** | A quadcopter, combat FPV, Geran and FP-1 with distinct models and flight behaviour |
 | **Combat** | Techguns and MC Heli CE, tank controls, server-confirmed damage feedback and combat audio |
 | **Medical care** | First Aid wounds and timed healing, with configurable visual effects |
-| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, new roads and buildings, equipment menus and a 28-page book in each language |
+| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, roads and buildings; a 28-page guide in stable RV 1.2.1 and a 30-page guide in RV 2 Preview, in each language |
 | **First-play setup** | Actual device selection, calibration and server selection; cancelled setup preserves saved choices |
 | **Graphics profiles** | Low, Balanced and Quality applied explicitly; language changes preserve graphics settings |
 | **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
