@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1
+
+- Fix server startup preparation so stock addon updates and pending graphics profiles run before the runner publishes its starting state. The vendor download mutex, port reservation and stop handling remain active.
+- All mod binaries, the clean battlefield, player guide, audio and data preservation policies are unchanged.
+
 ## 1.2.0
 
 - Eight pinned official downloads: AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles, IAV, VEB, ModularWarfare and MCglTF. The installer verifies all files before applying a transaction and preserves unknown mods and user data.

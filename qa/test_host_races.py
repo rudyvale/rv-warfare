@@ -1,4 +1,5 @@
 import importlib.util
+import hashlib
 import io
 import os
 from pathlib import Path
@@ -9,6 +10,7 @@ import threading
 import time
 from types import SimpleNamespace
 import unittest
+import zipfile
 from unittest.mock import Mock, patch
 
 
@@ -48,6 +50,32 @@ def make_launcher(folder):
 
 
 class HostRaceTests(unittest.TestCase):
+    def test_vendor_start_preserves_stopped_maintenance_for_addons_and_pending_profile(self):
+        with tempfile.TemporaryDirectory(prefix='rv-host-maintenance-') as temporary:
+            root = Path(temporary)
+            (root / 'mods').mkdir()
+            resource = 'assets/mcheli/textures/rv-test.txt'
+            data = b'updated owned addon'
+            jar = root / 'mods/mcheli-ce-1.5.1-rv.jar'
+            with zipfile.ZipFile(jar, 'w') as archive:
+                archive.writestr(resource, data)
+            addon = root / 'mcheli_addons/default' / resource
+            addon.parent.mkdir(parents=True)
+            addon.write_bytes(b'old owned addon')
+            host_runtime.write_json(root / 'rv-addon-assets.json', {'schema': 1, 'mcheliSha256': hashlib.sha256(jar.read_bytes()).hexdigest(), 'resources': {resource: hashlib.sha256(data).hexdigest()}})
+            host_runtime.write_json(root / 'release.json', {'version': '1.2.0', 'vendorCatalogSha256': 'fixture'})
+            host_runtime.write_json(root / 'launcher-settings.json', {'pendingServerProfile': 'balanced'})
+            (root / 'server.properties').write_text('server-port=25565\nview-distance=4\n')
+            process = SimpleNamespace(pid=43210, returncode=0, stdin=io.StringIO(), poll=Mock(return_value=0))
+            def prepared(folder, pulse):
+                self.assertEqual(addon.read_bytes(), data)
+                self.assertIn('view-distance=6', (root / 'server.properties').read_text())
+                self.assertFalse(pulse())
+            with patch.object(runner, 'acquire_lock', return_value=object()), patch.object(runner, 'server_status', return_value={'state': 'stopped'}), patch.object(runner, 'java_arguments', return_value=(['fake-java'], 2)), patch.object(runner.socket, 'socket'), patch.object(runner, 'install_for_runner', side_effect=prepared), patch.object(runner.subprocess, 'Popen', return_value=process) as spawn, patch.object(runner.porthole, 'process_identity', return_value={'startedAt': 10}):
+                runner.run(root)
+            spawn.assert_called_once()
+            self.assertEqual(host_runtime.read_json(root / 'server-state.json')['state'], 'stopped')
+
     def test_stop_waits_for_tunnel_and_rejects_old_completion(self):
         for phase_delivered in (False, True):
             with self.subTest(phase_delivered=phase_delivered), tempfile.TemporaryDirectory(prefix='vm-host-races-') as temporary:

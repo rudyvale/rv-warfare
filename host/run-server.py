@@ -29,8 +29,6 @@ def run(root):
     try:
         commands_path.write_text('', encoding='utf-8')
         vendor_meta = read_json(root / 'release.json')
-        if vendor_meta.get('vendorCatalogSha256'):
-            save()
         settings = read_json(root / 'launcher-settings.json')
         arguments, memory = java_arguments(root, settings)
         port = server_port(root)
@@ -38,6 +36,10 @@ def run(root):
             if hasattr(socket, 'SO_EXCLUSIVEADDRUSE'):
                 port_check.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
             port_check.bind(('127.0.0.1', port))
+            update_stock_addons(root)
+            apply_pending_profile(root, settings)
+            if vendor_meta.get('vendorCatalogSha256'):
+                save()
             def vendor_wait():
                 state['phase'] = 'vendors'
                 save()
@@ -47,8 +49,6 @@ def run(root):
                 state.update(state='stopped', ready=False, phase='stopped')
                 save()
                 return
-        update_stock_addons(root)
-        apply_pending_profile(root, settings)
         if any(line.strip() == 'stop' for line in commands_path.read_text(encoding='utf-8').splitlines()):
             state.update(state='stopped', ready=False, phase='stopped')
             save()
