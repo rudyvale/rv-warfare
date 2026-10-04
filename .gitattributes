@@ -28,3 +28,5 @@ patches/controls/resources/** -text whitespace=cr-at-eol
 *.command text eol=lf
 platform/macos/GSON-LICENSE.txt text eol=lf
 src/Warfare-SelfHost.ps1 -text whitespace=cr-at-eol
+patches/compat/NOTICE.txt text eol=lf
+patches/experience/NOTICE.txt text eol=lf
