@@ -15,7 +15,7 @@ Produce a public Preview with matching source, client and host packages, clean w
 
 ## Decisions and dependencies
 
-The unreleased 2.0.1 candidate was rejected after an actual 105-mm impact exposed incompatible VMProps hook descriptors. The 2.0.2 correction passed linkage and packaging checks, but its native retry exposed a separate dedicated-server fire error. Preserve both existing tags as unreleased source checkpoints. The next corrected candidate is 2.0.3. Keep the stable update target unchanged. The experimental MTS damage bridge and all test helpers are excluded from public packages.
+The unreleased 2.0.1 candidate was rejected after an actual 105-mm impact exposed incompatible VMProps hook descriptors. The 2.0.2 correction passed linkage and packaging checks, but its native retry exposed a separate dedicated-server fire error. Preserve both existing tags as unreleased source checkpoints. The corrected 2.0.3 Preview is published and immutable. Keep the stable update target unchanged. The experimental MTS damage bridge and all test helpers are excluded from public packages.
 
 ## Changes and artifact identifiers
 
@@ -37,6 +37,8 @@ Eight native WinForms message-loop cases covered launcher action completion and 
 
 ## Open gaps and next gate
 
-Before publication, integrate the exact native-tested candidate into the next release, independently verify the exact five final assets, frozen source closure, nested checksums, vendor exclusions and public GitHub state. The 30-minute deadline at 11:07:39 UTC on 2026-10-04 was missed; neither rejected package was uploaded.
+Published [RV 2.0.3 Preview](https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.3) from frozen source `6e06eed7b7942327d26777ee9e2ffc599bb6be21`. A fresh checkout reproduced the selected controls JAR and all captured source bytes. Exact-source Windows CI passed. All five public assets were independently downloaded and their sizes and SHA-256 digests matched the accepted packages; release metadata identifies a public prerelease. Stable RV 1.2.1 remains the latest stable release. The 30-minute deadline at 11:07:39 UTC on 2026-10-04 was missed; neither rejected package was uploaded.
 
-The 75-check isolated combat suite covers its listed fixtures, not every weapon or vehicle. Physical controller models, audible playback, visible impact output, an external friend's connection and the final performance matrix remain unverified. Fault-injection rollback and the third-player inventory case also remain open. The release must remain a Preview and must not claim those checks passed.
+The 75-check isolated combat suite covers its listed fixtures, not every weapon or vehicle. Physical controller models, audible playback, visible impact output, an external friend's connection and the final performance matrix remain unverified. Subsequent native equipment checks passed tagged-bandage stacking and rollback after an injected post-write failure before container packet forwarding. Recovery after partial packet delivery and the third-player case remain open. The release must remain a Preview and must not claim those checks passed.
+
+Continue equipment acceptance and the separately observed menu rendering defect through [player choice acceptance](rv-2-player-choice-acceptance.md). Published Preview files are not replaced by this follow-up work.

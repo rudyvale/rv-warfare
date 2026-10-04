@@ -51,6 +51,8 @@ The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. N
 
 ## RV 2.0.3 Preview
 
+Download [RV 2.0.3 Preview](https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.3) to try the player menu shown below. The main **Download RV** link and automatic updates still select stable RV 1.2.1. Every participant and the host need matching versions.
+
 RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with equipment previews, explicit confirmation, readiness and server validation. The installer configures missing keyboard controls automatically and can import a host's local invitation. Use matching RV 2 client and server versions. Stable RV 1.2.1 remains the automatic update target.
 
 ![RV 2 player equipment menu in English, with weapon choices and explicit equipment confirmation](docs/gallery/rv201-gear.png)
@@ -64,7 +66,7 @@ RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with e
 
 </details>
 
-The gear and session captures show the updated menu exercised by two ordinary players and a dedicated Forge server. The controls capture is retained from the original RV 2.0.0 single-player check. Reviewed menu checks cover equipment confirmation and preservation, readiness, cancellation, reconnect and restart; separate zero- and one-free-slot checks preserved inventory. Dedicated-server fire and prop regressions passed in an isolated game fixture. Physical controllers, full-inventory rollback and the complete performance matrix remain pending. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
+The gear and session captures show the updated menu exercised by two ordinary players and a dedicated Forge server. The controls capture is retained from the original RV 2.0.0 single-player check. Reviewed menu checks cover equipment confirmation and preservation, readiness, cancellation, reconnect and restart; zero- and one-free-slot checks, tagged-bandage stacking and rollback before container packet forwarding passed. Dedicated-server fire and prop regressions passed in an isolated game fixture. Physical controllers, recovery after partial inventory packet delivery and the complete performance matrix remain pending. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
 
 ## In game
 
