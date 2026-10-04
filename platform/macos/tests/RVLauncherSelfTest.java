@@ -171,10 +171,10 @@ public final class RVLauncherSelfTest {
         Files.setLastModifiedTime(log, java.nio.file.attribute.FileTime.fromMillis(started - 10000));
         check(!RVLauncher.serverLogReady(log, started), "previous server readiness does not count");
         Files.write(log, "[Server thread/INFO]: Preparing level world\n".getBytes(StandardCharsets.UTF_8));
-        Files.setLastModifiedTime(log, java.nio.file.attribute.FileTime.fromMillis(started + 100));
+        Files.setLastModifiedTime(log, java.nio.file.attribute.FileTime.fromMillis(started + 5000));
         check(!RVLauncher.serverLogReady(log, started), "world must finish loading");
         Files.write(log, "[Server thread/INFO]: Done (5.0s)!\n".getBytes(StandardCharsets.UTF_8));
-        Files.setLastModifiedTime(log, java.nio.file.attribute.FileTime.fromMillis(started + 100));
+        Files.setLastModifiedTime(log, java.nio.file.attribute.FileTime.fromMillis(started + 5000));
         check(RVLauncher.serverLogReady(log, started), "current Forge log confirms readiness");
         delete(root);
     }
