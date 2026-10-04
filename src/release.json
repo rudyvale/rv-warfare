@@ -1,5 +1,5 @@
 {
-  "version": "1.2.1",
+  "version": "2.0.4",
   "repository": "rudyvale/rv-warfare",
   "requiredMods": {
     "mcheli": "1.5.1-rv-controls3",
@@ -10,7 +10,8 @@
     "biomesoplenty": "7.0.1.2445",
     "mts": "24.0.0",
     "modularwarfare": "2.4.2f",
-    "rvcompat": "1.2.0"
+    "rvcompat": "1.2.0",
+    "rvexperience": "2.0.0"
   },
   "clientRequiredMods": {
     "mcheli": "1.5.1-rv-controls3",
@@ -24,8 +25,9 @@
     "mts": "24.0.0",
     "mcgltf": "1.12.2-Forge-2.0.3.0",
     "modularwarfare": "2.4.2f",
-    "rvcompat": "1.2.0"
+    "rvcompat": "1.2.0",
+    "rvexperience": "2.0.0"
   },
   "vendorCatalogSha256": "05528c1fee7f18bfcc66b8ab393d6978141e9424eecbb6145da03861be0653ae",
-  "managedModsSha256": "296716ab4d2bd125d7752d31d0e34a39d2dc1c030b4fa497c7fa201f84486ab3"
+  "managedModsSha256": "92c32a01c0d4ac17141f06b9e4f3dd0235c6cfc5990794af4a468392aa551f0c"
 }

@@ -1,6 +1,8 @@
 ﻿function Get-WarfareSetupText([string]$Language,[string]$Ru,[string]$En) {
     if ($Language -eq 'en') { return $En }; return $Ru
 }
+. (Join-Path $PSScriptRoot 'Warfare-ClientControls.ps1')
+. (Join-Path $PSScriptRoot 'Warfare-ConnectionProfiles.ps1')
 function Initialize-WarfareSetupUI {
     if(-not ('RvSetupDpi' -as [type])){
         Add-Type @'
@@ -72,7 +74,7 @@ function Stop-WarfareSetupTask($Process,[string]$Root) {
     $Process.Kill();if(-not $Process.WaitForExit(1500)){throw 'setup_cleanup_failed'}
 }
 function Show-WarfareOnboarding {
-    param([string]$Root,[ValidateSet('ru','en')][string]$Language='ru',$Parent,[switch]$Reconfigure,[switch]$Owner)
+    param([string]$Root,[ValidateSet('ru','en')][string]$Language='ru',$Parent,[switch]$Reconfigure,[switch]$Owner,[ValidateSet('local','friends','owner','host')][string]$PlayMode,[bool]$UseConnectionDefaults=$true)
     $Root=[IO.Path]::GetFullPath($Root)
     $settingsPath=Join-Path $Root 'warfare-settings.json'
     $settings=$null
@@ -80,10 +82,12 @@ function Show-WarfareOnboarding {
         try{$settings=Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{throw (Get-WarfareSetupText $Language 'Не удалось прочитать настройки. Открой журнал.' 'Could not read settings. Open Log.')}
     }
     if(-not $settings){$settings=[PSCustomObject]@{}}
+    $localOnly = $PlayMode -in @('local','host')
     $defaults=$null
     $defaultsPath=Join-Path $Root 'server-defaults.json'
-    if(Test-Path -LiteralPath $defaultsPath){try{$defaults=Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{}}
+    if($UseConnectionDefaults -and (Test-Path -LiteralPath $defaultsPath)){try{$defaults=Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{}}
     $connection=Get-WarfareConnection $settings $defaults
+    if($localOnly){$connection=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}}
     $scope=if($Owner){'owner'}else{'client'}
     $saved=$settings.firstPlay
     if(-not $Reconfigure -and $saved -and $saved.schema -eq 1 -and $saved.completed -eq $true -and $saved.scope -eq $scope -and $saved.inputMode -in @('easy','radio','gamepad') -and ($Owner -or $connection.connectionTarget)){
@@ -99,6 +103,7 @@ function Show-WarfareOnboarding {
     $profileBefore=if(Test-Path -LiteralPath $profilePath){[IO.File]::ReadAllBytes($profilePath)}else{$null}
     $draft=if($settings.firstPlayDraft){$settings.firstPlayDraft}else{$saved}
     if($draft -and $draft.inputMode -in @('easy','radio','gamepad')){$state.mode=$draft.inputMode}
+    if(-not $Owner -and -not $draft -and (Test-WarfareKeyboardDefaultsReady $Root)){$state.page=2}
     $dialog=[Windows.Forms.Form]::new()
     $dialog.SuspendLayout()
     $dialog.Name='firstPlay';$dialog.Text='RV';$dialog.StartPosition='CenterParent';$dialog.ShowInTaskbar=$false
@@ -162,7 +167,17 @@ function Show-WarfareOnboarding {
     $portLabel=Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Порт' 'Port') 220 26;$portLabel.SetBounds(400,220,160,26)
     $targetInput=[Windows.Forms.TextBox]::new();$targetInput.Name='setupTarget';$targetInput.MaxLength=300;$targetInput.SetBounds(24,252,360,28);$pages[2].Controls.Add($targetInput)
     $portInput=[Windows.Forms.NumericUpDown]::new();$portInput.Name='setupPort';$portInput.Minimum=1;$portInput.Maximum=65535;$portInput.SetBounds(400,252,160,28);$pages[2].Controls.Add($portInput)
-    [void](Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Вставь код подключения от хозяина. Его можно заменить в настройках.' 'Paste the connection code from the host. You can change it in Settings.') 308 92)
+    $importInvite=[RvSetupButton]::new();$importInvite.Name='setupImportInvite';$importInvite.SetBounds(24,298,536,36);$importInvite.Text=Get-WarfareSetupText $Language 'Открыть приглашение' 'Open invitation';$pages[2].Controls.Add($importInvite)
+    $inviteHint=Add-SetupLabel $pages[2] (Get-WarfareSetupText $Language 'Выбери файл .rvinvite от хозяина или введи код подключения.' 'Open the host .rvinvite file or enter a connection code.') 350 64
+    $importInvite.Add_Click({
+        $picker=[Windows.Forms.OpenFileDialog]::new();$picker.Filter='RV invitation|*.rvinvite'
+        try{
+            if($picker.ShowDialog($dialog) -ne 'OK'){return}
+            $invite=ConvertFrom-WarfareInvite -Path $picker.FileName
+            $serverBox.SelectedIndex=$serverChoices.Count-1;$modeBox.SelectedIndex=0;$targetInput.Text=$invite.connection.connectionTarget;$portInput.Value=$invite.connection.serverPort
+            $inviteHint.Text=$invite.label+' · RV '+$invite.version
+        }catch{$errorLabel.Text=Get-WarfareSetupText $Language 'Приглашение повреждено или не подходит для RV.' 'This invitation is damaged or incompatible with RV.'}finally{$picker.Dispose()}
+    })
     $updateServerFields={
         $selected=$serverChoices[$serverBox.SelectedIndex].connection
         $manual=$null -eq $selected
@@ -200,11 +215,11 @@ function Show-WarfareOnboarding {
         } catch {$errorLabel.Text=Get-WarfareSetupText $Language 'Настройка недоступна. Установи актуальное обновление RV.' 'Control setup is unavailable. Install the current RV update.';& $updateButtons}
     }
     $completeSetup={
-        $chosen=if($Owner){$connection}else{ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString()}
+        $chosen=if($Owner -or $localOnly){$connection}else{ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString()}
         $data=[PSCustomObject]@{schema=1;completed=$true;scope=$scope;inputMode=$state.mode;brand=[string]$brandBox.SelectedItem;device='';deviceName=''}
         if($state.mode -ne 'easy'){$data.device=[string]$state.verified.profile.device;$data.deviceName=[string]$state.devices[$deviceBox.SelectedIndex].name}
         $newSettings=$settings|ConvertTo-Json -Depth 32|ConvertFrom-Json
-        $newSettings=Set-WarfareConnection $newSettings $chosen
+        if(-not $localOnly){$newSettings=Set-WarfareConnection $newSettings $chosen}
         $newSettings|Add-Member NoteProperty firstPlay $data -Force
         $newSettings.PSObject.Properties.Remove('firstPlayDraft')
         Save-WarfareSetupSettings $Root $newSettings
@@ -213,7 +228,7 @@ function Show-WarfareOnboarding {
     $next.Add_Click({try{
         if($state.page -eq 0){
             $state.mode=if($inputChoices[1].Checked){'radio'}elseif($inputChoices[2].Checked){'gamepad'}else{'easy'}
-            if($state.mode -eq 'easy'){if($Owner){& $beginTask 'Keyboard'}else{$state.page=2;& $showPage};return}
+            if($state.mode -eq 'easy'){if($Owner -or $localOnly){if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}}else{$state.page=2;& $showPage};return}
             $state.page=1;$state.verified=$null;$deviceBox.Items.Clear();$state.devices=@()
             $brandBox.Items.Clear()
             if($state.mode -eq 'radio'){
@@ -228,10 +243,10 @@ function Show-WarfareOnboarding {
             $brandBox.SelectedIndex=$brandBox.Items.Count-1
             if($draft -and $brandBox.Items.Contains([string]$draft.brand)){$brandBox.SelectedItem=[string]$draft.brand}
             & $showPage;& $beginTask 'Probe'
-        }elseif($state.page -eq 1){if($Owner){& $completeSetup}else{$state.page=2;& $showPage}}
+        }elseif($state.page -eq 1){if($Owner -or $localOnly){& $completeSetup}else{$state.page=2;& $showPage}}
         elseif($state.mode -eq 'easy'){
             [void](ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString())
-            & $beginTask 'Keyboard'
+            if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}
         }else{& $completeSetup}
     }catch{$errorLabel.Text=Get-WarfareConnectionError $_.Exception.Message $Language}})
     foreach($radio in $inputChoices){$radio.Add_CheckedChanged({& $updateButtons})}

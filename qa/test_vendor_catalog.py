@@ -315,6 +315,45 @@ class FirstPartyTests(unittest.TestCase):
             with zipfile.ZipFile(io.BytesIO(payload)) as archive, self.assertRaisesRegex(ValueError, 'loaded native binary'):
                 verify_first_party_proof(path, catalog(), manifest, archive, root)
 
+    def test_manual_proof_cannot_add_private_fields_or_unknown_identities(self):
+        changes = (('privatePeer', {'privatePeer': 'fixture'}), ('mods', {'mods': {'rvcompat': '1.2.0', 'unknown': '1.0'}}), ('artifacts', {'artifacts': {'mods/rv-compat.jar': 'a' * 64, 'logs/private.log': 'b' * 64}}))
+        for name, change in changes:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                path, proof, manifest, payload = self.fixture(root)
+                receipt = proof['nativeReceipts'][1]
+                target = root / receipt['path']
+                data = {**json.loads(target.read_bytes()), **change}
+                target.write_bytes(json.dumps(data).encode())
+                receipt['sha256'] = hashlib.sha256(target.read_bytes()).hexdigest()
+                path.write_bytes(json.dumps(proof).encode())
+                with zipfile.ZipFile(io.BytesIO(payload)) as archive, self.assertRaisesRegex(ValueError, 'only successful FML identities|complete owned module union'):
+                    verify_first_party_proof(path, catalog(), manifest, archive, root)
+
+    def test_manual_proof_cannot_reference_private_evidence_location(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path, proof, manifest, payload = self.fixture(root)
+            receipt = proof['nativeReceipts'][1]
+            original = root / receipt['path']
+            receipt['path'] = '.local/private-native.json'
+            target = root / receipt['path']
+            target.parent.mkdir()
+            target.write_bytes(original.read_bytes())
+            path.write_bytes(json.dumps(proof).encode())
+            with zipfile.ZipFile(io.BytesIO(payload)) as archive, self.assertRaisesRegex(ValueError, 'scrubbed public evidence path'):
+                verify_first_party_proof(path, catalog(), manifest, archive, root)
+
+    def test_manual_proof_requires_exactly_two_native_sides(self):
+        for count in (0, 1, 3):
+            with self.subTest(count=count), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                path, proof, manifest, payload = self.fixture(root)
+                proof['nativeReceipts'] = (proof['nativeReceipts'] * 2)[:count]
+                path.write_bytes(json.dumps(proof).encode())
+                with zipfile.ZipFile(io.BytesIO(payload)) as archive, self.assertRaisesRegex(ValueError, 'Both first-party native runtime receipts'):
+                    verify_first_party_proof(path, catalog(), manifest, archive, root)
+
 
 class DownloadTests(unittest.TestCase):
     def test_verified_cache_and_unknown_target_preserved(self):

@@ -1,8 +1,10 @@
-# RV player guide
+# RV 2 Preview player guide
 
-Extract the entire **RV-Setup.zip**, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation.
+Local play does not require a server. Multiplayer requires an RV 2 client and matching RV 2 server. The stable download and automatic update target remain RV 1.2.1. Multiplayer sessions, physical controllers and combat with the new vendor content still need broader testing.
 
-On the first **Play**, choose **Mouse and keyboard**, **FPV radio** or **Gamepad**. For a controller, select the actual connected device, check its axes and complete calibration. Then choose your server. RV saves your choice; setup remains available in the launcher.
+For this menu, download **RV-Setup.zip** from [RV 2.0.4 Preview](https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.4). Extract the entire archive, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation. The host and all players need matching RV versions.
+
+On the first **Play**, RV configures missing keyboard controls automatically. Choose Local, Friends, Owner or Host my server. Friends and Owner keep separate addresses; Local needs no server or Steam. Host my server creates your own persistent server after the first EULA confirmation. For an FPV radio or gamepad, select the actual connected device, check its axes and complete calibration in setup. Saved choices remain available in the launcher.
 
 ## Connect and update
 
@@ -17,9 +19,13 @@ If RV reports duplicate gameplay mods, use the relative paths shown in the error
 
 ## Menu and equipment
 
-**T** opens chat, **E** opens inventory and **J** opens the map. Use `/trigger menu set 1` for the RV menu. Restore the field guide through **Menu → Book** or `/trigger wbook set 1`.
+The player menu opens when you join an RV 2 world. **Session** selects a mode and team, confirms readiness and shows the current vote. **Gear** previews equipment before **Equip selection**; **Keep my gear** retains your existing inventory. The server validates these actions.
 
-On an RV server, **Kit** or `/trigger kit set 1` supplies weapons, ammunition, food, armour, a tablet and medical supplies. `/trigger drone set 1` replenishes up to three combat FPV drones; `/trigger wing set 1` supplies Geran and FP-1. Leave free inventory slots and wait five seconds between requests. Use **Spawn** or `/trigger spawn set 1` to return to the shared spawn.
+**Controls** contains device, axis and flight-feel settings. Use **Guide** to request the 30-page field guide in the menu's selected language. **Training** and **Lobby** move you to the world's designated destinations without replacing your gear. Reopen the menu with `/trigger menu set 1` or `/rvx open`.
+
+To start a team round, choose **Team round**, choose a team, confirm your equipment or choose **Keep my gear**, then press **Ready**. **Vote to start** records your vote. The countdown needs at least two ready players, both teams, a team-size difference of at most one, and votes from at least two thirds of ready players. Two ready players both need to vote; three ready players need two votes. An enrolled participant changing equipment or team, cancelling readiness, or disconnecting cancels the countdown.
+
+**T** opens chat, **E** opens inventory and **J** opens the map. **Slots needed** shows whether the selected supplies fit; already-owned equipment may require no new slot. A full inventory rejection leaves your items unchanged. Older kit and team triggers route through the RV 2 server menu and its checks.
 
 ## FPV quadcopter
 
@@ -60,7 +66,7 @@ Server-confirmed feedback distinguishes a hit without HP loss, the amount of dam
 
 Leave the vehicle and press **H** to inspect wounds. First Aid tracks the head, body, arms and legs separately. Check **Options → Controls → First Aid** if the key has been changed.
 
-Hold a bandage or plaster and **right-click**, then hold the button for the wounded body part until the countdown finishes. Healing takes time. Replenish medical supplies through **Kit**.
+Hold a bandage or plaster and **right-click**, then hold the button for the wounded body part until the countdown finishes. Healing takes time. To request medical supplies, open **Gear → Med**, choose your supplies and press **Equip selection** when the inventory and cooldown checks allow it.
 
 ## Graphics and performance
 

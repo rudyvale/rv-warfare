@@ -234,15 +234,16 @@ class PlayerGuideTests(unittest.TestCase):
             book = Snbt(line.split(' 1 0 ', 1)[1]).parse()
             self.assertLessEqual(len(book['title']), 32)
             self.assertEqual(book['rvGuide'], 1)
-            self.assertEqual(book['rvGuideVersion'], 3)
+            self.assertEqual(book['rvGuideVersion'], builder.EDITION)
+            self.assertEqual(book['rvGuideLang'], 1 if language == 'ru' else 2)
             self.assertEqual(book['author'], 'RV')
-            self.assertEqual(len(book['pages']), 28)
+            self.assertEqual(len(book['pages']), 30)
             for encoded in book['pages']:
                 text = json.loads(encoded)['text']
                 self.assertLessEqual(len(text.splitlines()), 14)
                 self.assertTrue(all(builder.width(line) <= 114 for line in text.splitlines()))
             all_text = '\n'.join(json.loads(page)['text'] for page in book['pages'])
-            for required in ('/trigger wbook set 1', '/trigger menu set 1', '/trigger spawn set 1', '/trigger kit set 1', '/trigger drone set 1', '/trigger wing set 1', 'X: 0', 'Y: 65', 'Z: -210', 'FP-1', 'First Aid', 'Easy', 'Space', 'Ctrl', 'F8', 'Angle', 'Acro', 'USB', '4–6', 'F3', 'Low', 'Balanced', 'Quality', 'HUD', 'HP', 'AmbientSounds', 'Mouse Tweaks'):
+            for required in ('/trigger wbook set 1', '/trigger spawn set 1', 'F7', '10', 'X: 0', 'Y: 65', 'Z: -210', 'FP-1', 'First Aid', 'Easy', 'Space', 'Ctrl', 'F8', 'Angle', 'Acro', 'USB', '4–6', 'F3', 'Low', 'Balanced', 'Quality', 'HUD', 'HP', 'AmbientSounds', 'Mouse Tweaks'):
                 self.assertIn(required, all_text)
             for required in (('Танк', 'ЛКМ — выстрел', 'ПОПАДАНИЕ', 'УРОН', 'УНИЧТОЖЕНО') if language == 'ru' else ('Tank', 'Left click — fire', 'HIT', 'DAMAGE', 'DESTROYED')):
                 self.assertIn(required, all_text)
@@ -279,7 +280,7 @@ class PlayerGuideTests(unittest.TestCase):
         self.assertEqual(player.scores['kills'], 17)
 
     def test_old_edition_is_upgraded_once_without_replacing_inventory(self):
-        for edition in (1, 2):
+        for edition in range(1, builder.EDITION):
             with self.subTest(edition=edition):
                 player = Player('Veteran')
                 player.scores = {'wlang': 1, 'wbOnce': 1, 'wbEdition': edition, 'kills': 17}
@@ -291,8 +292,8 @@ class PlayerGuideTests(unittest.TestCase):
                 self.assertEqual(player.inventory[0], old)
                 self.assertEqual(player.inventory[1], weapon)
                 self.assertEqual(player.scores['kills'], 17)
-                self.assertEqual(player.scores['wbEdition'], 3)
-                self.assertEqual([book['tag']['rvGuideVersion'] for book in player.books()], [edition, 3])
+                self.assertEqual(player.scores['wbEdition'], builder.EDITION)
+                self.assertEqual([book['tag']['rvGuideVersion'] for book in player.books()], [edition, builder.EDITION])
                 self.assertEqual(model.gives, 1)
                 checks = model.nbt_checks
                 model.tick(100)
@@ -313,20 +314,61 @@ class PlayerGuideTests(unittest.TestCase):
         del rejoined.inventory[35]
         restarted.tick(20)
         self.assertEqual(rejoined.inventory[0], before[0])
-        self.assertEqual(rejoined.inventory[35]['tag']['rvGuideVersion'], 3)
-        self.assertEqual(rejoined.scores['wbEdition'], 3)
+        self.assertEqual(rejoined.inventory[35]['tag']['rvGuideVersion'], builder.EDITION)
+        self.assertEqual(rejoined.scores['wbEdition'], builder.EDITION)
         self.assertEqual(rejoined.dropped, [])
 
     def test_current_edition_offhand_confirms_migration_without_free_slot(self):
         player = Player('AlreadyUpgraded')
         player.scores = {'wlang': 1, 'wbOnce': 1}
         player.fill()
-        player.inventory[-106] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': 3}}
+        player.inventory[-106] = {'id': 'minecraft:written_book', 'Count': 1, 'tag': {'rvGuide': 1, 'rvGuideVersion': builder.EDITION, 'rvGuideLang': 1}}
         before = deepcopy(player.inventory)
         model = Model([player])
         model.tick(100)
         self.assertEqual(player.inventory, before)
-        self.assertEqual((model.gives, player.scores['wbEdition'], player.scores['wbPending']), (0, 3, 0))
+        self.assertEqual((model.gives, player.scores['wbEdition'], player.scores['wbPending']), (0, builder.EDITION, 0))
+
+    def test_explicit_other_language_preserves_books_and_does_not_repeat(self):
+        player = Player('Translation')
+        model = Model([player])
+        model.tick()
+        original = deepcopy(player.inventory[0])
+        player.scores['wlang'] = 2
+        model.tick(40)
+        self.assertEqual(model.gives, 1)
+        model.request(player)
+        model.tick()
+        self.assertEqual(player.inventory[0], original)
+        self.assertEqual([book['tag']['rvGuideLang'] for book in player.books()], [1, 2])
+        for language in (2, 1, 2):
+            player.scores['wlang'] = language
+            model.request(player)
+            model.tick()
+        self.assertEqual(model.gives, 2)
+        self.assertEqual(player.dropped, [])
+
+    def test_other_language_full_inventory_waits_across_restart(self):
+        player = Player('FullTranslation')
+        model = Model([player])
+        model.tick()
+        original = deepcopy(player.inventory[0])
+        player.fill()
+        player.inventory[0] = original
+        before = deepcopy(player.inventory)
+        player.scores['wlang'] = 2
+        model.request(player)
+        model.tick(40)
+        self.assertEqual(player.inventory, before)
+        self.assertEqual(player.scores['wbPending'], 1)
+        self.assertEqual(player.dropped, [])
+        rejoined = deepcopy(player)
+        restarted = Model([rejoined])
+        del rejoined.inventory[35]
+        restarted.tick(20)
+        self.assertEqual(rejoined.inventory[0], original)
+        self.assertEqual(rejoined.inventory[35]['tag']['rvGuideLang'], 2)
+        self.assertEqual(rejoined.dropped, [])
 
     def test_each_of_36_free_main_slots_is_usable(self):
         for slot in range(36):
@@ -450,16 +492,22 @@ class PlayerGuideTests(unittest.TestCase):
             model.tick()
         self.assertEqual((model.gives, len(player.books())), (2, 1))
 
-    def test_existing_book_offhand_and_locale_change_do_not_duplicate(self):
+    def test_existing_offhand_book_is_preserved_when_requesting_other_locale(self):
         player = Player('Offhand')
         model = Model([player])
         model.tick()
         player.inventory[-106] = player.inventory.pop(0)
+        original = deepcopy(player.inventory[-106])
         player.scores['wlang'] = 2
         model.request(player)
         model.tick()
-        self.assertEqual(model.gives, 1)
-        self.assertEqual(len(player.books()), 1)
+        self.assertEqual(model.gives, 2)
+        self.assertEqual(len(player.books()), 2)
+        self.assertEqual(player.inventory[-106], original)
+        self.assertEqual(player.inventory[0]['tag']['rvGuideLang'], 2)
+        model.request(player)
+        model.tick()
+        self.assertEqual(model.gives, 2)
 
     def test_reissue_with_full_inventory_waits(self):
         player = Player('Reissue')
@@ -509,13 +557,16 @@ def vanilla_check(vanilla_jar, java):
         {'nbt': '{Inventory:[' + almost + ',{Slot:-106b,id:"minecraft:shield",Count:1b},{Slot:100b,id:"minecraft:iron_boots",Count:1b}]}', 'occupied': 35},
         {'nbt': '{Inventory:[]}', 'occupied': 0},
     ], 'matches': [
-        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:3}}]}', 'result': True},
+        {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:' + str(builder.EDITION) + '}}]}', 'result': True},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:2}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:1}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:written_book",Count:1b,tag:{title:"RV"}}]}', 'result': False},
         {'expected': builder.MARKER, 'actual': '{Inventory:[{Slot:0b,id:"minecraft:book",Count:1b,tag:{rvGuide:1b}}]}', 'result': False},
     ]}
+    for language in (1, 2):
+        for actual_language in (1, 2):
+            payload['matches'].append({'expected': builder.LANGUAGE_MARKERS[language], 'actual': '{Inventory:[{Slot:-106b,id:"minecraft:written_book",Count:1b,tag:{rvGuide:1b,rvGuideVersion:' + str(builder.EDITION) + ',rvGuideLang:' + str(actual_language) + 'b}}]}', 'result': language == actual_language})
     script = '''var Files=Java.type('java.nio.file.Files'), Paths=Java.type('java.nio.file.Paths');
 var data=JSON.parse(new java.lang.String(Files.readAllBytes(Paths.get(arguments[0])), 'UTF-8'));
 var Parser=Java.type('gp'), Util=Java.type('gj'), Book=Java.type('akf');

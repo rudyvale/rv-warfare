@@ -11,7 +11,7 @@ $Candidate=[IO.Path]::GetFullPath($Candidate)
 $root=Join-Path $workspace ('.local/rv-1.1/client-wizard-native-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $root,(Join-Path $root 'mods'),(Join-Path $root 'config') -Force|Out-Null
 Copy-Item -LiteralPath $Candidate -Destination (Join-Path $root 'mods/mcheli.jar')
-foreach($name in @('Configure-Controller.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1','Warfare-Connection.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
+foreach($name in @('Configure-Controller.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1','Warfare-Connection.ps1','Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
 $profile=Join-Path $root 'config/vm-controller.properties'
 $old="enabled=true`r`nkind=radio`r`nkeyboardFlight=pro`r`ndevice=old-device`r`nroll.axis=3`r`nroll.min=-1`r`nroll.max=1`r`nroll.center=0`r`nunknown=keep`r`n"
 [IO.File]::WriteAllText($profile,$old,[Text.UTF8Encoding]::new($false))
@@ -73,7 +73,7 @@ try {
     $root=Join-Path $clientRoot 'legacy-owner-game'
     New-Item -ItemType Directory -Path $root,(Join-Path $root 'mods'),(Join-Path $root 'config') -Force|Out-Null
     Copy-Item -LiteralPath $Candidate -Destination (Join-Path $root 'mods/mcheli.jar')
-    foreach($name in @('Configure-Controller.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1','Warfare-Connection.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
+    foreach($name in @('Configure-Controller.ps1','Configure-FirstPlay.ps1','Warfare-Onboarding.ps1','Warfare-Connection.ps1','Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $root}
     $legacyPath=Join-Path $root 'Warfare-1.12.2.json';$legacyBytes=[Text.Encoding]::UTF8.GetBytes('{"id":"Warfare-1.12.2","unknown":"retain TLauncher profile"}')
     [IO.File]::WriteAllBytes($legacyPath,$legacyBytes)
     Save-WarfareSetupSettings $root ([PSCustomObject]@{memoryMB=0;unknown='owner-retain'})

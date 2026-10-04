@@ -6,6 +6,8 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $packageRoot = $PSScriptRoot
 . (Join-Path $packageRoot 'Warfare-Connection.ps1')
 . (Join-Path $packageRoot 'Warfare-Performance.ps1')
+if(Test-Path -LiteralPath (Join-Path $packageRoot 'Warfare-PlayModes.ps1')){. (Join-Path $packageRoot 'Warfare-PlayModes.ps1')}
+if(Test-Path -LiteralPath (Join-Path $packageRoot 'Warfare-ClientControls.ps1')){. (Join-Path $packageRoot 'Warfare-ClientControls.ps1')}
 $defaultsPath = Join-Path $packageRoot 'server-defaults.json'
 $connectionDefaults = if (Test-Path -LiteralPath $defaultsPath) { Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 if (-not $InstallRoot) { $InstallRoot = Join-Path $env:LOCALAPPDATA 'Warfare-1.12.2' }
@@ -14,7 +16,6 @@ $clientPreferencesExisted = Test-Path -LiteralPath (Join-Path $InstallRoot 'conf
 $initialPerformance = -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'options.txt')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'config\rv-client.properties')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'optionsshaders.txt'))
 if ($InstallRoot.TrimEnd('\') -eq [IO.Path]::GetFullPath($packageRoot).TrimEnd('\')) { throw 'Choose an installation directory outside the package folder.' }
 . (Join-Path $packageRoot 'Warfare-Updates.ps1')
-Start-VmUpdateCheck $InstallRoot $packageRoot
 Assert-VmUpgrade $packageRoot $InstallRoot
 function Resolve-Inside([string]$Root, [string]$Relative) {
     if ([IO.Path]::IsPathRooted($Relative)) { throw 'Absolute package path is not allowed.' }
@@ -50,12 +51,10 @@ if (-not $Nickname) {
     }
 }
 if ($Nickname -notmatch '^[A-Za-z0-9_]{3,16}$') { throw 'Nickname must contain 3–16 letters, numbers or _.' }
-$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -and $_.CommandLine.IndexOf($InstallRoot, [StringComparison]::OrdinalIgnoreCase) -ge 0 }
-if ($activeGame) { throw 'Close RV before installing an update / Закрой RV перед обновлением.' }
-New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 $installLock = $null
-try { $installLock = [IO.File]::Open((Join-Path $InstallRoot '.install.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw 'Installation is already running / Установка уже запущена.' }
+try { $installLock = Enter-WarfareClientOperation $InstallRoot 8000 } catch { throw (Get-WarfarePreferenceError $_.Exception.Message 'ru') }
 try {
+Start-VmUpdateCheck $InstallRoot $packageRoot
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $stage = Join-Path $InstallRoot ('.update-' + $stamp)
 $backup = Join-Path $InstallRoot ('backups\' + $stamp)
@@ -79,7 +78,7 @@ if ($release.vendorCatalogSha256) {
         Set-InstallStatus 'installing' $message
     }
     try {
-        $vendors=@(Initialize-WarfareVendorStage -CatalogPath $vendorCatalogPath -ExpectedCatalogSha256 $release.vendorCatalogSha256 -InstallRoot $InstallRoot -StageRoot $stage -CacheRoot (Join-Path $InstallRoot '.vendor-cache') -CancelPath $CancelPath -ProgressAction $vendorProgress)
+        $vendors=@(Initialize-WarfareVendorStage -CatalogPath $vendorCatalogPath -ExpectedCatalogSha256 $release.vendorCatalogSha256 -InstallRoot $InstallRoot -StageRoot $stage -CacheRoot (Join-Path $InstallRoot '.vendor-cache') -CancelPath $CancelPath -ProgressCallback $vendorProgress)
         foreach ($vendor in $vendors) {
             $managed=@($manifest.managedFiles|Where-Object {$_.path -ceq $vendor.path -and $_.sha256 -ceq $vendor.sha256})
             if ($managed.Count -ne 1) { throw 'RV_VENDOR_CATALOG' }
@@ -211,6 +210,7 @@ function Backup-File([string]$Path, [string]$Relative, [switch]$Remove) {
     $rollback.Add([PSCustomObject]@{target=$Path;backup=$destination;existed=$exists})
     if ($Remove -and $exists) { Remove-Item -LiteralPath $absolute }
 }
+
 $oldManifestPath = Join-Path $InstallRoot 'installed-manifest.json'
 $oldManifest = if (Test-Path -LiteralPath $oldManifestPath) { Get-Content -LiteralPath $oldManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $currentModNames = @($manifest.managedFiles | Where-Object { $_.path -like 'mods/*' } | ForEach-Object { Split-Path -Leaf $_.path })
@@ -285,9 +285,20 @@ if ($initialPerformance) {
     Backup-File (Join-Path $InstallRoot 'config\rv-client.properties') 'config/rv-client.properties'
     Set-WarfarePerformanceProfile -Root $InstallRoot -Language $Language -LanguageOnly -Installer
 }
+if(Get-Command Initialize-WarfareClientControls -ErrorAction SilentlyContinue){$null=Initialize-WarfareClientControls -Root $InstallRoot -ReleasePath (Join-Path $packageRoot 'release.json')}
 $settings = if ($previousSettings) { $previousSettings } else { [PSCustomObject]@{} }
 $connection = Get-WarfareConnection -Settings $settings -Defaults $connectionDefaults
 $settings = Set-WarfareConnection -Settings $settings -Connection $connection
+if(-not $previousSettings -and [version]$release.version -ge [version]'2.0.4'){
+    $friendsConnection=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}
+    if($connection.connectionTarget){try{$friendsConnection=ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget ([string]$connection.serverPort)}catch{}}
+    $settings|Add-Member -MemberType NoteProperty -Name playMode -Value 'local' -Force
+    $settings|Add-Member -MemberType NoteProperty -Name playProfiles -Value ([PSCustomObject]@{
+        friends=$friendsConnection
+        owner=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}
+        host=[PSCustomObject]@{port=25565}
+    }) -Force
+}
 $settings | Add-Member -MemberType NoteProperty -Name language -Value $Language -Force
 $settings | Add-Member -MemberType NoteProperty -Name nickname -Value $Nickname -Force
 Backup-File $settingsPath 'warfare-settings.json'
@@ -307,6 +318,22 @@ if (Test-Path -LiteralPath $defaultsPath) {
     Copy-Item -LiteralPath $defaultsPath -Destination (Join-Path $InstallRoot 'server-defaults.json') -Force
 }
 Backup-File $oldManifestPath 'installed-manifest.json'
+if([version]$release.version -ge [version]'2.0.0'){
+    foreach($name in @('Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){
+        Backup-File (Join-Path $InstallRoot $name) $name
+        Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
+    }
+}
+if([version]$release.version -ge [version]'2.0.4'){
+    foreach($name in @('Warfare-PlayModes.ps1','Warfare-SelfHost.ps1','self-host-package.json','self-host-world.zip')){
+        $source=Join-Path $packageRoot $name
+        if(-not(Test-Path -LiteralPath $source -PathType Leaf)){throw ('Required host file is missing: '+$name)}
+        $target=Join-Path $InstallRoot $name
+        Backup-File $target $name
+        Copy-Item -LiteralPath $source -Destination $target -Force
+    }
+}
+if(-not $previousSettings -and [version]$release.version -ge [version]'2.0.4'){$null=Install-WarfareWorldTemplate $packageRoot $InstallRoot}
 Copy-Item -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Destination $oldManifestPath -Force
 } catch {
     for ($index=$rollback.Count-1; $index -ge 0; $index--) {
@@ -352,7 +379,7 @@ Remove-Item -LiteralPath $stageAbsolute -Recurse -Force
 Say ('Готово. Запуск: ' + (Join-Path $InstallRoot 'Play.cmd')) ('Ready. Start: ' + (Join-Path $InstallRoot 'Play.cmd'))
 Say 'Обновления доступны в окне RV. Миры и настройки сохраняются.' 'Updates are available in RV. Worlds and settings are preserved.'
 } finally {
-    if ($installLock) { $installLock.Dispose() }
+    if ($installLock) { Exit-WarfareClientOperation $installLock }
 }
 if (-not $NoSteam) {
     & (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -NoProfile -ExecutionPolicy Bypass -File (Join-Path $InstallRoot 'Play-Warfare.ps1') -Prepare

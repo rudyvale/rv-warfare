@@ -5,7 +5,7 @@ import org.objectweb.asm.*;
 import org.objectweb.asm.tree.*;
 
 public final class VMComfortTransformer implements IClassTransformer {
-    public static String[] append(String[] original){String[] result=java.util.Arrays.copyOf(original,original.length+1);result[original.length]=VMComfortTransformer.class.getName();return result;}
+    public static String[] append(String[] original){String[] result=java.util.Arrays.copyOf(original,original.length+2);result[original.length]=VMComfortTransformer.class.getName();result[original.length+1]=VMPropsTransformer.class.getName();return result;}
     public byte[] transform(String name,String transformedName,byte[] bytes){
         boolean medical="ichttt.mods.firstaid.common.EventHandler".equals(transformedName),visual="team.creative.enhancedvisuals.client.render.EVRenderer".equals(transformedName);
         if(bytes==null||!medical&&!visual)return bytes;

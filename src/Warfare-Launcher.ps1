@@ -32,6 +32,7 @@ public class VmButton : Button {
 }
 . (Join-Path $PSScriptRoot 'Warfare-Connection.ps1')
 . (Join-Path $PSScriptRoot 'Warfare-Performance.ps1')
+. (Join-Path $PSScriptRoot 'Warfare-PlayModes.ps1')
 . (Join-Path $PSScriptRoot 'Warfare-Onboarding.ps1')
 . (Join-Path $PSScriptRoot 'Warfare-Updates.ps1')
 [Windows.Forms.Application]::EnableVisualStyles()
@@ -44,11 +45,10 @@ if (-not $PackageRoot -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'pay
 $script:settingsPath = Join-Path $InstallRoot 'warfare-settings.json'
 $script:settings = $null
 if (Test-Path -LiteralPath $script:settingsPath) { try { $script:settings = Get-Content -LiteralPath $script:settingsPath -Raw -Encoding UTF8 | ConvertFrom-Json } catch { } }
-$defaults = $null
-foreach ($candidate in @((Join-Path $InstallRoot 'server-defaults.json'),(Join-Path $PSScriptRoot 'server-defaults.json'))) {
-    if (Test-Path -LiteralPath $candidate) { try { $defaults=Get-Content -LiteralPath $candidate -Raw -Encoding UTF8 | ConvertFrom-Json; break } catch { } }
-}
-$script:connection = Get-WarfareConnection $script:settings $defaults
+$script:playState = Get-WarfarePlayModeState $script:settings
+$script:playMode = $script:playState.mode
+$script:playModeValues = @('local','friends','owner','host')
+$script:connection = if ($script:playMode -in @('friends','owner')) { Get-WarfarePlayModeConnection $script:playState $script:playMode } else { New-WarfareModeConnection }
 if (-not $Language) { $Language = if ($script:settings -and $script:settings.language -eq 'en') { 'en' } else { 'ru' } }
 $script:language = $Language
 $sourcePath = Join-Path $InstallRoot 'launcher-source.json'
@@ -63,6 +63,11 @@ $script:logDirectory = Join-Path $InstallRoot '.launcher'
 $script:statusPath = Join-Path $script:logDirectory ($script:jobId + '.json')
 $script:lastStatus = ''
 $script:workerState = ''
+$script:workerStatus = $null
+$script:hostRunning = $false
+$script:hostLanAddresses = @()
+$script:hostShareCode = ''
+$script:acceptEulaForNextPlay = $false
 $script:needsUpdate = $false
 $script:localNeedsUpdate = $false
 $script:remoteRelease = $null
@@ -73,13 +78,13 @@ function Quote-Argument([string]$Value) {
 }
 function Has-Package {
     if (-not $script:packageRoot) { return $false }
-    foreach ($name in @('Install-Warfare.ps1','Play-Warfare.ps1','Play.cmd','Warfare-Launcher.ps1','Warfare-Connection.ps1','Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','Warfare-Updates.ps1','Check-WarfareUpdate.ps1','Configure-Controller.ps1','release.json','code.ico','payload.zip','runtime.zip','package-manifest.json','installer-files.json')) {
+    foreach ($name in (Get-VmPackageFiles (Get-VmLocalVersion $script:packageRoot))) {
         if (-not (Test-Path -LiteralPath (Join-Path $script:packageRoot $name) -PathType Leaf)) { return $false }
     }
     return $true
 }
 $form = [Windows.Forms.Form]::new()
-$form.Text = 'RV'
+$form.Text = 'VM'
 $form.ShowIcon = $false
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'code.ico')) { $form.Icon = [Drawing.Icon]::new((Join-Path $PSScriptRoot 'code.ico')); $form.ShowIcon = $true }
 $form.ClientSize = [Drawing.Size]::new(960,640)
@@ -113,7 +118,7 @@ $control.FlatStyle = 'Flat'
     return $control
 }
 $title = Label 32 24 430 64 34
-$title.Text = 'RV'
+$title.Text = 'VM'
 $nicknameLabel = Label 35 113 350 26
 $nickname = [Windows.Forms.TextBox]::new()
 $nickname.Location = [Drawing.Point]::new(35,145)
@@ -138,7 +143,17 @@ $serverLabel = Label 35 229 475 32 10
 $serverLabel.AutoEllipsis = $true
 $serverHeading = Label 35 204 475 26 10
 $serverHeading.ForeColor = [Drawing.Color]::FromArgb(153,164,181)
+$playModeBox = [Windows.Forms.ComboBox]::new()
+$playModeBox.Name = 'playMode'
+$playModeBox.DropDownStyle = 'DropDownList'
+[void]$playModeBox.Items.AddRange(@((L 'Одиночная игра' 'Local'),(L 'К друзьям' 'Friends'),(L 'Владелец сервера' 'Owner'),(L 'Мой сервер' 'Host my server')))
+$playModeBox.SelectedIndex = [Array]::IndexOf($script:playModeValues,$script:playMode)
+$form.Controls.Add($playModeBox)
 $changeServer = Button 521 223 124 32
+$hostStart = Button 35 260 180 30
+$hostStop = Button 223 260 180 30
+$hostStart.Visible = $script:playMode -eq 'host'
+$hostStop.Visible = $script:playMode -eq 'host'
 $status = Label 35 282 610 60 11
 $status.Text = ''
 $progress = [Windows.Forms.ProgressBar]::new()
@@ -180,7 +195,11 @@ function Update-Layout {
         @($nickname,$margin,($fieldY+35),$column,38),
         @($hint,$margin,($fieldY+83),$column,26),
         @($serverHeading,($margin+$column+48),$fieldY,$column,26),
-        @($serverLabel,($margin+$column+48),($fieldY+41),$column,32),
+        @($playModeBox,($margin+$column+48),($fieldY+30),$column,32),
+        @($serverLabel,($margin+$column+48),($fieldY+67),($column-136),32),
+        @($changeServer,($margin+$column+48+$column-124),($fieldY+67),124,32),
+        @($hostStart,($margin+$column+48),($fieldY+105),(($column-12)/2),30),
+        @($hostStop,($margin+$column+60+($column-12)/2),($fieldY+105),(($column-12)/2),30),
         @($status,$margin,[Math]::Max(278,($height-316)/2),$content,80),
         @($updateLabel,$margin,($height-264),$content,26),
         @($progress,$margin,($height-226),$content,5),
@@ -217,14 +236,39 @@ function Refresh-Text {
     $nicknameLabel.Text = L 'Ник' 'Nickname'
     $hint.Text = L '3–16 латинских букв, цифр или _.' '3–16 letters, digits or _.'
     $changeServer.Text = L 'Настройки' 'Settings'
-    $serverHeading.Text = L 'Подключение' 'Connection'
-    $serverLabel.Text = if ($script:connection.connectionTarget) {
-        if($script:connection.connectionMode -eq 'porthole') {
-            if ($script:connection.connectionTarget -like 'peer:*') { L 'Сервер в Steam' 'Steam server' }
-            else { 'Porthole: ' + $script:connection.connectionTarget }
+    $serverHeading.Text = L 'Режим игры' 'Play mode'
+    $serverLabel.Text = switch ($script:playMode) {
+        'local' { L 'Одиночная игра · без сервера' 'Single-player · no server' }
+        'friends' {
+            if ($script:connection.connectionTarget) {
+                if ($script:connection.connectionMode -eq 'porthole') { 'Porthole: ' + $script:connection.connectionTarget }
+                else { $script:connection.connectionTarget + ':' + $script:connection.serverPort }
+            } else { L 'Выбери приглашение или введи код' 'Import an invite or enter a code' }
         }
-        else { (L 'Сервер: ' 'Server: ') + $script:connection.connectionTarget + ':' + $script:connection.serverPort }
-    } else { L 'Сервер не выбран' 'No server selected' }
+        'owner' {
+            if ($script:connection.connectionTarget) {
+                if ($script:connection.connectionMode -eq 'porthole') { 'Porthole: ' + $script:connection.connectionTarget }
+                else { $script:connection.connectionTarget + ':' + $script:connection.serverPort }
+            } else { L 'Сервер владельца не задан' 'Owner server not set' }
+        }
+        default {
+            if (-not $script:hostRunning) { L 'Запусти сервер или нажми «Играть»' 'Start the server or click Play' }
+            else {
+                $hostDestinations = @($script:hostLanAddresses | ForEach-Object { $_ + ':' + $script:playState.hostPort })
+                if ($hostDestinations.Count) { $destinationText = (L 'В одной сети: ' 'Same network: ') + ($hostDestinations -join ', ') }
+                else { $destinationText = L 'Адрес локальной сети не найден' 'No local network address found' }
+                if ($script:hostShareCode) { $destinationText += ' · Porthole: ' + $script:hostShareCode }
+                $destinationText
+            }
+        }
+    }
+    $hostStart.Text = L 'Запустить сервер' 'Start server'
+    $hostStop.Text = L 'Остановить сервер' 'Stop server'
+    $hostStart.Visible = $script:playMode -eq 'host'
+    $hostStop.Visible = $script:playMode -eq 'host'
+    $hostStart.Enabled = $script:playMode -eq 'host' -and -not $script:busy
+    $hostStop.Enabled = $script:playMode -eq 'host' -and -not $script:busy
+    $playModeBox.Enabled = -not $script:busy
     $steam.Text = 'Steam'
     $advanced.Text = L 'Папка игры' 'Game folder'
     $logs.Text = L 'Журнал' 'Log'
@@ -239,7 +283,7 @@ function Refresh-Text {
 }
 function Set-Busy([bool]$Busy) {
     $script:busy = $Busy
-    foreach ($control in @($primary,$nickname,$languageBox,$advanced,$repair,$steam,$changeServer,$install,$updateAction)) { $control.Enabled = -not $Busy }
+    foreach ($control in @($primary,$nickname,$languageBox,$playModeBox,$advanced,$repair,$steam,$changeServer,$install,$updateAction,$hostStart,$hostStop)) { $control.Enabled = -not $Busy }
     $progress.Visible = $Busy
     Refresh-Text
 }
@@ -248,11 +292,94 @@ function Save-Settings([switch]$ConnectionOnly) {
     if (-not $script:settings) { $script:settings = [PSCustomObject]@{language=$script:language;nickname=$nickname.Text.Trim()} }
     $script:settings|Add-Member NoteProperty nickname $nickname.Text.Trim() -Force
     $script:settings|Add-Member NoteProperty language $script:language -Force
-    $script:settings = Set-WarfareConnection $script:settings $script:connection
+    if ($script:playMode -in @('friends','owner')) { $script:playState = Set-WarfarePlayModeConnection $script:playState $script:playMode $script:connection }
+    $script:settings = Set-WarfarePlayModeState $script:settings $script:playState $script:playMode
     New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
     $temp = $script:settingsPath + '.tmp'
     [IO.File]::WriteAllText($temp, ($script:settings | ConvertTo-Json -Depth 32), [Text.UTF8Encoding]::new($false))
     Move-Item -LiteralPath $temp -Destination $script:settingsPath -Force
+}
+function Start-HostWorker([switch]$AcceptEula) {
+    if ($nickname.Text.Trim() -notmatch '^[A-Za-z0-9_]{3,16}$') { throw (L 'Введи ник перед запуском сервера.' 'Enter a nickname before starting the server.') }
+    $script:playMode = 'host'
+    $script:playState.mode = 'host'
+    $playModeBox.SelectedIndex = [Array]::IndexOf($script:playModeValues,'host')
+    Save-Settings -ConnectionOnly
+    $worker = Join-Path $PSScriptRoot 'Warfare-PlayModes.ps1'
+    if (-not (Test-Path -LiteralPath $worker -PathType Leaf)) { throw 'self_host_helper_missing' }
+    $arguments = @('-WarfareWorkerAction','start-host','-WarfareWorkerGameRoot',$InstallRoot,'-WarfareWorkerPort',[string]$script:playState.hostPort,'-WarfareWorkerNickname',$nickname.Text.Trim(),'-WarfareWorkerStatusFile',$script:statusPath,'-WarfareWorkerLanguage',$script:language)
+    if ($AcceptEula) { $arguments += '-WarfareWorkerAcceptEula' }
+    $status.Text = L 'Запуск сервера…' 'Starting server…'
+    Start-Worker 'hostStart' $worker $arguments
+}
+function Stop-HostWorker {
+    $worker = Join-Path $PSScriptRoot 'Warfare-PlayModes.ps1'
+    if (-not (Test-Path -LiteralPath $worker -PathType Leaf)) { throw 'self_host_helper_missing' }
+    $arguments = @('-WarfareWorkerAction','stop-host','-WarfareWorkerGameRoot',$InstallRoot,'-WarfareWorkerStatusFile',$script:statusPath,'-WarfareWorkerLanguage',$script:language)
+    $status.Text = L 'Остановка сервера…' 'Stopping server…'
+    Start-Worker 'hostStop' $worker $arguments
+}
+function Start-SelectedPlay {
+    Save-Settings
+    if ($script:playMode -in @('friends','owner')) {
+        $script:connection = Get-WarfarePlayModeConnection $script:playState $script:playMode
+        $script:settings = Set-WarfarePlayModeState $script:settings $script:playState $script:playMode
+        $setup = Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $form -UseConnectionDefaults:$false
+        $script:settings = $setup.settings
+        if (-not $setup.completed) {
+            $script:playState.mode = $script:playMode
+            $script:connection = Get-WarfarePlayModeConnection $script:playState $script:playMode
+            Save-Settings -ConnectionOnly
+            $status.Text = L 'Настройка отменена. Продолжи через «Играть».' 'Setup cancelled. Click Play to continue.'
+            return
+        }
+        $script:connection = ConvertTo-WarfareConnection $setup.connection.connectionMode $setup.connection.connectionTarget $setup.connection.serverPort
+        $script:playState = Set-WarfarePlayModeConnection $script:playState $script:playMode $script:connection
+        $script:playState.mode = $script:playMode
+        $script:settings = Set-WarfarePlayModeState $script:settings $script:playState $script:playMode
+        Save-Settings
+    }
+    $arguments = @('-PlayMode',$script:playMode,'-StatusFile',$script:statusPath)
+    if ($script:acceptEulaForNextPlay) { $arguments += '-AcceptEula'; $script:acceptEulaForNextPlay = $false }
+    $status.Text = L 'Запуск…' 'Starting…'
+    Start-Worker 'play' (Join-Path $InstallRoot 'Play-Warfare.ps1') $arguments
+}
+function Confirm-WarfareSelfHostEula {
+    $dialog = [Windows.Forms.Form]::new()
+    $dialog.Text = L 'Условия Minecraft' 'Minecraft EULA'
+    $dialog.ClientSize = [Drawing.Size]::new(500,220)
+    $dialog.StartPosition = 'CenterParent'
+    $dialog.FormBorderStyle = 'FixedDialog'
+    $dialog.MaximizeBox = $false
+    $dialog.MinimizeBox = $false
+    $dialog.Font = $form.Font
+    $dialog.BackColor = $form.BackColor
+    $dialog.ForeColor = $form.ForeColor
+    $label = [Windows.Forms.Label]::new()
+    $label.SetBounds(20,18,460,68)
+    $label.Text = L 'Чтобы создать сервер Minecraft, прочитай условия и подтверди согласие. RV запустит сервер только после подтверждения.' 'Read and accept the Minecraft EULA to create a server. RV will start the server only after you confirm.'
+    $link = [Windows.Forms.LinkLabel]::new()
+    $link.SetBounds(20,92,460,26)
+    $link.Text = L 'Открыть Minecraft EULA' 'Read the Minecraft EULA'
+    $link.Add_LinkClicked({ Start-Process 'https://www.minecraft.net/en-us/eula' })
+    $accepted = [Windows.Forms.CheckBox]::new()
+    $accepted.SetBounds(20,124,460,28)
+    $accepted.Text = L 'Я прочитал(а) и принимаю условия Minecraft EULA.' 'I have read and accept the Minecraft EULA.'
+    $continue = [Windows.Forms.Button]::new()
+    $continue.SetBounds(244,174,112,30)
+    $continue.Text = L 'Продолжить' 'Continue'
+    $continue.Enabled = $false
+    $cancel = [Windows.Forms.Button]::new()
+    $cancel.SetBounds(368,174,112,30)
+    $cancel.Text = L 'Отмена' 'Cancel'
+    $cancel.DialogResult = [Windows.Forms.DialogResult]::Cancel
+    $accepted.Add_CheckedChanged({ $continue.Enabled = $accepted.Checked })
+    $continue.Add_Click({ $dialog.DialogResult = [Windows.Forms.DialogResult]::OK })
+    $dialog.AcceptButton = $continue
+    $dialog.CancelButton = $cancel
+    $dialog.Controls.AddRange(@($label,$link,$accepted,$continue,$cancel))
+    try { return $dialog.ShowDialog($form) -eq [Windows.Forms.DialogResult]::OK -and $accepted.Checked }
+    finally { $dialog.Dispose() }
 }
 function Start-Worker([string]$Mode,[string]$Script,[string[]]$Arguments) {
     New-Item -ItemType Directory -Path $script:logDirectory -Force | Out-Null
@@ -261,6 +388,7 @@ function Start-Worker([string]$Mode,[string]$Script,[string[]]$Arguments) {
     if (Test-Path -LiteralPath $script:statusPath) { Remove-Item -LiteralPath $script:statusPath -Force }
     $script:lastStatus = ''
     $script:workerState = ''
+    $script:workerStatus = $null
     $script:mode = $Mode
     $shell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $argLine = (@('-NoLogo','-NoProfile','-ExecutionPolicy','Bypass','-File',$Script) + $Arguments | ForEach-Object { Quote-Argument $_ }) -join ' '
@@ -269,12 +397,10 @@ function Start-Worker([string]$Mode,[string]$Script,[string[]]$Arguments) {
     Set-Busy $true
 }
 function Start-Install {
-    Save-Settings
     if (-not (Has-Package)) {
-        $picker = [Windows.Forms.OpenFileDialog]::new()
-        $picker.Title = L 'Выбери Install-Warfare.ps1 в распакованном пакете' 'Choose Install-Warfare.ps1 in the extracted package'
-        $picker.Filter = 'RV installer|Install-Warfare.ps1'
-        try { if ($picker.ShowDialog($form) -ne 'OK') { return }; $script:packageRoot = Split-Path -Parent $picker.FileName } finally { $picker.Dispose() }
+        $status.Text=L 'Загрузка установщика…' 'Downloading the installer…'
+        Start-Worker 'recover' (Join-Path $PSScriptRoot 'Check-WarfareUpdate.ps1') @('-Root',$InstallRoot,'-CurrentVersion','0.0.0','-Download')
+        return
     }
     if (-not (Has-Package)) { throw (L 'Нужен полный актуальный установщик RV. Распакуй новый архив целиком.' 'Use the complete current RV installer. Extract the entire new archive.') }
     Assert-VmUpgrade $script:packageRoot $InstallRoot
@@ -282,11 +408,59 @@ function Start-Install {
     Start-Worker 'install' (Join-Path $script:packageRoot 'Install-Warfare.ps1') @('-Language',$script:language,'-Nickname',$nickname.Text.Trim(),'-InstallRoot',$InstallRoot,'-NoLaunch','-NoSteam','-StatusFile',$script:statusPath)
 }
 function Start-Update {
-    Save-Settings
     Read-UpdateStatus
     if ($script:localNeedsUpdate -and -not $script:remoteRelease) { Start-Install; return }
     $status.Text = L 'Поиск обновления…' 'Checking for an update…'
     Start-Worker 'download' (Join-Path $PSScriptRoot 'Check-WarfareUpdate.ps1') @('-Root',$InstallRoot,'-CurrentVersion',(Get-VmLocalVersion $InstallRoot),'-Download')
+}
+function Start-GuardedOperation([string]$Kind) {
+    if($script:guardPowerShell){return}
+    $script:guardKind=$Kind
+    $shell=[Management.Automation.PowerShell]::Create()
+    [void]$shell.AddScript('param($helperPath,$rootPath);. $helperPath;Enter-WarfareClientOperation $rootPath 3000')
+    [void]$shell.AddArgument((Join-Path $PSScriptRoot 'Warfare-Performance.ps1'))
+    [void]$shell.AddArgument($InstallRoot)
+    $script:guardPowerShell=$shell
+    try{$script:guardAsync=$shell.BeginInvoke()}catch{$shell.Dispose();$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind='';throw}
+    $status.Text=L 'Проверка игры…' 'Checking that the game is closed…'
+    Set-Busy $true
+}
+function Complete-GuardedOperation {
+    $lease=$null
+    $kind=$script:guardKind
+    try {
+        $result=@($script:guardPowerShell.EndInvoke($script:guardAsync))
+        if($script:guardPowerShell.Streams.Error.Count -gt 0 -or $result.Count -ne 1){throw 'RV_OPERATION_BUSY'}
+        $lease=$result[0]
+        if($lease -isnot [IO.FileStream]){throw 'RV_OPERATION_BUSY'}
+        $kind=$script:guardKind
+        $script:guardPowerShell.Dispose();$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind=''
+        switch($kind){
+            'startup' { Start-VmUpdateCheck $InstallRoot $PSScriptRoot; Check-Install }
+            'install' { Save-Settings; Start-Install }
+            'update' { Save-Settings; Start-Update }
+            'postInstall' { if($script:packageRoot){[IO.File]::WriteAllText($sourcePath,(@{path=$script:packageRoot}|ConvertTo-Json),[Text.UTF8Encoding]::new($false))};$script:needsUpdate=$false;$script:localNeedsUpdate=$false;$status.Text=L 'Подготовка подключения…' 'Preparing connection…';Start-Worker 'prepare' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-Prepare','-PlayMode',$script:playMode,'-StatusFile',$script:statusPath) }
+            'play' {
+                Start-SelectedPlay
+            }
+            default {throw 'RV_OPERATION_BUSY'}
+        }
+    }catch{
+        $failure=$_.Exception.Message
+        $inner=$_.Exception
+        while($inner){
+            if($inner.Message -in @('RV_GAME_RUNNING','RV_OPERATION_BUSY','RV_PROCESS_CHECK_FAILED')){$failure=$inner.Message;break}
+            $inner=$inner.InnerException
+        }
+        if($failure -eq 'RV_GAME_RUNNING' -and $kind -eq 'play'){$status.Text=L 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'}
+        elseif($failure -like 'RV_GAME_RUNNING' -or $failure -like 'RV_OPERATION_BUSY' -or $failure -eq 'RV_PROCESS_CHECK_FAILED'){$status.Text=Get-WarfarePreferenceError $failure $script:language}
+        else{$status.Text=Get-WarfareConnectionError $failure $script:language}
+        if($script:guardPowerShell){try{$script:guardPowerShell.Dispose()}catch{};$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind=''}
+        if($failure -eq 'RV_GAME_RUNNING' -and $kind -eq 'startup'){Check-Install}
+    }finally{
+        if($lease){Exit-WarfareClientOperation $lease}
+        if(-not $script:process){Set-Busy $false}
+    }
 }
 function Check-Install {
     $play = Join-Path $InstallRoot 'Play-Warfare.ps1'
@@ -305,19 +479,20 @@ function Start-Controller {
     $status.Text = L 'Открытие настройки контроллера…' 'Opening controller settings…'
     Start-Worker 'controller' $scriptPath @('-InstallRoot',$InstallRoot)
 }
-$primary.Add_Click({ try {
-    if ($script:ready) {
-        Save-Settings
-        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $form
-        $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
-        if(-not $setup.completed){$status.Text=L 'Запуск отменён. Настройку можно продолжить по «Играть».' 'Launch cancelled. Click Play to continue setup.';return}
-        $script:connection = ConvertTo-WarfareConnection $script:connection.connectionMode $script:connection.connectionTarget $script:connection.serverPort
-        Save-Settings; $status.Text = L 'Подключение…' 'Connecting…'; Start-Worker 'play' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-StatusFile',$script:statusPath)
-    }
-} catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
-$install.Add_Click({ try { Start-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
+$primary.Add_Click({ try { if($script:ready){Start-GuardedOperation 'play'} } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
+$playModeBox.Add_SelectedIndexChanged({
+    if ($playModeBox.SelectedIndex -lt 0) { return }
+    $script:playMode = $script:playModeValues[$playModeBox.SelectedIndex]
+    $script:playState.mode = $script:playMode
+    $script:connection = if ($script:playMode -in @('friends','owner')) { Get-WarfarePlayModeConnection $script:playState $script:playMode } else { New-WarfareModeConnection }
+    try { Save-Settings -ConnectionOnly; Refresh-Text }
+    catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language }
+})
+$hostStart.Add_Click({ try { Start-HostWorker } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
+$hostStop.Add_Click({ try { Stop-HostWorker } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
+$install.Add_Click({ try { Start-GuardedOperation 'install' } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
 $repair.Add_Click({ try { Check-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
-$updateAction.Add_Click({ try { Start-Update } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
+$updateAction.Add_Click({ try { Start-GuardedOperation 'update' } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
 $languageBox.Add_SelectedIndexChanged({
     $script:language = if ($languageBox.SelectedIndex -eq 1) {'en'} else {'ru'}
     Refresh-Text
@@ -353,15 +528,17 @@ $changeServer.Add_Click({
     $dialog.AutoScaleDimensions = [Drawing.SizeF]::new(96,96)
     $dialog.AutoScroll = $true
     $dialog.SuspendLayout()
-    $label = [Windows.Forms.Label]::new(); $label.Text = L 'Способ подключения' 'Connection type'; $label.SetBounds(20,18,510,24)
-    $modeBox = [Windows.Forms.ComboBox]::new(); $modeBox.Name='connectionMode'; $modeBox.DropDownStyle='DropDownList'; $modeBox.SetBounds(20,44,510,28)
+    $profileEditable = $script:playMode -in @('friends','owner')
+    $profileName = if ($script:playMode -eq 'friends') { L 'Друзья' 'Friends' } elseif ($script:playMode -eq 'owner') { L 'Владелец' 'Owner' } else { '' }
+    $label = [Windows.Forms.Label]::new(); $label.Text = if($profileEditable){(L 'Подключение профиля ' 'Connection for ')+$profileName}else{L 'Подключение профиля' 'Connection profile'}; $label.SetBounds(20,18,510,24)
+    $modeBox = [Windows.Forms.ComboBox]::new(); $modeBox.Name='connectionMode'; $modeBox.DropDownStyle='DropDownList'; $modeBox.SetBounds(20,44,510,28);$modeBox.Enabled=$profileEditable
     [void]$modeBox.Items.AddRange(@('Porthole',(L 'Прямой адрес' 'Direct address'))); $modeBox.SelectedIndex=if($script:connection.connectionMode -eq 'direct'){1}else{0}
     $targetLabel = [Windows.Forms.Label]::new(); $targetLabel.Text=L 'Код Porthole или адрес' 'Porthole code or address'; $targetLabel.SetBounds(20,85,340,24)
     $portLabel = [Windows.Forms.Label]::new(); $portLabel.Text=L 'Порт сервера' 'Server port'; $portLabel.SetBounds(420,85,110,24)
-    $targetInput = [Windows.Forms.TextBox]::new(); $targetInput.Name='connectionTarget'; $targetInput.SetBounds(20,112,385,28); $targetInput.MaxLength = 300; $targetInput.Text=$script:connection.connectionTarget
-    $portBox = [Windows.Forms.NumericUpDown]::new(); $portBox.SetBounds(420,112,110,28); $portBox.Minimum=1; $portBox.Maximum=65535; $portBox.Value=[Math]::Min(65535,[Math]::Max(1,[int]$script:connection.serverPort))
+    $targetInput = [Windows.Forms.TextBox]::new(); $targetInput.Name='connectionTarget'; $targetInput.SetBounds(20,112,385,28); $targetInput.MaxLength = 300; $targetInput.Text=$script:connection.connectionTarget;$targetInput.Enabled=$profileEditable
+    $portBox = [Windows.Forms.NumericUpDown]::new(); $portBox.SetBounds(420,112,110,28); $portBox.Minimum=1; $portBox.Maximum=65535; $portBox.Value=[Math]::Min(65535,[Math]::Max(1,[int]$script:connection.serverPort));$portBox.Enabled=$profileEditable
     $detail = [Windows.Forms.Label]::new(); $detail.SetBounds(20,149,510,48)
-    $detail.Text = L 'Код: из Porthole хозяина, peer:SteamID или lobby:ID. Прямое подключение: IP или домен сервера.' 'Porthole: host code, peer:SteamID or lobby:ID. Direct: server IP or hostname.'
+    $detail.Text = if($profileEditable){L 'Код: из Porthole хозяина, peer:SteamID или lobby:ID. Прямое подключение: IP или домен сервера.' 'Porthole: host code, peer:SteamID or lobby:ID. Direct: server IP or hostname.'}else{L 'Выбери «К друзьям» или «Владелец» в главном окне, чтобы задать отдельный адрес.' 'Choose Friends or Owner in the main window to edit that connection.'}
     $preferences = Get-WarfareClientPreferences $InstallRoot
     $profileLabel = [Windows.Forms.Label]::new(); $profileLabel.SetBounds(20,204,510,24); $profileLabel.Text=L 'Производительность' 'Performance'
     $profileBox = [Windows.Forms.ComboBox]::new(); $profileBox.Name='profile'; $profileBox.DropDownStyle='DropDownList'; $profileBox.SetBounds(20,230,320,28)
@@ -415,17 +592,21 @@ $changeServer.Add_Click({
     $controller.Enabled = Test-Path -LiteralPath (Join-Path $InstallRoot 'Configure-Controller.ps1')
     $controller.Add_Click({ try {
         Save-Settings -ConnectionOnly
-        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $dialog -Reconfigure
+        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $dialog -Reconfigure -PlayMode $script:playMode -UseConnectionDefaults:$false
         $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
-        if($setup.completed){$status.Text=L 'Управление и сервер сохранены.' 'Controls and server saved.';$dialog.DialogResult='Cancel'}
+        if($setup.completed){if($script:playMode -in @('friends','owner')){$script:playState=Set-WarfarePlayModeConnection $script:playState $script:playMode $script:connection};Save-Settings -ConnectionOnly;$status.Text=L 'Настройки сохранены.' 'Settings saved.';$dialog.DialogResult='Cancel'}
     } catch { $detail.Text=$_.Exception.Message } })
     $controlsHelp=[VmButton]::new(); $controlsHelp.Name='controlsHelp'; $controlsHelp.SetBounds(190,516,185,32); $controlsHelp.Text=L 'Управление · F8' 'Controls · F8'
     $controlsHelp.FlatStyle='Flat'; $controlsHelp.BackColor=$save.BackColor
     $controlsHelp.Add_Click({[void][Windows.Forms.MessageBox]::Show($dialog,(L 'F8 — контроллер, калибровка, пресеты и плавность FPV. Настройки сохраняются локально. Огонь, оружие и перезарядка показаны в HUD техники и руководстве.' 'F8 opens controller selection, calibration, presets and FPV smoothing. Settings are saved locally. Fire, weapon selection and reload are shown in the vehicle HUD and guide.'),(L 'Управление' 'Controls'),'OK','Information')})
     $save.Add_Click({ try {
-        $modeValue = if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}
-        $newConnection = if ($targetInput.Text.Trim()) { ConvertTo-WarfareConnection $modeValue $targetInput.Text $portBox.Value.ToString() } else { [PSCustomObject]@{connectionMode=$modeValue;connectionTarget='';serverPort=[int]$portBox.Value} }
-        $script:connection=$newConnection; Save-Settings -ConnectionOnly
+        if($profileEditable){
+            $modeValue = if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}
+            $newConnection = if ($targetInput.Text.Trim()) { ConvertTo-WarfareConnection $modeValue $targetInput.Text $portBox.Value.ToString() } else { [PSCustomObject]@{connectionMode=$modeValue;connectionTarget='';serverPort=[int]$portBox.Value} }
+            $script:connection=$newConnection
+            $script:playState=Set-WarfarePlayModeConnection $script:playState $script:playMode $newConnection
+        }
+        Save-Settings -ConnectionOnly
         $wasAutoCheck = Get-VmAutoCheck $InstallRoot
         Set-VmAutoCheck $InstallRoot $autoCheck.Checked
         if ($autoCheck.Checked -and -not $wasAutoCheck) { Start-VmUpdateCheck $InstallRoot $PSScriptRoot }
@@ -458,11 +639,12 @@ function Read-UpdateStatus {
 }
 $timer.Interval = 350
 $timer.Add_Tick({
+    if($script:guardPowerShell){if($script:guardAsync.IsCompleted){Complete-GuardedOperation};return}
     if (-not $script:busy) { Read-UpdateStatus }
     if (-not $script:process) { return }
     try {
         if (Test-Path -LiteralPath $script:statusPath) {
-            try { $state = Get-Content -LiteralPath $script:statusPath -Raw -Encoding UTF8 | ConvertFrom-Json; $script:workerState=$state.state; if ($state.message -and $state.message -ne $script:lastStatus) { $status.Text = $state.message; $script:lastStatus = $state.message } } catch { }
+            try { $state = Get-Content -LiteralPath $script:statusPath -Raw -Encoding UTF8 | ConvertFrom-Json; $script:workerState=$state.state; $script:workerStatus=$state; if ($state.message -and $state.message -ne $script:lastStatus) { $status.Text = $state.message; $script:lastStatus = $state.message } } catch { }
         } elseif ($script:mode -eq 'install' -and (Test-Path -LiteralPath $script:outFile)) {
             try { $lines = @(Get-Content -LiteralPath $script:outFile -Tail 3 -Encoding UTF8 | Where-Object { $_.Trim() }); if ($lines.Count) { $status.Text = $lines[-1] } } catch { }
         }
@@ -471,6 +653,13 @@ $timer.Add_Tick({
         $exitCode = $script:process.ExitCode; $mode = $script:mode
         $script:process.Dispose(); $script:process = $null; Set-Busy $false
         if ($exitCode -ne 0) {
+            if ($script:workerStatus -and $script:workerStatus.reason -eq 'self_host_eula_required' -and $mode -in @('hostStart','play')) {
+                if (Confirm-WarfareSelfHostEula) {
+                    if ($mode -eq 'hostStart') { Start-HostWorker -AcceptEula }
+                    else { $script:acceptEulaForNextPlay = $true; Start-GuardedOperation 'play' }
+                } else { $status.Text = L 'Подтверждение отменено. Сервер не запущен.' 'Confirmation cancelled. The server was not started.' }
+                return
+            }
             if (-not $script:lastStatus -or ($mode -eq 'install' -and $script:workerState -ne 'failed')) {
                 $details = @(); if (Test-Path -LiteralPath $script:errFile) { $details = @(Get-Content -LiteralPath $script:errFile -Encoding UTF8 | Where-Object { $_.Trim() }) }
                 $status.Text = if ($details.Count) { ($details | Select-Object -First 2) -join ' ' } else { L 'Не удалось завершить операцию. Открой «Журнал» и повтори попытку.' 'The operation did not complete. Open Log and try again.' }
@@ -479,7 +668,7 @@ $timer.Add_Tick({
             if ($mode -eq 'prepare') { $script:ready = $true }
             Refresh-Text; return
         }
-        if ($mode -eq 'download') {
+        if ($mode -in @('download','recover')) {
             $update = Get-Content -LiteralPath (Join-Path $InstallRoot '.updates\status.json') -Raw -Encoding UTF8 | ConvertFrom-Json
             if ($update.state -eq 'current') {
                 $script:remoteRelease = $null
@@ -491,16 +680,29 @@ $timer.Add_Tick({
             if ($update.state -ne 'downloaded' -or -not (Test-Path -LiteralPath (Join-Path $update.packageRoot 'Install-Warfare.ps1'))) { throw (L 'Обновление ещё не готово. Повтори попытку.' 'The update is not ready. Please try again.') }
             $script:packageRoot = $update.packageRoot
             $script:remoteRelease = $null
-            Start-Install
+            Start-GuardedOperation 'install'
         } elseif ($mode -eq 'install') {
-            $script:needsUpdate = $false; $script:localNeedsUpdate = $false
-            if ($script:packageRoot) { [IO.File]::WriteAllText($sourcePath, (@{path=$script:packageRoot}|ConvertTo-Json),[Text.UTF8Encoding]::new($false)) }
-            $status.Text = L 'Подготовка подключения…' 'Preparing connection…'
-            Start-Worker 'prepare' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-Prepare','-StatusFile',$script:statusPath)
+            Start-GuardedOperation 'postInstall'
         } elseif ($mode -eq 'prepare') {
             Check-Install
         } elseif ($mode -eq 'controller') {
             $status.Text = L 'Настройка контроллера открыта.' 'Controller settings opened.'
+        } elseif ($mode -eq 'hostStart') {
+            if ($script:workerStatus -and $script:workerStatus.port) { $script:playState = Set-WarfarePlayModeHostPort $script:playState ([int]$script:workerStatus.port); Save-Settings -ConnectionOnly }
+            $script:hostLanAddresses = @(Get-WarfareHostLanIPv4Addresses)
+            $script:hostShareCode = if ($script:workerStatus.shareCode) { [string]$script:workerStatus.shareCode } else { '' }
+            $script:hostRunning = $true
+            Refresh-Text
+        } elseif ($mode -eq 'hostStop') {
+            $script:hostRunning = $false
+            $script:hostShareCode = ''
+            Refresh-Text
+        } elseif ($mode -eq 'play' -and $script:playMode -eq 'host') {
+            if ($script:workerStatus -and $script:workerStatus.port) { $script:playState = Set-WarfarePlayModeHostPort $script:playState ([int]$script:workerStatus.port); Save-Settings -ConnectionOnly }
+            $script:hostLanAddresses = @(Get-WarfareHostLanIPv4Addresses)
+            $script:hostShareCode = if ($script:workerStatus.shareCode) { [string]$script:workerStatus.shareCode } else { '' }
+            $script:hostRunning = $true
+            Refresh-Text
         } elseif ($mode -eq 'check') {
             $script:ready = $true; $script:localNeedsUpdate = $false
             if (Has-Package) {
@@ -510,13 +712,13 @@ $timer.Add_Tick({
                 elseif ($packVersion -eq [version]'0.0.0' -and $installedVersion -eq [version]'0.0.0') { $script:localNeedsUpdate = (Get-FileHash -LiteralPath (Join-Path $script:packageRoot 'package-manifest.json')).Hash -ne (Get-FileHash -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')).Hash }
             }
             Read-UpdateStatus
-            $status.Text = if (-not $script:connection.connectionTarget) { L 'Укажи сервер в настройках.' 'Choose a server in Settings.' } else { L 'Готово к запуску.' 'Ready to play.' }
+            $status.Text = if ($script:playMode -in @('friends','owner') -and -not $script:connection.connectionTarget) { L 'Импортируй приглашение или задай адрес для выбранного режима.' 'Import an invite or set an address for the selected mode.' } else { L 'Готово к запуску.' 'Ready to play.' }
             Refresh-Text
         }
     } catch { $status.Text = $_.Exception.Message; if ($script:process -and $script:process.HasExited) { $script:process = $null; Set-Busy $false } }
 })
 $form.Add_FormClosing({
-    if ($script:busy -and ($script:mode -eq 'prepare' -or ($script:mode -eq 'play' -and $script:workerState -eq 'preparing'))) {
+    if ($script:busy -and ($script:mode -eq 'prepare' -or ($script:mode -eq 'play' -and $script:workerState -eq 'preparing' -and $script:playMode -ne 'host'))) {
         if ($script:process -and -not $script:process.HasExited) { $script:process.Kill(); [void]$script:process.WaitForExit(3000) }
     } elseif ($script:busy) {
         $_.Cancel = $true
@@ -539,5 +741,5 @@ if ($PreviewPath) {
     try { $form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save($PreviewPath,[Drawing.Imaging.ImageFormat]::Png) } finally { $bitmap.Dispose(); $form.Dispose() }
     exit 0
 }
-$form.Add_Shown({ $form.WindowState = 'Maximized'; Update-Layout; Start-VmUpdateCheck $InstallRoot $PSScriptRoot; Check-Install; $timer.Start(); $nickname.Focus() })
+$form.Add_Shown({ $form.WindowState = 'Maximized'; Update-Layout; Start-GuardedOperation 'startup'; $timer.Start(); $nickname.Focus() })
 try { [void]$form.ShowDialog() } finally { $timer.Stop(); $timer.Dispose(); $form.Dispose() }

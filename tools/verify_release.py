@@ -6,7 +6,7 @@ from pathlib import Path
 import urllib.request
 import zipfile
 from download_release_base import safe_entries
-from release_contract import checksums, load_addon_map, managed_hashes, managed_policies, require_source_asset, required_mods, retirement_policy, validate_addon_resources
+from release_contract import checksums, client_source_names, load_addon_map, managed_hashes, managed_policies, require_source_asset, required_mods, retirement_policy, validate_addon_resources
 from third_party_sources import load_registry, verify_bundle, verify_vendor_manifest, verify_vendor_payload
 
 
@@ -17,15 +17,24 @@ def require(condition, message):
 
 def verify_sources(archive, tracked_root, client):
     prefix = 'RV-Setup/' if client else ''
+    metadata = json.loads((tracked_root / 'src/release.json').read_text(encoding='utf-8-sig'))
     if client:
-        sources = {name: tracked_root / 'src' / name for name in ('Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json')}
+        sources = {name: tracked_root / 'src' / name for name in client_source_names(metadata['version'])}
         sources['READ-ME.md'] = tracked_root / 'pack/READ-ME.md'
         sources['server-defaults.json'] = tracked_root / 'pack/server-defaults.json'
     else:
         sources = {name: tracked_root / 'host' / name for name in ('README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Porthole-Host.ps1', 'Get-ClientMemory.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1')}
+        sources['invitations.py'] = tracked_root / 'host/invitations.py'
         sources.update({name: tracked_root / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
     sources['THIRD-PARTY-NOTICES.md'] = tracked_root / 'pack/THIRD-PARTY-NOTICES.md'
-    metadata = json.loads((tracked_root / 'src/release.json').read_text(encoding='utf-8-sig'))
+    if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        sources['self-host-package.json'] = tracked_root / 'pack/self-host-package.json'
+    if not client and tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 0):
+        for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            sources[name] = tracked_root / 'src' / name
+    if not client and tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        for name in ('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1'):
+            sources[name] = tracked_root / 'src' / name
     if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
         sources['vendor-catalog.json'] = tracked_root / 'pack/vendor-catalog.json'
         sources['Warfare-VendorDownloads.ps1'] = tracked_root / 'src/Warfare-VendorDownloads.ps1'
@@ -44,6 +53,8 @@ def verify_sources(archive, tracked_root, client):
         require(data == source.read_text(encoding='utf-8-sig'), 'Packaged source differs from the frozen checkout: ' + name)
     require(archive.read(prefix + 'code.ico') == (tracked_root / 'assets/code.ico').read_bytes(), 'Packaged icon differs from source')
     allowed = set(sources) | {'code.ico'}
+    if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        allowed.add('self-host-world.zip')
     if client:
         allowed |= {'package-manifest.json', 'installer-files.json', 'payload.zip', 'runtime.zip', 'INSTALL.cmd', '\u0423\u0421\u0422\u0410\u041d\u041e\u0412\u0418\u0422\u042c.cmd', 'Play.cmd'}
     else:
@@ -58,7 +69,27 @@ def verify_host_map(archive, source):
     require(archive.read('rv-addon-assets.json') == Path(source).read_bytes(), 'Host addon resource map differs from the frozen source')
 
 
-def verify(directory, tag=None, remote=False):
+def verify_remote(root, tag, expected, prerelease=False):
+    require(tag, '--remote requires --tag')
+    url = 'https://api.github.com/repos/rudyvale/rv-warfare/releases/tags/' + tag
+    request = urllib.request.Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'RV-release-verifier'})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        release = json.load(response)
+    require(not release['draft'] and release['prerelease'] is prerelease and release['tag_name'] == tag, 'Release is not public at the expected tag and preview status')
+    require({asset['name'] for asset in release['assets']} == set(expected) | {'SHA256SUMS.txt'} and len(release['assets']) == len(expected) + 1, 'Unexpected release assets')
+    checksum_asset = next(asset for asset in release['assets'] if asset['name'] == 'SHA256SUMS.txt')
+    checksum_file = root / 'SHA256SUMS.txt'
+    require(checksum_asset['digest'] == 'sha256:' + hashlib.sha256(checksum_file.read_bytes()).hexdigest() and checksum_asset['size'] == checksum_file.stat().st_size and checksum_asset['state'] == 'uploaded', 'Checksum file mismatch')
+    for name, digest in expected.items():
+        assets = [asset for asset in release['assets'] if asset['name'] == name]
+        require(len(assets) == 1 and assets[0]['state'] == 'uploaded', 'Release asset is not uploaded: ' + name)
+        require(assets[0]['digest'] == 'sha256:' + digest and assets[0]['size'] == (root / name).stat().st_size, 'Remote asset checksum or size mismatch: ' + name)
+    with urllib.request.urlopen(urllib.request.Request('https://api.github.com/repos/rudyvale/rv-warfare/releases/latest', headers={'User-Agent': 'RV-release-verifier'}), timeout=30) as response:
+        latest = json.load(response)['tag_name']
+    require(latest != tag if prerelease else latest == tag, 'Release preview replaced stable latest' if prerelease else 'Release is not latest')
+
+
+def verify(directory, tag=None, remote=False, prerelease=False):
     root = Path(directory).resolve()
     expected = checksums(root)
     tracked_root = Path(__file__).resolve().parents[1]
@@ -79,11 +110,17 @@ def verify(directory, tag=None, remote=False):
         from vendor_catalog import first_party_proof_path, load_catalog, sha256_file, validate_release_catalog, verify_first_party_proof, verify_managed_delivery
         catalog_path = tracked_root / 'pack/vendor-catalog.json'
         vendor_catalog = load_catalog(catalog_path)
+        guide_digest = hashlib.sha256((tracked_root / 'pack/READ-ME.md').read_bytes()).hexdigest()
+        delivery_manifest = {**tracked, 'managedFiles': [{**entry, 'sha256': guide_digest} if entry['path'] == 'READ-ME.md' else entry for entry in tracked['managedFiles']]}
         with zipfile.ZipFile(root / 'RV-Setup.zip') as setup:
             with zipfile.ZipFile(io.BytesIO(setup.read('RV-Setup/payload.zip'))) as payload:
-                first_party = verify_first_party_proof(first_party_proof_path(source_metadata, tracked_root), vendor_catalog, tracked, payload, tracked_root)
+                first_party = verify_first_party_proof(first_party_proof_path(source_metadata, tracked_root), vendor_catalog, delivery_manifest, payload, tracked_root)
         validate_release_catalog(vendor_catalog, source_metadata, sha256_file(catalog_path), first_party)
     for name, digest in expected.items():
+        if name == 'RV-Mac-Setup.zip':
+            from verify_macos import verify as verify_macos
+            verify_macos(root / name, version=source_metadata['version'])
+            continue
         with zipfile.ZipFile(root / name) as archive:
             safe_entries(archive)
             names = archive.namelist()
@@ -98,6 +135,11 @@ def verify(directory, tag=None, remote=False):
             path = 'RV-Setup/release.json' if name == 'RV-Setup.zip' else 'release.json'
             metadata = json.loads(archive.read(path).decode('utf-8-sig'))
             version = metadata['version']
+            if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+                prefix = 'RV-Setup/' if name == 'RV-Setup.zip' else ''
+                world = archive.read(prefix + 'self-host-world.zip')
+                descriptor = json.loads((tracked_root / 'pack/self-host-package.json').read_text())
+                require(hashlib.sha256(world).hexdigest() == descriptor['worldTemplate']['sha256'] and len(world) == descriptor['worldTemplate']['size'], 'Self-host world differs from frozen clean template')
             required_mods(metadata)
             if vendor_catalog is not None:
                 require(len(archive.read(path)) <= 4096, 'Packaged metadata exceeds the immutable older updater limit')
@@ -160,23 +202,8 @@ def verify(directory, tag=None, remote=False):
         audit = audit_archives([root / name for name in expected], vendor_catalog)
         require(audit.get('passed') is True, 'RV 1.2.0 nested vendor archive audit failed')
     if remote:
-        require(tag, '--remote requires --tag')
-        url = 'https://api.github.com/repos/rudyvale/rv-warfare/releases/tags/' + tag
-        request = urllib.request.Request(url, headers={'Accept': 'application/vnd.github+json', 'User-Agent': 'RV-release-verifier'})
-        with urllib.request.urlopen(request, timeout=30) as response:
-            release = json.load(response)
-        require(not release['draft'] and not release['prerelease'] and release['tag_name'] == tag, 'Release is not public and stable at the expected tag')
-        require({asset['name'] for asset in release['assets']} == set(expected) | {'SHA256SUMS.txt'} and len(release['assets']) == len(expected) + 1, 'Unexpected release assets')
-        checksum_asset = next(asset for asset in release['assets'] if asset['name'] == 'SHA256SUMS.txt')
-        checksum_file = root / 'SHA256SUMS.txt'
-        require(checksum_asset['digest'] == 'sha256:' + hashlib.sha256(checksum_file.read_bytes()).hexdigest() and checksum_asset['size'] == checksum_file.stat().st_size and checksum_asset['state'] == 'uploaded', 'Checksum file mismatch')
-        for name, digest in expected.items():
-            assets = [asset for asset in release['assets'] if asset['name'] == name]
-            require(len(assets) == 1 and assets[0]['state'] == 'uploaded', 'Release asset is not uploaded: ' + name)
-            require(assets[0]['digest'] == 'sha256:' + digest and assets[0]['size'] == (root / name).stat().st_size, 'Remote asset checksum or size mismatch: ' + name)
-        with urllib.request.urlopen(urllib.request.Request('https://api.github.com/repos/rudyvale/rv-warfare/releases/latest', headers={'User-Agent': 'RV-release-verifier'}), timeout=30) as response:
-            require(json.load(response)['tag_name'] == tag, 'Release is not latest')
-    return {'verified': sorted(expected), 'tag': tag, 'remote': remote}
+        verify_remote(root, tag, expected, prerelease)
+    return {'verified': sorted(expected), 'tag': tag, 'remote': remote, 'prerelease': prerelease}
 
 
 if __name__ == '__main__':
@@ -184,5 +211,6 @@ if __name__ == '__main__':
     parser.add_argument('--directory', type=Path, required=True)
     parser.add_argument('--tag')
     parser.add_argument('--remote', action='store_true')
+    parser.add_argument('--prerelease', action='store_true')
     args = parser.parse_args()
-    print(json.dumps(verify(args.directory, args.tag, args.remote)))
+    print(json.dumps(verify(args.directory, args.tag, args.remote, args.prerelease)))

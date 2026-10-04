@@ -199,3 +199,7 @@ run('shared-runtime-server-does-not-block-client', mode='direct', target='shared
 run('actual-client-with-uppercase-path-is-not-duplicated', mode='direct', target='shared.example', active_process='client')
 run('missing-release-file-does-not-bypass-version-gate', mode='direct', target='version.example', release_version=None, compatibility_error=True, expected_reason='connection_package')
 print('37 connection launch integration tests passed')
+guard = subprocess.run([str(PS), '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(ROOT / 'qa/test_game_operation_guard.ps1')], env=ENV, capture_output=True, timeout=30)
+if guard.returncode:
+    raise RuntimeError(guard.stdout.decode(errors='replace') + guard.stderr.decode(errors='replace'))
+print(guard.stdout.decode(errors='replace').strip())

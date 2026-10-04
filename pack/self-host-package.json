@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "minecraftVersion": "1.12.2",
+  "forgeVersion": "14.23.5.2860",
+  "serverJar": {
+    "url": "https://piston-data.mojang.com/v1/objects/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar",
+    "sha1": "886945bfb2b978778c3a0288fd7fab09d315b25f",
+    "size": 30222121
+  },
+  "serverModIds": [
+    "mcheli",
+    "techguns",
+    "firstaid",
+    "creativecore",
+    "enhancedvisuals",
+    "biomesoplenty",
+    "mts",
+    "modularwarfare",
+    "rvcompat",
+    "rvexperience"
+  ],
+  "clientOnlyModIds": [
+    "mousetweaks",
+    "ambientsounds",
+    "mcgltf"
+  ],
+  "worldTemplate": {
+    "path": "self-host-world.zip",
+    "sha256": "4dc49272c62b281d96e06d82814e34a9d6b93ed0a320699b42946914af18d75c",
+    "size": 6093117
+  }
+}

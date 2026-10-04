@@ -30,7 +30,40 @@ def safe_member(name):
     return True
 
 
-def audit_archives(paths, catalog):
+def populated_connection_json(data):
+    data = data.strip()
+    if len(data) > 65536:
+        if not data.removeprefix(b'\xef\xbb\xbf').startswith((b'{', b'[')):
+            return False
+        return re.search(rb'"connectionTarget"\s*:\s*"[^"\s]', data) is not None or re.search(rb'"product"\s*:\s*"RV"', data) is not None and re.search(rb'"transport"\s*:\s*"porthole"', data) is not None and re.search(rb'"target"\s*:\s*"[^"\s]', data) is not None
+    try:
+        text = data.decode('utf-16') if data.startswith((b'\xff\xfe', b'\xfe\xff')) else data.decode('utf-8-sig')
+        if not text.lstrip().startswith(('{', '[')):
+            return False
+        document = json.loads(text, object_pairs_hook=tuple)
+    except (ValueError, UnicodeError, RecursionError):
+        return False
+    def inspect(value, depth=0):
+        if depth > 64:
+            return False
+        if isinstance(value, tuple):
+            if any(key == 'connectionTarget' and isinstance(item, str) and item.strip() for key, item in value):
+                return True
+            products = [item for key, item in value if key == 'product']
+            transports = [item for key, item in value if key == 'transport']
+            targets = [item for key, item in value if key == 'target']
+            if 'RV' in products and 'porthole' in transports and any(isinstance(item, str) and item.strip() for item in targets):
+                return True
+            return any(inspect(item, depth + 1) for key, item in value)
+        if isinstance(value, list):
+            return any(inspect(item, depth + 1) for item in value)
+        return False
+    return inspect(document)
+
+
+def audit_archives(paths, catalog, public=True):
+    if type(public) is not bool:
+        raise ValueError('Public archive mode must be a boolean')
     catalog_bytes = Path(catalog).read_bytes() if isinstance(catalog, (str, Path)) else None
     definition = json.loads(catalog_bytes) if catalog_bytes is not None else catalog
     forbidden = {}
@@ -41,7 +74,7 @@ def audit_archives(paths, catalog):
                 forbidden.setdefault(child['sha256'], []).append({'id': entry['id'], 'path': child['path'], 'kind': 'embedded-content'})
     if not forbidden or any(not re.fullmatch('[a-f0-9]{64}', value) for value in forbidden):
         raise ValueError('Invalid or empty forbidden byte inventory')
-    report = {'passed': False, 'status': 'PUBLIC_ARCHIVE_AUDIT_FAILED', 'scope': 'Exact forbidden byte SHA audit at top and recursively nested ZIP/JAR members; no extraction or execution; no general licence or gameplay acceptance', 'catalogSha256': sha256(catalog_bytes) if catalog_bytes is not None else None, 'catalogCanonicalSha256': sha256(json.dumps(definition, sort_keys=True, separators=(',', ':')).encode()), 'forbiddenSha256': forbidden, 'limits': dict(LIMITS), 'inputs': [], 'findings': [], 'counts': {'filesHashed': 0, 'archives': 0, 'entries': 0, 'expandedBytes': 0, 'maxDepth': 0}}
+    report = {'passed': False, 'public': public, 'status': 'PUBLIC_ARCHIVE_AUDIT_FAILED' if public else 'PRIVATE_ARCHIVE_AUDIT_FAILED', 'scope': 'Exact forbidden byte SHA and ZIP path/CRC audit at top and recursively nested members; public mode also rejects invitations and populated connection defaults; no extraction, execution or gameplay acceptance', 'catalogSha256': sha256(catalog_bytes) if catalog_bytes is not None else None, 'catalogCanonicalSha256': sha256(json.dumps(definition, sort_keys=True, separators=(',', ':')).encode()), 'forbiddenSha256': forbidden, 'limits': dict(LIMITS), 'inputs': [], 'findings': [], 'counts': {'filesHashed': 0, 'archives': 0, 'entries': 0, 'expandedBytes': 0, 'maxDepth': 0}}
 
     def finding(kind, location, **details):
         report['findings'].append({'kind': kind, 'location': location, **details})
@@ -50,6 +83,10 @@ def audit_archives(paths, catalog):
         report['counts']['filesHashed'] += 1
         if digest in forbidden:
             finding('FORBIDDEN_VENDOR_BYTES', location, sha256=digest, matched=forbidden[digest])
+
+    def check_private(data, location, name):
+        if public and (name.casefold().endswith('.rvinvite') or populated_connection_json(data)):
+            finding('PRIVATE_CONNECTION_DATA', location)
 
     report['legacyCaseCollisionPins'] = dict(LEGACY_CASE_COLLISIONS)
     report['legacyCaseCollisions'] = []
@@ -113,6 +150,7 @@ def audit_archives(paths, catalog):
                         finding('MEMBER_SIZE_MISMATCH', member_location, read=read, declared=entry.file_size)
                         continue
                     check_bytes(digest.hexdigest(), member_location)
+                    check_private(buffer.getvalue(), member_location, entry.filename)
                     buffer.seek(0)
                     if zipfile.is_zipfile(buffer):
                         buffer.seek(0)
@@ -144,13 +182,17 @@ def audit_archives(paths, catalog):
         actual = digest.hexdigest()
         report['inputs'].append({'path': str(path), 'size': size, 'sha256': actual})
         check_bytes(actual, str(path))
+        if public and path.name.casefold().endswith('.rvinvite'):
+            finding('PRIVATE_CONNECTION_DATA', str(path))
         try:
             is_archive = zipfile.is_zipfile(path)
             if is_archive:
                 scan_archive(path, str(path), 0, actual)
             else:
                 with path.open('rb') as file:
-                    prefix = file.read(4)
+                    data = file.read(65537)
+                    check_private(data, str(path), '')
+                    prefix = data[:4]
                 if prefix.startswith(b'PK') or path.suffix.lower() in ('.zip', '.jar'):
                     finding('INVALID_INPUT_ARCHIVE', str(path))
         except OSError as exc:
@@ -161,7 +203,7 @@ def audit_archives(paths, catalog):
         finding('NO_INPUTS', '')
     report['passed'] = not report['findings']
     if report['passed']:
-        report['status'] = 'PUBLIC_ARCHIVE_BYTES_READY'
+        report['status'] = 'PUBLIC_ARCHIVE_BYTES_READY' if public else 'PRIVATE_ARCHIVE_BYTES_READY'
     return report
 
 

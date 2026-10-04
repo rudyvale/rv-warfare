@@ -1,9 +1,9 @@
 {
-  "version": "1.2.1",
+  "version": "2.0.4",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "11020eb2e5afc9cee4649b72d91942e9e3a854476b5cad154c41cf9432ec5af3"
+      "sha256": "c3da0344e97b764510b66aaeb7b591750de1c9e1aea6e4baa86d3cab678a3594"
     },
     {
       "path": "runtime.zip",
@@ -12,12 +12,28 @@
   ],
   "managedFiles": [
     {
+      "path": "ModularWarfare/mod_config.json",
+      "sha256": "5e7b479c275f0ae714d6f4d39afd424190b91c8dfb7523b0b260557e23b84feb"
+    },
+    {
+      "path": "PRESETS/options-en.txt",
+      "sha256": "b84ffb190a3869b6cf10309fa2942aaece9088a0f25046259f0c0798f7342e84"
+    },
+    {
+      "path": "PRESETS/options-ru.txt",
+      "sha256": "5e5c575ffec80146ce028ce779b6550fa049c58760c816d3a16dbeabe177cde7"
+    },
+    {
       "path": "READ-ME.md",
-      "sha256": "fb36be1463af5573bd79a5a80de865782ca05a8a6d9c779410e899138913c241"
+      "sha256": "c958dd4135e4dffc2ee7bd8c9a582b1b4c96a2ea471ed35d82b005b76686fb94"
     },
     {
       "path": "THIRD-PARTY-NOTICES.md",
       "sha256": "0868b4cd2f580e2ffbdeb49059cb7280f35059fbc329bb94fd1b4491a2090f28"
+    },
+    {
+      "path": "config/MouseTweaks.cfg",
+      "sha256": "a66d877d4ce701314ba77d9faaa773d9a08858fb7f9bcdcd6a9fa3a2c1081619"
     },
     {
       "path": "config/elegant_networking.cfg",
@@ -80,6 +96,10 @@
       "sha256": "c2b19d76e59ddb104fbca2e44c303d46dd24f31352268af0b7a700e822785e48"
     },
     {
+      "path": "config/mtsconfigclient.json",
+      "sha256": "1709d7b281f613b6638a1923d1489461e3590ffde820fe0af254066e94b4dc6d"
+    },
+    {
       "path": "config/splash.properties",
       "sha256": "11fb3855f700141fc96c99aae2c23610ef5c6130e5605796a65747675028b27e"
     },
@@ -97,12 +117,12 @@
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin-bomb.yml",
-      "sha256": "b4916eb01a786a1dd87b65e8190c810643385d7a62a249f8d8d77712f6d78334",
+      "sha256": "20677e68d9d95d259c82b7ed45a50434e3689d38295939fe058309700e4cb38e",
       "existingOnly": true
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin.yml",
-      "sha256": "6a9d0a3c30eca99f62a783c413a1050c8a4c29d7dd3e57a936194e07a70efd71",
+      "sha256": "12835abeb4ce79d72e6eaf3b5ed9f6130dbd991d6359227a3612820f98a4edf7",
       "existingOnly": true
     },
     {
@@ -205,12 +225,40 @@
       "sha256": "8bb53080aede2d2b1e1c5f713bbf49a38f20add8caa3d52fabcdf8a536b55a18"
     },
     {
+      "path": "mods/AmbientSounds_v3.1.7_mc1.12.2.jar",
+      "sha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed"
+    },
+    {
+      "path": "mods/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
+      "sha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908"
+    },
+    {
       "path": "mods/CreativeCore_v1.10.71_mc1.12.2.jar",
       "sha256": "b0ef34ec816fa91451f8d4b62c016c159ab3559d6f75870790d1215943f009d5"
     },
     {
       "path": "mods/EnhancedVisuals_v1.4.4_mc1.12.2.jar",
       "sha256": "4b8c538370ada6c25ab13990e90c903aed9e0bd0e63d59c34848ce59781fc966"
+    },
+    {
+      "path": "mods/IAV-1.1.11-1.12.2.jar",
+      "sha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47"
+    },
+    {
+      "path": "mods/Immersive Vehicles-1.12.2-24.0.0.jar",
+      "sha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b"
+    },
+    {
+      "path": "mods/MCglTF-1.12.2-Forge-2.0.3.0.jar",
+      "sha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f"
+    },
+    {
+      "path": "mods/MouseTweaks-2.10.1-mc1.12.2.jar",
+      "sha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575"
+    },
+    {
+      "path": "mods/VEB-1.1.11-1.12.2.jar",
+      "sha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565"
     },
     {
       "path": "mods/WorldEdit-CUI-FE3-1.12.2-3.0.9.jar",
@@ -242,11 +290,23 @@
     },
     {
       "path": "mods/mcheli-ce-1.5.1-rv.jar",
-      "sha256": "ea90ce380c54a45982b02f2ae61533517203e926da0f2d65d31e51d7dc3408bb"
+      "sha256": "3b35d78725238c9d0c5107ce185a2cec2e06ba030e376a66485a93906f665efb"
     },
     {
       "path": "mods/modularui-3.1.6.jar",
       "sha256": "4c16829c70b322aab735e73f53608fcabbf1d14956d5365c0c2b911c4d4dca54"
+    },
+    {
+      "path": "mods/modularwarfare-2.4.2f.jar",
+      "sha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc"
+    },
+    {
+      "path": "mods/rv-experience-2.0.0.jar",
+      "sha256": "a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007"
+    },
+    {
+      "path": "mods/rv-vehicle-compat-1.2.0.jar",
+      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4"
     },
     {
       "path": "mods/techguns-1.12.2-rv.jar",
@@ -258,7 +318,7 @@
     },
     {
       "path": "resourcepacks/Warfare-Combat-Audio.zip",
-      "sha256": "af8349de0ca964fb39cdfac76b5a32789684c78b1b1b03ecc7b41d4d4d2f1cf5"
+      "sha256": "2b5ac7eb54493bacfa339c21fc121e9c579adf240a5ef8e88ed96fce2437e6ae"
     },
     {
       "path": "resourcepacks/Warfare-UI-fixes.zip",
@@ -267,62 +327,6 @@
     {
       "path": "shaderpacks/BSL_v8.2.09p2.zip",
       "sha256": "5f1bad5c0c3b323b9ce753a1e3a7d138839a14bfa148a078204699a204a32a0b"
-    },
-    {
-      "path": "config/MouseTweaks.cfg",
-      "sha256": "a66d877d4ce701314ba77d9faaa773d9a08858fb7f9bcdcd6a9fa3a2c1081619"
-    },
-    {
-      "path": "mods/rv-vehicle-compat-1.2.0.jar",
-      "sha256": "f0c39c6f941df8b24225b0dcb2ed8758e1cd9621e23e9b8cdad7c6ab43361eb4"
-    },
-    {
-      "path": "mods/AmbientSounds_v3.1.7_mc1.12.2.jar",
-      "sha256": "8f9ea1605d2a141b269bbfd5e9c98ae06c7f47d13283454c75258e68e381d9ed"
-    },
-    {
-      "path": "mods/MouseTweaks-2.10.1-mc1.12.2.jar",
-      "sha256": "5e13315f4e0d0c96b1f9b800a42fecb89f519aca81d556c91df617c8751aa575"
-    },
-    {
-      "path": "mods/BiomesOPlenty-1.12.2-7.0.1.2445-universal.jar",
-      "sha256": "1c53d3ee39f557162591f618c58b79dc6861d24522ef785794ee4a815f8a3908"
-    },
-    {
-      "path": "mods/Immersive Vehicles-1.12.2-24.0.0.jar",
-      "sha256": "d32adb7ad75641137a1e0dfe57bdaaa47546b3aba9a9c7782b52a7917cd4d76b"
-    },
-    {
-      "path": "mods/IAV-1.1.11-1.12.2.jar",
-      "sha256": "9d73fffad745eaf6f539e32a14f2a7e988fa394a9edb1dfedba9fc9146367b47"
-    },
-    {
-      "path": "mods/VEB-1.1.11-1.12.2.jar",
-      "sha256": "45101b6266e20c5b5527a72a947f8f64def384e2f3a211e89e3a713aa60bf565"
-    },
-    {
-      "path": "mods/MCglTF-1.12.2-Forge-2.0.3.0.jar",
-      "sha256": "1fb5f503a0f0dd4c83015c58c4340d3f7608e1b02df45f10259c644ccbe0408f"
-    },
-    {
-      "path": "mods/modularwarfare-2.4.2f.jar",
-      "sha256": "da069382bf16e6879809cad459fc145ba84782728789db0147303755f89884fc"
-    },
-    {
-      "path": "ModularWarfare/mod_config.json",
-      "sha256": "5e7b479c275f0ae714d6f4d39afd424190b91c8dfb7523b0b260557e23b84feb"
-    },
-    {
-      "path": "config/mtsconfigclient.json",
-      "sha256": "1709d7b281f613b6638a1923d1489461e3590ffde820fe0af254066e94b4dc6d"
-    },
-    {
-      "path": "PRESETS/options-ru.txt",
-      "sha256": "5e5c575ffec80146ce028ce779b6550fa049c58760c816d3a16dbeabe177cde7"
-    },
-    {
-      "path": "PRESETS/options-en.txt",
-      "sha256": "b84ffb190a3869b6cf10309fa2942aaece9088a0f25046259f0c0798f7342e84"
     }
   ],
   "managedModPatterns": [
@@ -337,7 +341,9 @@
     "^foamfix-[0-9].*\\.jar$",
     "^journeymap-1\\.12.*\\.jar$",
     "^worldedit-forge-mc1\\.12.*\\.jar$",
-    "^WorldEditCUI.*-[0-9].*\\.jar$"
+    "^WorldEditCUI.*-[0-9].*\\.jar$",
+    "^rv\\-vehicle\\-compat\\-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar$",
+    "^rv\\-experience\\-[0-9]+\\.[0-9]+\\.[0-9]+\\.jar$"
   ],
   "optifineSha256": "3b0006797771feb97f2d0d2908ae7c9a78cefb2e730af1c2e85d08a839ba271e"
 }

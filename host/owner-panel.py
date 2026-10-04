@@ -6,10 +6,11 @@ from pathlib import Path
 import queue
 import threading
 import tkinter as tk
-from tkinter import messagebox
+from tkinter import filedialog, messagebox
 
 from host_runtime import read_json, server_status
 from world_reset import restore_stopped
+from invitations import export_invite
 
 ROOT = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location('owner_play', ROOT / 'play-owner.py')
@@ -45,8 +46,8 @@ class Panel:
         self.server = {}
         self.connection = {}
         window.title('RV — сервер')
-        window.geometry('620x480')
-        window.minsize(620, 480)
+        window.geometry('620x530')
+        window.minsize(620, 530)
         window.configure(bg='#101822')
         try:
             window.iconbitmap(str(ROOT / 'code.ico'))
@@ -72,6 +73,8 @@ class Panel:
         self.reset_button.grid(row=2, column=0, sticky='ew', padx=(0, 5), pady=4)
         self.stop_button = self.button('Остановить сервер', lambda: self.run('stop'))
         self.stop_button.grid(row=2, column=1, sticky='ew', padx=(5, 0), pady=4)
+        self.invite_button = self.button('Сохранить приглашение для друзей', self.save_invite)
+        self.invite_button.grid(row=3, column=0, columnspan=2, sticky='ew', pady=4)
         self.status = tk.Label(self.main, text='RV сам запускает сервер и подключение для друзей.', bg='#101822', fg='#a9bcc7', wraplength=560, justify='left', font=('Segoe UI', 10))
         self.status.pack(anchor='w', pady=(10, 4))
         tk.Button(self.main, text='Открыть журнал', command=self.open_log, bg='#101822', fg='#90dec4', activebackground='#101822', activeforeground='white', borderwidth=0, cursor='hand2').pack(anchor='w')
@@ -103,6 +106,7 @@ class Panel:
         for button in (self.play_button, self.retry_button, self.reset_button, self.stop_button):
             button.configure(state='disabled' if self.busy else 'normal')
         self.copy_button.configure(state='normal' if friends else 'disabled')
+        self.invite_button.configure(state='normal' if friends and not self.busy else 'disabled')
         self.retry_button.configure(state='normal' if ready and not self.busy else 'disabled')
         self.reset_button.configure(state='normal' if (ROOT / '.world-reset/baseline/level.dat').is_file() and not self.busy else 'disabled')
         self.stop_button.configure(state='normal' if state in ('running', 'starting', 'stopping') and not self.busy else 'disabled')
@@ -137,6 +141,9 @@ class Panel:
                     result = 'Друзья могут заходить по прежнему коду.'
                 elif action == 'reset':
                     result = reset_world(mode, self.cancel, update)
+                elif action == 'invite':
+                    export_invite(ROOT, mode)
+                    result = 'Приглашение сохранено. Отправь его друзьям для подключения.'
                 else:
                     result = stop_server(update)
                 self.events.put(('done', result))
@@ -170,6 +177,11 @@ class Panel:
             self.window.clipboard_clear()
             self.window.clipboard_append(self.connection.get('code', ''))
             self.status.configure(text='Код подключения скопирован.')
+
+    def save_invite(self):
+        path = filedialog.asksaveasfilename(parent=self.window, title='Сохранить приглашение', initialfile='RV.rvinvite', defaultextension='.rvinvite', filetypes=[('Приглашение RV', '*.rvinvite')])
+        if path:
+            self.run('invite', path)
 
     def open_log(self):
         path = ROOT / 'owner-panel-error.log'
@@ -211,7 +223,7 @@ if __name__ == '__main__':
     panel = Panel(window, args.game_root.resolve(), monitor=not args.check)
     if args.check:
         window.update_idletasks()
-        print(json.dumps({'state': 'ready', 'buttons': 5, 'resetRequiresConfirmation': True}))
+        print(json.dumps({'state': 'ready', 'buttons': 6, 'resetRequiresConfirmation': True}))
         window.destroy()
     else:
         window.mainloop()

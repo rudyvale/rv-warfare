@@ -1,11 +1,11 @@
-param([string]$Candidate)
+﻿param([string]$Candidate)
 $ErrorActionPreference='Stop'
 $workspace=Split-Path -Parent $PSScriptRoot
 $root=Join-Path $workspace ('.local/qa-1.1.0/onboarding-state-'+[Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $root -Force|Out-Null
 $frozen=Join-Path $root 'source';New-Item -ItemType Directory -Path $frozen -Force|Out-Null
 $sourceHashes=@{}
-foreach($name in @('Warfare-Connection.ps1','Warfare-Onboarding.ps1','Configure-Controller.ps1','Configure-FirstPlay.ps1')){
+foreach($name in @('Warfare-Connection.ps1','Warfare-Onboarding.ps1','Configure-Controller.ps1','Configure-FirstPlay.ps1','Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1')){
     Copy-Item -LiteralPath (Join-Path $workspace ('src/'+$name)) -Destination $frozen
     $sourceHashes[$name]=(Get-FileHash -LiteralPath (Join-Path $frozen $name)).Hash.ToLowerInvariant()
 }

@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import shutil
 import zipfile
-from release_contract import load_addon_map, required_mods, validate_base, validate_output, write_candidate
+from release_contract import client_source_names, load_addon_map, required_mods, validate_base, validate_output, write_candidate
 from third_party_sources import verify_bundle, verify_vendor_manifest
 
 root = Path(__file__).resolve().parents[1]
@@ -14,6 +14,7 @@ parser.add_argument('--output', type=Path)
 parser.add_argument('--private', action='store_true')
 parser.add_argument('--defaults', type=Path)
 parser.add_argument('--world-template', type=Path)
+parser.add_argument('--macos-package', type=Path)
 parser.add_argument('--third-party-sources', type=Path)
 parser.add_argument('--replace-candidate', action='store_true')
 args = parser.parse_args()
@@ -26,6 +27,8 @@ output = (args.output or root / ('dist-private' if args.private else 'dist')).re
 metadata = json.loads((root / 'src/release.json').read_text())
 required_mods(metadata)
 version = metadata['version']
+if tuple(map(int, version.split('.'))) >= (2, 0, 4) and not args.macos_package:
+    raise ValueError('RV 2.0.4 requires its verified Mac package')
 validate_output(output, version, args.private, args.replace_candidate)
 vendor_catalog = None
 first_party = {}
@@ -51,25 +54,20 @@ if tuple(map(int, version.split('.'))) >= (1, 1, 0):
         raise ValueError('RV 1.1.0 requires a frozen addon resource map')
     mcheli_sha = next(entry['sha256'] for entry in manifest['managedFiles'] if entry['path'] == 'mods/mcheli-ce-1.5.1-rv.jar')
     load_addon_map(addon_map, mcheli_sha)
-scripts = ['Install-Warfare.ps1', 'Play-Warfare.ps1', 'Warfare-Launcher.ps1', 'Warfare-Connection.ps1', 'Warfare-Updates.ps1', 'Check-WarfareUpdate.ps1', 'Configure-Controller.ps1', 'release.json']
-if vendor_catalog is not None:
-    for name in ('Warfare-VendorDownloads.ps1', 'Warfare-Ambience.ps1', 'Warfare-ClientMods.ps1'):
-        if not (root / 'src' / name).is_file():
-            raise ValueError('RV 1.2.0 requires ' + name)
-        scripts.append(name)
+scripts = list(client_source_names(version))
+for name in scripts:
+    if not (root / 'src' / name).is_file():
+        raise ValueError('RV ' + version + ' requires ' + name)
 performance = root / 'src/Warfare-Performance.ps1'
-if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not performance.is_file():
-    raise ValueError('RV 1.1.0 requires Warfare-Performance.ps1')
-if performance.is_file():
+if performance.is_file() and 'Warfare-Performance.ps1' not in scripts:
     scripts.append('Warfare-Performance.ps1')
 first_play = ['Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1']
 for name in first_play:
     source = root / 'src' / name
-    if tuple(map(int, version.split('.'))) >= (1, 1, 0) and not source.is_file():
-        raise ValueError('RV 1.1.0 requires ' + name)
-    if source.is_file():
+    if source.is_file() and name not in scripts:
         scripts.append(name)
 host_scripts = ['README.md', 'warfare-launcher.py', 'play-owner.py', 'owner-panel.py', 'world_reset.py', 'host_runtime.py', 'porthole-status.py', 'run-server.py', 'launch-warfare.py', 'launcher-texts.json', 'Join-Server.ps1', 'Launch-Warfare.ps1', 'Start-All.ps1', 'Start-Server.ps1', 'Start-Porthole.ps1', 'Stop-All.ps1', 'Stop-Server.ps1', 'Check-OwnerConnection.ps1']
+host_scripts.append('invitations.py')
 if vendor_catalog is not None:
     for name in ('server_vendors.py', 'Install-ServerVendors.ps1', 'Warfare-VendorDownloads.ps1'):
         if not (root / 'host' / name).is_file():
@@ -98,6 +96,11 @@ for name in scripts:
     data = source.read_text(encoding='utf-8-sig')
     (package / name).write_text(data, encoding='utf-8-sig' if source.suffix == '.ps1' else 'utf-8')
 pack_files = ['READ-ME.md']
+if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+    if not args.world_template:
+        raise ValueError('RV 2.0.4 requires its clean self-host world template')
+    pack_files.append('self-host-package.json')
+    shutil.copyfile(args.world_template, package / 'self-host-world.zip')
 if vendor_catalog is not None:
     pack_files.append('vendor-catalog.json')
     if metadata.get('managedModsSha256'):
@@ -132,7 +135,7 @@ play = '@echo off\r\nif exist "%~dp0payload.zip" (\r\n  start "" powershell.exe 
 (package / 'Play.cmd').write_bytes(play.encode('ascii'))
 archive_path = output / 'RV-Setup.zip'
 with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
-    for name in sorted(scripts + pack_files + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
+    for name in sorted(scripts + pack_files + (['self-host-world.zip'] if tuple(map(int, version.split('.'))) >= (2, 0, 4) else []) + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
         archive.write(package / name, 'RV-Setup/' + name)
 with archive_path.open('rb') as stream:
     digest = hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -155,6 +158,14 @@ with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as a
         archive.write(package / 'Warfare-Performance.ps1', 'Warfare-Performance.ps1')
     for name in first_play:
         if (package / name).is_file():
+            archive.write(package / name, name)
+    if tuple(map(int, version.split('.'))) >= (2, 0, 0):
+        for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            archive.write(package / name, name)
+    if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+        for name in ('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1'):
+            archive.write(package / name, name)
+        for name in ('self-host-package.json', 'self-host-world.zip'):
             archive.write(package / name, name)
     if tuple(map(int, version.split('.'))) >= (1, 1, 0):
         archive.write(package / 'Warfare-Connection.ps1', 'Warfare-Connection.ps1')
@@ -185,11 +196,19 @@ if args.world_template:
                 raise SystemExit('Private or unsafe world template entry: ' + name)
     with world.open('rb') as stream:
         checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-World-Template.zip\n'
+if args.macos_package:
+    from verify_macos import verify as verify_macos
+    verify_macos(args.macos_package, version=version)
+    mac = output / 'RV-Mac-Setup.zip'
+    if args.macos_package.resolve() != mac.resolve():
+        shutil.copyfile(args.macos_package, mac)
+    with mac.open('rb') as stream:
+        checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-Mac-Setup.zip\n'
 (output / 'SHA256SUMS.txt').write_text(checksums, encoding='ascii')
 if vendor_catalog is not None:
     from audit_public_archives import audit_archives
     paths = [output / line.split('  ', 1)[1] for line in checksums.splitlines()]
-    audit = audit_archives(paths, vendor_catalog)
+    audit = audit_archives(paths, vendor_catalog, public=not args.private)
     (output.parent / (output.name + '-vendor-public-audit.json')).write_text(json.dumps(audit, indent=2) + '\n', encoding='utf-8')
     if audit.get('passed') is not True:
         raise ValueError('RV 1.2.0 vendor archive audit failed')

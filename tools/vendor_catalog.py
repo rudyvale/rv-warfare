@@ -216,6 +216,25 @@ def verify_managed_sources(catalog, root):
     return True
 
 
+def load_native_projection(root, name):
+    name = safe_path(name)
+    require(name.startswith('qa/evidence/') and name.endswith('.json'), 'Native proof must use a scrubbed public evidence path')
+    path = Path(root) / name
+    require(0 < path.stat().st_size <= 16384, 'Native projection exceeds its bounded size')
+    data = json.loads(path.read_text(encoding='utf-8-sig'))
+    require(isinstance(data, dict) and set(data) == {'success', 'mods', 'artifacts'} and data['success'] is True and isinstance(data['mods'], dict) and isinstance(data['artifacts'], dict), 'Native projection must contain only successful FML identities and loaded artifact digests')
+    return data
+
+
+def validate_native_union(data, mods):
+    versions = {name: version for entry in mods for name, version in entry['fml'].items()}
+    artifacts = {entry['path']: entry['sha256'] for entry in mods}
+    require(set(data['mods']) == set(versions) and set(data['artifacts']) == set(artifacts), 'Native projection differs from the complete owned module union')
+    require(data['mods'] == versions, 'First-party native runtime version differs from its source/binary proof')
+    require(data['artifacts'] == artifacts, 'First-party loaded native binary differs from its frozen artifact')
+    return versions
+
+
 def verify_first_party_proof(proof_path, catalog, manifest, archive, root):
     if proof_path is None:
         return {}
@@ -226,14 +245,16 @@ def verify_first_party_proof(proof_path, catalog, manifest, archive, root):
     verify_managed_sources(composed, root)
     verify_managed_delivery(composed, manifest, archive, 'client')
     native, artifacts = {}, {}
-    for receipt in proof.get('nativeReceipts', []):
+    receipts = proof.get('nativeReceipts')
+    require(isinstance(receipts, list) and len(receipts) == 2, 'Both first-party native runtime receipts are required')
+    for receipt in receipts:
+        require(isinstance(receipt, dict) and set(receipt) == {'side', 'path', 'sha256'}, 'Invalid first-party native receipt fields')
         require(receipt.get('side') in ('client', 'server') and receipt['side'] not in native, 'Invalid or duplicate first-party native receipt side')
         path = Path(root) / safe_path(receipt.get('path'))
         require(sha256_file(path) == receipt.get('sha256'), 'First-party native receipt changed after verification')
-        data = json.loads(path.read_text(encoding='utf-8-sig'))
-        require(data.get('success') is True and isinstance(data.get('mods'), dict), 'First-party native receipt is incomplete')
+        data = load_native_projection(root, receipt['path'])
+        validate_native_union(data, proof['mods'])
         native[receipt['side']] = data['mods']
-        require(isinstance(data.get('artifacts'), dict), 'First-party native receipt is missing the loaded artifact digests')
         artifacts[receipt['side']] = data['artifacts']
     require(set(native) == {'client', 'server'}, 'Both first-party native runtime receipts are required')
     result = {}

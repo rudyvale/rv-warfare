@@ -1,1 +1,1 @@
-tellraw @s [{"text": "\nRV\nВыбери язык / Choose a language\n", "color": "gold"}, {"text": "[Русский] ", "color": "green", "clickEvent": {"action": "run_command", "value": "/trigger lang_ru set 1"}}, {"text": "[English] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/trigger lang_en set 1"}}]
+rvx open

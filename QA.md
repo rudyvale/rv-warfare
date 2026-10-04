@@ -1,5 +1,37 @@
 # Verification scope
 
+## RV 2.0.4 Preview verification
+
+Gameplay modules, audio and the clean world remain frozen to 2.0.3. The final Windows Setup ZIP `3064d7e2c4014ce03ac39c91da2421b411357b2b034121689502736bb581a47d` completed an isolated cold install in 77.41 seconds and reinstall in 10.81 seconds, without Java on PATH, Steam, shortcuts or game startup. All 1347 download SHA-1 pins and delivered helpers/data matched. Friends and Owner destinations, a local-world sentinel and update opt-out survived reinstall; installed Play Check passed. The earlier cold run caught an undefined world-helper call; the final package uses the actual helper and passed without source substitution.
+
+Destination checks exercised Local without a target or Steam, distinct Friends and Owner command vectors, migration, cancellation and EULA gating. The native Windows launcher rendered Local mode through its existing preview entry point; assets/launcher.png is the original capture. Rendering is separate from command and runtime checks. Relevant Python suites passed 90 tests, with 37 connection launch cases, five operation guards and six protocol probes; PowerShell update, onboarding, syntax, play-mode and self-host checks passed.
+
+The exact self-host helper `3df30a56876a1119263b5ebf0835ab09b9b53b61c15733d2057ac462e2abfe0b` booted an isolated Forge server with the pinned map and ten required advertised mod versions. Duplicate start kept its Java PID; graceful stop saved chunks and exited with code zero. Read-only reconciliation confirmed world/level.dat, worldTemplateInstalled=true, 158 world files, no owned processes and a free port. The one-off native runner stopped at a map assertion contradicted by those saved operands: this is confirmed runtime observation, not a clean pass of the complete runner. A connection from another computer remains unverified.
+
+The Mac ZIP `cbb16a8c90442ea887e08667c8489c0a348074b92f6c3dcc8e646bc1d28d0da3` contains the frozen launcher JAR `4135c219580daad8d0456ed07698cf4eab3b0005f8ee829d43682bfa321cde32`, 146 pinned Intel Java runtime files, 1349 download records and three Mac native classifiers. Java 8 compilation, headless checks against actual Resources, configuration preservation, current-log readiness and full runtime archive comparisons passed on Windows. Six altered runtime/origin/policy/script/world cases were rejected. The public JAR is bound by its full digest and each entry digest; cross-platform recompilation must retain every class, notice and manifest byte, independently of ZIP compression. The Intel Mac CI check and bundled Java startup are separate gates. Native Mac GUI, Minecraft, physical controllers and external friend connections remain unverified; this package is experimental.
+
+Windows self-hosting currently uses LAN/direct connections with offline nicknames. Operator nicknames are not authenticated and should be used only with trusted players. Automatic Windows Porthole sharing is not included; public packages contain no owner connection defaults.
+
+## RV 2 Preview verification
+
+The selected player menu module `a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007` was loaded by an actual Forge client and dedicated server. Public projections contain only owned module identities and loaded artifact digests. All 21 build source digests match the frozen source, and the compilation-only GUI API is excluded from the production JAR.
+
+Two ordinary players exercised the reviewed equipment and session flow, including confirmation, preservation, readiness, cancellation, disconnect and restart persistence. Native zero- and one-free-slot capacity denials preserved all 41 inventory slots, cursor, selection and equipment choices, with no dropped items. A subsequent native check preserved unmatched tagged bandages while merging matching supplies without duplication. An injected container failure after the inventory write returned inventory_error and preserved inventory, cursor, selection, equipment choices, confirmation flags and cooldown, with no new dropped items. The injected failure occurs before container packets are forwarded; recovery after partial packet delivery and the third-player matrix remain open. Original menu captures show 960 by 600 with shaders disabled.
+
+The earlier RV 2.0.0 module `7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969` had separate single-player checks for equipment, guides and training. Its controls capture remains historical evidence; it does not prove the later menu or controls binaries.
+
+Eight native WinForms message-loop cases exercised isolated launcher workers, action completion and cancellation. They do not establish a fresh installation or physical device compatibility. The configured two-contentpack sound registry resolved 2,257 file references and 33 event links; 1,673 clips decoded. The corrected silent cue reuses an existing valid silence sample, and all 106 RV sound files remain byte-identical. Audible playback remains unverified.
+
+The published 2.0.3 Setup ZIP `7513fd652268df7a6e8db5f2b6aee1160c2375564025eee42f2cd56ad0bc38c2` also completed a cold worker installation in empty isolated application-data directories without Java on PATH. Bundled OpenJDK 1.8.0_504 ran; all 1,347 downloaded manifest files matched SHA-1; the installed Play Check passed. Reinstallation preserved settings, unfinished first-play choices, an empty server destination, a custom port, update preference and a test world. This check did not open the setup UI, start the game or establish Steam/Porthole connectivity.
+
+Packaging checks cover exact source and artifact closure, managed files, recursive vendor and invitation privacy inspection, ZIP paths and CRC, checksums, immutable outputs and preview publication policy. The third-party source registry is pinned as raw bytes so a fresh checkout agrees with the frozen source bundle. These checks do not establish Minecraft combat or multiplayer acceptance.
+
+RV 2.0.1 and 2.0.2 candidates remain unpublished. Actual projectile impact exposed incompatible hook descriptors in the first candidate. The 2.0.2 correction then exposed a dedicated-server fire error when reflection resolved an unrelated client-only tooltip class.
+
+The selected 2.0.3 controls JAR `3b35d78725238c9d0c5107ce185a2cec2e06ba030e376a66485a93906f665efb` calls the two Forge protection hooks through exact cached method handles. Its 39 captured controls inputs match the frozen source. All five VMProps classes and the transformer are byte-identical to those loaded by the isolated server and client test. That instrumented fixture completed 25 impact checks and 75 combat assertions with zero failures, including projectile stopping, tank HP changes, glass, wooden props and managed fire. No ITooltipFlag or helper-descriptor error was observed. Quota-sensitive groups explicitly advance the WorldInfo total-time counter; these checks do not establish elapsed server ticks, real-time fire expiry or performance. Test helpers are excluded from the public JAR. This is a scoped regression result, not full-modpack combat acceptance.
+
+Physical controllers, an external friend's connection, cross-mod damage, recovery after partial inventory packet delivery, audible playback and the final TPS/FPS/RAM matrix remain open. The experimental MTS damage bridge and acceptance-test helpers are excluded from public packages. Historical results below apply to their named earlier releases.
+
 RV is developed on Windows using Windows PowerShell 5.1. Automated checks live in `qa`; the [Windows checks workflow](https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml) shows the result for each pushed source revision.
 
 | Area | Checks |
@@ -21,7 +53,7 @@ RV is developed on Windows using Windows PowerShell 5.1. Automated checks live i
 | Combat runtime | Dedicated server and client loading, rotated tank hulls, turret hits, projectile stopping, wall obstruction, FPV impact and prop damage |
 | Owner access | Actual owner connection receives permissions; ordinary clients and a matching nickname from an untrusted directory are denied |
 
-The frozen gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
+The historical RV 1.1.0 gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
 
 The 1.1.0 component checks also exercised Easy flight and lost-focus input, malformed network input, current tank bindings, First Aid wounds and healing, and actual Low/Balanced effect values. Both 24-page books were parsed by Minecraft and checked against the native font renderer. The new Apache burst event was resolved through the actual loaded sound registry; codec and byte comparisons covered the updated audio archive.
 

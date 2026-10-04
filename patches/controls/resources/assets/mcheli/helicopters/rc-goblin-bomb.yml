@@ -19,7 +19,7 @@ Camera:
 Sound:
   MoveSound: mcheli:radicon_heli
 PhysicalProperties:
-  Speed: 0.4
+  Speed: 0.6
 Render:
   ParticleScale: 0.2
 Weapons:
