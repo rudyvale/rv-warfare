@@ -97,6 +97,7 @@ def verify(package, version=None, runtime=None, launcher_sha=None):
         with zipfile.ZipFile(io.BytesIO(jar)) as compiled:
             safe_entries(compiled)
             require(compiled.testzip() is None, 'Mac launcher JAR failed CRC')
+            require({name: sha(compiled.read(name)) for name in compiled.namelist()} == binding['entryHashes'], 'Mac launcher entries differ from the frozen source build')
             require('RVLauncher.class' in compiled.namelist(), 'Mac launcher entry point missing')
             for name in compiled.namelist():
                 if name.startswith('RVLauncher') and name.endswith('.class'):

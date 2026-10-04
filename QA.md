@@ -1,5 +1,17 @@
 # Verification scope
 
+## RV 2.0.4 Preview verification
+
+Gameplay modules, audio and the clean world remain frozen to 2.0.3. The final Windows Setup ZIP `3064d7e2c4014ce03ac39c91da2421b411357b2b034121689502736bb581a47d` completed an isolated cold install in 77.41 seconds and reinstall in 10.81 seconds, without Java on PATH, Steam, shortcuts or game startup. All 1347 download SHA-1 pins and delivered helpers/data matched. Friends and Owner destinations, a local-world sentinel and update opt-out survived reinstall; installed Play Check passed. The earlier cold run caught an undefined world-helper call; the final package uses the actual helper and passed without source substitution.
+
+Destination checks exercised Local without a target or Steam, distinct Friends and Owner command vectors, migration, cancellation and EULA gating. The native Windows launcher rendered Local mode through its existing preview entry point; assets/launcher.png is the original capture. Rendering is separate from command and runtime checks. Relevant Python suites passed 90 tests, with 37 connection launch cases, five operation guards and six protocol probes; PowerShell update, onboarding, syntax, play-mode and self-host checks passed.
+
+The exact self-host helper `3df30a56876a1119263b5ebf0835ab09b9b53b61c15733d2057ac462e2abfe0b` booted an isolated Forge server with the pinned map and ten required advertised mod versions. Duplicate start kept its Java PID; graceful stop saved chunks and exited with code zero. Read-only reconciliation confirmed world/level.dat, worldTemplateInstalled=true, 158 world files, no owned processes and a free port. The one-off native runner stopped at a map assertion contradicted by those saved operands: this is confirmed runtime observation, not a clean pass of the complete runner. A connection from another computer remains unverified.
+
+The Mac ZIP `cbb16a8c90442ea887e08667c8489c0a348074b92f6c3dcc8e646bc1d28d0da3` contains the frozen launcher JAR `4135c219580daad8d0456ed07698cf4eab3b0005f8ee829d43682bfa321cde32`, 146 pinned Intel Java runtime files, 1349 download records and three Mac native classifiers. Java 8 compilation, headless checks against actual Resources, configuration preservation, current-log readiness and full runtime archive comparisons passed on Windows. Six altered runtime/origin/policy/script/world cases were rejected. The public JAR is bound by its full digest and each entry digest; cross-platform recompilation must retain every class, notice and manifest byte, independently of ZIP compression. The Intel Mac CI check and bundled Java startup are separate gates. Native Mac GUI, Minecraft, physical controllers and external friend connections remain unverified; this package is experimental.
+
+Windows self-hosting currently uses LAN/direct connections with offline nicknames. Operator nicknames are not authenticated and should be used only with trusted players. Automatic Windows Porthole sharing is not included; public packages contain no owner connection defaults.
+
 ## RV 2 Preview verification
 
 The selected player menu module `a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007` was loaded by an actual Forge client and dedicated server. Public projections contain only owned module identities and loaded artifact digests. All 21 build source digests match the frozen source, and the compilation-only GUI API is excluded from the production JAR.

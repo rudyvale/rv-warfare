@@ -50,3 +50,11 @@ The self-host helper is frozen at SHA-256 3df30a56876a1119263b5ebf0835ab09b9b53b
 The first cold installer exposed a stale helper call after all 1347 downloads: Install-FreshWarfareWorld was undefined. Serial integration changed that call to the actually defined Install-WarfareWorldTemplate. The isolated debug retry installed successfully; final candidate cold installation must repeat without substituting source.
 
 Foreign controller-combat edits made concurrently in the coordinator checkout are preserved but excluded. Publication uses a clean checkout containing frozen gameplay sources and only this task changes.
+
+## Final package evidence
+
+Final Setup SHA-256 3064d7e2c4014ce03ac39c91da2421b411357b2b034121689502736bb581a47d and Host Tools SHA-256 e32f17675481ca2f3e802616fa04b53d6697535c69e6336a54c270677217a92c passed full verification from a clean checkout. The exact Setup archive passed cold install (77.41 s), reinstall (10.81 s), all 1347 downloaded SHA-1 pins, helper/data bytes, saved Friends/Owner separation, existing world and update opt-out preservation, and installed Play Check. No game, Steam, shortcuts or real installed worlds were involved.
+
+The native helper fixture used the exact frozen 3df30a source, reached Forge readiness with ten required mod versions, preserved its PID on duplicate start, saved world chunks and stopped with exit code zero. Independent postmortem found world/level.dat, the installed pinned-world marker, 158 files, no owned processes and a free port. The whole one-off runner did not pass: its map assertion contradicted these saved operands. Keep this distinction in QA and Preview notes rather than claiming complete native acceptance.
+
+The first Intel Mac CI run failed its rebuilt JAR container digest. Build evidence now records every JAR entry digest, and the cross-platform source check requires those complete contents, source digests, Java target and pinned Gson; only ZIP compression differences may vary. Public package verification still requires the exact full JAR digest and entry set. Mac source, launcher and archive bytes did not change. The next gate is the corrected Intel Mac CI and public release download verification.

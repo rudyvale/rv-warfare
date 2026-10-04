@@ -156,7 +156,9 @@ def launcher_jar(source, java, compiler, gson, output):
                     put(archive, name, dependency.read(name))
         put(archive, 'META-INF/RV-NOTICE.txt', b'RV Warfare launcher. Includes Gson 2.8.0, Copyright Google Inc., Apache License 2.0.\nhttps://github.com/google/gson/blob/gson-parent-2.8.0/LICENSE\n')
         put(archive, 'META-INF/GSON-LICENSE.txt', (ROOT / 'platform/macos/GSON-LICENSE.txt').read_bytes())
-    (output / 'build.json').write_text(json.dumps(dict(javaTarget=8, sourceHashes={file.relative_to(source).as_posix(): digest(file.read_bytes()) for file in inputs}, gsonSha256=digest(gson.read_bytes()), jarSha256=digest(jar.read_bytes())), indent=2) + '\n', encoding='utf-8')
+    with zipfile.ZipFile(jar) as archive:
+        entry_hashes = {name: digest(archive.read(name)) for name in sorted(archive.namelist())}
+    (output / 'build.json').write_text(json.dumps(dict(javaTarget=8, sourceHashes={file.relative_to(source).as_posix(): digest(file.read_bytes()) for file in inputs}, gsonSha256=digest(gson.read_bytes()), jarSha256=digest(jar.read_bytes()), entryHashes=entry_hashes), indent=2) + '\n', encoding='utf-8')
     return jar
 
 

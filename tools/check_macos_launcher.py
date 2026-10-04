@@ -21,8 +21,9 @@ def check(java, cache, runtime_check=False):
         jar = launcher_jar(ROOT / 'platform/macos/src', java, cache / pins['compiler']['sha256'], cache / pins['gson']['sha256'], output)
         receipt = read_json(output / 'build.json')
         frozen = read_json(ROOT / 'pack/macos-launcher.json')
-        if receipt != frozen:
-            raise ValueError('Compiled Mac launcher differs from frozen source build')
+        if {key: value for key, value in receipt.items() if key != 'jarSha256'} != {key: value for key, value in frozen.items() if key != 'jarSha256'}:
+            changed = sorted(name for name in set(receipt.get('entryHashes', {})) | set(frozen.get('entryHashes', {})) if receipt.get('entryHashes', {}).get(name) != frozen.get('entryHashes', {}).get(name))
+            raise ValueError('Compiled Mac launcher contents differ from frozen source build: ' + ', '.join(changed))
         tests = ROOT / 'platform/macos/tests'
         if tests.exists():
             files = sorted(tests.rglob('*.java'))
