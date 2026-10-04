@@ -1,6 +1,6 @@
 # RV game captures
 
-## RV 2.0.1 Preview menu captures
+## RV 2.0.2 Preview menu captures
 
 These original 960 × 600 captures show the actual menu in an isolated Minecraft 1.12.2 Forge session with two ordinary players and quorum 2. The loaded experience module is `a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007`, component version 2.0.0. Both client and server loaded-artifact projections are in `qa/evidence/rv2-owned-client.json` and `qa/evidence/rv2-owned-server.json`. The captures are copied byte for byte from the native pair run; no crop, retouch or compositing was applied.
 

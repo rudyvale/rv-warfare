@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "mcheliSha256": "d553a339ba416ff51ea9ce613f23d331abb9e9520a54f8508adac731a6ee2772",
+  "mcheliSha256": "d6b305e11c0ecc0cdf599039e888af96bd9911ca90e82979c671f5a641b16f60",
   "resources": {
     "assets/mcheli/helicopters/rc-goblin-bomb.yml": "20677e68d9d95d259c82b7ed45a50434e3689d38295939fe058309700e4cb38e",
     "assets/mcheli/helicopters/rc-goblin.yml": "12835abeb4ce79d72e6eaf3b5ed9f6130dbd991d6359227a3612820f98a4edf7",

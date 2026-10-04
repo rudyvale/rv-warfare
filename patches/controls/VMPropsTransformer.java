@@ -41,7 +41,7 @@ public final class VMPropsTransformer implements IClassTransformer {
                 method.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
                 call.owner = props;
                 call.name = "flamethrower";
-                call.desc = "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/RayTraceResult;DLjava/lang/Object;)V";
+                call.desc = "(Ljava/lang/Object;Ljava/lang/Object;DLjava/lang/Object;)V";
                 found++;
             }
         }
@@ -67,7 +67,7 @@ public final class VMPropsTransformer implements IClassTransformer {
                         method.instructions.insertBefore(call, new VarInsnNode(Opcodes.ALOAD, 0));
                         call.owner = props;
                         call.name = "explosionBlockId";
-                        call.desc = "(Lnet/minecraft/world/World;IIILjava/lang/Object;)I";
+                        call.desc = "(Ljava/lang/Object;IIILjava/lang/Object;)I";
                     }
                 }
                 if (call.getOpcode() == Opcodes.INVOKEVIRTUAL && "net/minecraft/world/World".equals(call.owner) && "func_175656_a".equals(call.name) && "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Z".equals(call.desc)) {
@@ -75,7 +75,7 @@ public final class VMPropsTransformer implements IClassTransformer {
                     call.setOpcode(Opcodes.INVOKESTATIC);
                     call.owner = props;
                     call.name = "explosionFire";
-                    call.desc = "(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/lang/Object;)Z";
+                    call.desc = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z";
                     call.itf = false;
                     firePlacements++;
                 }

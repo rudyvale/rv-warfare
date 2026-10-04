@@ -1,7 +1,8 @@
 # Changelog
 
-## 2.0.1 Preview
+## 2.0.2 Preview
 
+- Fixes three JVM call descriptors in the destruction and fire transformer to match the actual helper methods, preventing method-resolution failure during projectile impact.
 - Refreshes menu permissions from each player snapshot and allows confirming an existing selection without requiring an empty inventory slot.
 - Guards managed file changes against a running game and keeps launcher checks available while playing. Client HTTP and TLS waits are bounded to ten seconds.
 - Speeds up Easy FPV flight and increases quad contact power, with bounded server-side destruction, protection checks and fire cleanup.
