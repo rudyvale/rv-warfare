@@ -19,7 +19,7 @@
       "expectedModIds": [
         "rvcompat"
       ],
-      "nativeReceiptSha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
+      "nativeReceiptSha256": "ca2d3724ea4b233b47e9d9c3fd3a85e3ea9649f2b9efea7c441d3a5d349f79a1"
     },
     {
       "id": "rvexperience",
@@ -34,7 +34,7 @@
         "patches/experience/client/ClientSnapshotHandler.java": "6b74df14c9a076fb8bc0a0c64d82a4fe51671dc6b3c3412261ac827a65004c07",
         "patches/experience/client/ClientState.java": "04bd86aff4dcfb381336a719eecb1541534ee1ef1b9406ae2367cf1809591ad0",
         "patches/experience/client/ControlDraft.java": "4b750b9912e5e43103a78b5dd0c356360a8b692a1e9915e611399188947ea5d3",
-        "patches/experience/client/ExperienceScreen.java": "44a3d620ee26ef8228164eae38d7eeee30423880ae61f380582ea4205729b9f3",
+        "patches/experience/client/ExperienceScreen.java": "1b56a9f8f8a3451f3d1d409d16723230878145772aa399b7e1aeb609840906ca",
         "patches/experience/client/Native.java": "96cffad6faa8c606a1df4b24e3213e23b807da3e012678e6094e4ce2214636d1",
         "patches/experience/protocol/ExperienceProtocol.java": "b3083fe7a74663e14b2243eef3572d80a671844c5a72d3096fa47cadadb19422",
         "patches/experience/protocol/SessionRequest.java": "349d503c5dbb17db2af1b7dc54946a33787e7fb45187044790ec1b2676e6975b",
@@ -52,24 +52,24 @@
         "tools/build_experience.py": "2211a67507473185a6e0d1790788aa88d65734b8212febf9c24384030d3fc915",
         "patches/experience-api/net/minecraft/client/gui/GuiScreen.java": "f65d729c524604130ae114070b437038eca656151859dd1f1ca05553b2216b81"
       },
-      "size": 79371,
-      "sha256": "7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969",
+      "size": 81946,
+      "sha256": "a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007",
       "expectedModIds": [
         "rvexperience"
       ],
-      "nativeReceiptSha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
+      "nativeReceiptSha256": "ca2d3724ea4b233b47e9d9c3fd3a85e3ea9649f2b9efea7c441d3a5d349f79a1"
     }
   ],
   "nativeReceipts": [
     {
       "side": "client",
       "path": "qa/evidence/rv2-owned-client.json",
-      "sha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
+      "sha256": "ca2d3724ea4b233b47e9d9c3fd3a85e3ea9649f2b9efea7c441d3a5d349f79a1"
     },
     {
       "side": "server",
       "path": "qa/evidence/rv2-owned-server.json",
-      "sha256": "98326db98212e8060e9c5d28f708822286fb0159961753b68154bd7e08e5f241"
+      "sha256": "ca2d3724ea4b233b47e9d9c3fd3a85e3ea9649f2b9efea7c441d3a5d349f79a1"
     }
   ]
 }

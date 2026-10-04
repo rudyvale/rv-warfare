@@ -1,9 +1,9 @@
 {
   "schema": 1,
-  "mcheliSha256": "ea90ce380c54a45982b02f2ae61533517203e926da0f2d65d31e51d7dc3408bb",
+  "mcheliSha256": "d553a339ba416ff51ea9ce613f23d331abb9e9520a54f8508adac731a6ee2772",
   "resources": {
-    "assets/mcheli/helicopters/rc-goblin-bomb.yml": "b4916eb01a786a1dd87b65e8190c810643385d7a62a249f8d8d77712f6d78334",
-    "assets/mcheli/helicopters/rc-goblin.yml": "6a9d0a3c30eca99f62a783c413a1050c8a4c29d7dd3e57a936194e07a70efd71",
+    "assets/mcheli/helicopters/rc-goblin-bomb.yml": "20677e68d9d95d259c82b7ed45a50434e3689d38295939fe058309700e4cb38e",
+    "assets/mcheli/helicopters/rc-goblin.yml": "12835abeb4ce79d72e6eaf3b5ed9f6130dbd991d6359227a3612820f98a4edf7",
     "assets/mcheli/hud/rv_fpv.yml": "cad9b018e2b1ad0b26e59baf161865d9aa06f6f60fd7003346de2685f5a593ce",
     "assets/mcheli/models/helicopters/rc-goblin-bomb.mqo": "d67332a1bfd77669e2569daa501e46d9c933daa1c75325bede2423d6b9f9d0ea",
     "assets/mcheli/models/helicopters/rc-goblin.mqo": "e231808aaec7612cc43c9ff0af7ad879546d311f6e559b899a9dd541f578e7de",

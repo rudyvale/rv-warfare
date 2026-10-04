@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.1 Preview
+
+- Refreshes menu permissions from each player snapshot and allows confirming an existing selection without requiring an empty inventory slot.
+- Guards managed file changes against a running game and keeps launcher checks available while playing. Client HTTP and TLS waits are bounded to ten seconds.
+- Speeds up Easy FPV flight and increases quad contact power, with bounded server-side destruction, protection checks and fire cleanup.
+- Verifies release retry identity, preserves publication metadata and rebuilds the Java 8 controls overlay from captured inputs.
+- Binds the updated player module to the actual loaded client and server artifacts. Further combat, controller and performance acceptance is scoped in the release notes.
+- Restores one silent ModularWarfare contentpack cue through the pinned existing silence sample; all 106 RV audio files retain their exact bytes.
+- Remains a preview; stable 1.2.1 is the automatic-update target.
+
 ## 2.0.0 Preview
 
 - Adds a native player menu for sessions, equipment and controls, with decisions validated by the server.

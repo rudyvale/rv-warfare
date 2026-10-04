@@ -1,9 +1,9 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "0c7c0a5061a7be6267c613797a350f81a17b21df59c98b9d889e28a69ef6dc22"
+      "sha256": "9fa7acbe53339133b85ce6d2b020dedabad3e5e76cf26f23800c46d6309cc721"
     },
     {
       "path": "runtime.zip",
@@ -117,12 +117,12 @@
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin-bomb.yml",
-      "sha256": "b4916eb01a786a1dd87b65e8190c810643385d7a62a249f8d8d77712f6d78334",
+      "sha256": "20677e68d9d95d259c82b7ed45a50434e3689d38295939fe058309700e4cb38e",
       "existingOnly": true
     },
     {
       "path": "mcheli_addons/default/assets/mcheli/helicopters/rc-goblin.yml",
-      "sha256": "6a9d0a3c30eca99f62a783c413a1050c8a4c29d7dd3e57a936194e07a70efd71",
+      "sha256": "12835abeb4ce79d72e6eaf3b5ed9f6130dbd991d6359227a3612820f98a4edf7",
       "existingOnly": true
     },
     {
@@ -290,7 +290,7 @@
     },
     {
       "path": "mods/mcheli-ce-1.5.1-rv.jar",
-      "sha256": "ea90ce380c54a45982b02f2ae61533517203e926da0f2d65d31e51d7dc3408bb"
+      "sha256": "d553a339ba416ff51ea9ce613f23d331abb9e9520a54f8508adac731a6ee2772"
     },
     {
       "path": "mods/modularui-3.1.6.jar",
@@ -302,7 +302,7 @@
     },
     {
       "path": "mods/rv-experience-2.0.0.jar",
-      "sha256": "7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969"
+      "sha256": "a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007"
     },
     {
       "path": "mods/rv-vehicle-compat-1.2.0.jar",
@@ -318,7 +318,7 @@
     },
     {
       "path": "resourcepacks/Warfare-Combat-Audio.zip",
-      "sha256": "af8349de0ca964fb39cdfac76b5a32789684c78b1b1b03ecc7b41d4d4d2f1cf5"
+      "sha256": "2b5ac7eb54493bacfa339c21fc121e9c579adf240a5ef8e88ed96fce2437e6ae"
     },
     {
       "path": "resourcepacks/Warfare-UI-fixes.zip",

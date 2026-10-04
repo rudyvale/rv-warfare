@@ -1,5 +1,5 @@
 {
-  "version": "2.0.0",
+  "version": "2.0.1",
   "repository": "rudyvale/rv-warfare",
   "requiredMods": {
     "mcheli": "1.5.1-rv-controls3",
@@ -29,5 +29,5 @@
     "rvexperience": "2.0.0"
   },
   "vendorCatalogSha256": "05528c1fee7f18bfcc66b8ab393d6978141e9424eecbb6145da03861be0653ae",
-  "managedModsSha256": "7ccdf420b2fcce26a56bf8a00aad53ff4ee73d9e4ef32e93a7dad574d6621f04"
+  "managedModsSha256": "92c32a01c0d4ac17141f06b9e4f3dd0235c6cfc5990794af4a468392aa551f0c"
 }
