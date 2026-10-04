@@ -19,6 +19,30 @@ function Test-WarfareGameProcess([string]$CommandLine,[string]$Root) {
     if(-not [IO.Path]::IsPathRooted($path)){return $false}
     try { return [IO.Path]::GetFullPath($path).TrimEnd('\').Equals([IO.Path]::GetFullPath($Root).TrimEnd('\'),[StringComparison]::OrdinalIgnoreCase) } catch { return $false }
 }
+function Assert-WarfareGameStopped([string]$Root) {
+    try{$active=@(Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction Stop|Where-Object { Test-WarfareGameProcess $_.CommandLine $Root })}catch{throw 'RV_PROCESS_CHECK_FAILED'}
+    if($active.Count){throw 'RV_GAME_RUNNING'}
+}
+function Enter-WarfareClientOperation([string]$Root,[int]$WaitMilliseconds=0) {
+    $Root=[IO.Path]::GetFullPath($Root)
+    Assert-WarfareGameStopped $Root
+    if(-not(Test-Path -LiteralPath $Root -PathType Container)){[void][IO.Directory]::CreateDirectory($Root)}
+    $lockPath=Join-Path $Root '.install.lock'
+    $timer=[Diagnostics.Stopwatch]::StartNew()
+    $lock=$null
+    do {
+        try{$lock=[IO.File]::Open($lockPath,'OpenOrCreate','ReadWrite','None')}
+        catch [IO.IOException]{
+            if($timer.ElapsedMilliseconds -ge [Math]::Max(0,$WaitMilliseconds)){$timer.Stop();throw 'RV_OPERATION_BUSY'}
+            Start-Sleep -Milliseconds 50
+        }
+    }while(-not $lock)
+    try{Assert-WarfareGameStopped $Root;return $lock}catch{$lock.Dispose();throw}
+    finally{$timer.Stop()}
+}
+function Exit-WarfareClientOperation($Lock) {
+    if($Lock){$Lock.Dispose()}
+}
 function Get-WarfareHardwareFacts {
     $ramMB = 0; $logicalProcessors = 0; $serverHeapMB = 0
     try { $ramMB = [int]([double](Get-CimInstance Win32_ComputerSystem -ErrorAction Stop).TotalPhysicalMemory / 1MB) } catch { }
@@ -179,6 +203,9 @@ function Set-WarfarePerformanceProfile {
 function Get-WarfarePreferenceError([string]$Message, [string]$Language) {
     $ru = $Language -eq 'ru'
     switch ($Message) {
+        'RV_GAME_RUNNING' { if($ru){return 'Закрой RV перед установкой, обновлением или запуском.'}; return 'Close RV before installing, updating or launching.' }
+        'RV_OPERATION_BUSY' { if($ru){return 'Подожди, пока закончится установка или запуск.'}; return 'Wait for the installation or launch to finish.' }
+        'RV_PROCESS_CHECK_FAILED' { if($ru){return 'Не удалось проверить игру. Перезапусти лаунчер и повтори попытку.'}; return 'Could not check whether the game is running. Restart the launcher and try again.' }
         'RV_SETTINGS_BUSY' { if($ru){return 'Дождись окончания установки или запуска.'}; return 'Wait for the installation or launch to finish.' }
         'RV_SETTINGS_RUNNING' { if($ru){return 'Закрой игру перед применением настроек.'}; return 'Close the game before applying settings.' }
         'RV_MEMORY_INVALID' { if($ru){return 'Память: авто или от 2048 до 8192 МБ. Проверь настройки.'}; return 'Memory must be Auto or 2048 to 8192 MB. Check Settings.' }

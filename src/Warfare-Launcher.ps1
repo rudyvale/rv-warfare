@@ -269,7 +269,6 @@ function Start-Worker([string]$Mode,[string]$Script,[string[]]$Arguments) {
     Set-Busy $true
 }
 function Start-Install {
-    Save-Settings
     if (-not (Has-Package)) {
         $status.Text=L 'Загрузка установщика…' 'Downloading the installer…'
         Start-Worker 'recover' (Join-Path $PSScriptRoot 'Check-WarfareUpdate.ps1') @('-Root',$InstallRoot,'-CurrentVersion','0.0.0','-Download')
@@ -281,11 +280,57 @@ function Start-Install {
     Start-Worker 'install' (Join-Path $script:packageRoot 'Install-Warfare.ps1') @('-Language',$script:language,'-Nickname',$nickname.Text.Trim(),'-InstallRoot',$InstallRoot,'-NoLaunch','-NoSteam','-StatusFile',$script:statusPath)
 }
 function Start-Update {
-    Save-Settings
     Read-UpdateStatus
     if ($script:localNeedsUpdate -and -not $script:remoteRelease) { Start-Install; return }
     $status.Text = L 'Поиск обновления…' 'Checking for an update…'
     Start-Worker 'download' (Join-Path $PSScriptRoot 'Check-WarfareUpdate.ps1') @('-Root',$InstallRoot,'-CurrentVersion',(Get-VmLocalVersion $InstallRoot),'-Download')
+}
+function Start-GuardedOperation([string]$Kind) {
+    if($script:guardPowerShell){return}
+    $script:guardKind=$Kind
+    $shell=[Management.Automation.PowerShell]::Create()
+    [void]$shell.AddScript('param($helperPath,$rootPath);. $helperPath;Enter-WarfareClientOperation $rootPath 3000')
+    [void]$shell.AddArgument((Join-Path $PSScriptRoot 'Warfare-Performance.ps1'))
+    [void]$shell.AddArgument($InstallRoot)
+    $script:guardPowerShell=$shell
+    try{$script:guardAsync=$shell.BeginInvoke()}catch{$shell.Dispose();$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind='';throw}
+    $status.Text=L 'Проверка игры…' 'Checking that the game is closed…'
+    Set-Busy $true
+}
+function Complete-GuardedOperation {
+    $lease=$null
+    try {
+        $result=@($script:guardPowerShell.EndInvoke($script:guardAsync))
+        if($script:guardPowerShell.Streams.Error.Count -gt 0 -or $result.Count -ne 1){throw 'RV_OPERATION_BUSY'}
+        $lease=$result[0]
+        if($lease -isnot [IO.FileStream]){throw 'RV_OPERATION_BUSY'}
+        $kind=$script:guardKind
+        $script:guardPowerShell.Dispose();$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind=''
+        switch($kind){
+            'startup' { Start-VmUpdateCheck $InstallRoot $PSScriptRoot; Check-Install }
+            'install' { Save-Settings; Start-Install }
+            'update' { Save-Settings; Start-Update }
+            'postInstall' { if($script:packageRoot){[IO.File]::WriteAllText($sourcePath,(@{path=$script:packageRoot}|ConvertTo-Json),[Text.UTF8Encoding]::new($false))};$script:needsUpdate=$false;$script:localNeedsUpdate=$false;$status.Text=L 'Подготовка подключения…' 'Preparing connection…';Start-Worker 'prepare' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-Prepare','-StatusFile',$script:statusPath) }
+            'play' {
+                Save-Settings
+                $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $form
+                $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
+                if(-not $setup.completed){$status.Text=L 'Запуск отменён. Настройку можно продолжить по «Играть».' 'Launch cancelled. Click Play to continue setup.';return}
+                $script:connection=ConvertTo-WarfareConnection $script:connection.connectionMode $script:connection.connectionTarget $script:connection.serverPort
+                Save-Settings;$status.Text=L 'Подключение…' 'Connecting…';Start-Worker 'play' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-StatusFile',$script:statusPath)
+            }
+            default {throw 'RV_OPERATION_BUSY'}
+        }
+    }catch{
+        $failure=$_.Exception.Message
+        if($failure -eq 'RV_GAME_RUNNING' -and $script:guardKind -eq 'play'){$status.Text=L 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'}
+        elseif($failure -like 'RV_GAME_RUNNING' -or $failure -like 'RV_OPERATION_BUSY' -or $failure -eq 'RV_PROCESS_CHECK_FAILED'){$status.Text=Get-WarfarePreferenceError $failure $script:language}
+        else{$status.Text=Get-WarfareConnectionError $failure $script:language}
+        if($script:guardPowerShell){try{$script:guardPowerShell.Dispose()}catch{};$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind=''}
+    }finally{
+        if($lease){Exit-WarfareClientOperation $lease}
+        if(-not $script:process){Set-Busy $false}
+    }
 }
 function Check-Install {
     $play = Join-Path $InstallRoot 'Play-Warfare.ps1'
@@ -304,19 +349,10 @@ function Start-Controller {
     $status.Text = L 'Открытие настройки контроллера…' 'Opening controller settings…'
     Start-Worker 'controller' $scriptPath @('-InstallRoot',$InstallRoot)
 }
-$primary.Add_Click({ try {
-    if ($script:ready) {
-        Save-Settings
-        $setup=Show-WarfareOnboarding -Root $InstallRoot -Language $script:language -Parent $form
-        $script:settings=$setup.settings;$script:connection=$setup.connection;Refresh-Text
-        if(-not $setup.completed){$status.Text=L 'Запуск отменён. Настройку можно продолжить по «Играть».' 'Launch cancelled. Click Play to continue setup.';return}
-        $script:connection = ConvertTo-WarfareConnection $script:connection.connectionMode $script:connection.connectionTarget $script:connection.serverPort
-        Save-Settings; $status.Text = L 'Подключение…' 'Connecting…'; Start-Worker 'play' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-StatusFile',$script:statusPath)
-    }
-} catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
-$install.Add_Click({ try { Start-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
+$primary.Add_Click({ try { if($script:ready){Start-GuardedOperation 'play'} } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
+$install.Add_Click({ try { Start-GuardedOperation 'install' } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
 $repair.Add_Click({ try { Check-Install } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
-$updateAction.Add_Click({ try { Start-Update } catch { $status.Text = $_.Exception.Message; Set-Busy $false } })
+$updateAction.Add_Click({ try { Start-GuardedOperation 'update' } catch { $status.Text = Get-WarfareConnectionError $_.Exception.Message $script:language; Set-Busy $false } })
 $languageBox.Add_SelectedIndexChanged({
     $script:language = if ($languageBox.SelectedIndex -eq 1) {'en'} else {'ru'}
     Refresh-Text
@@ -457,6 +493,7 @@ function Read-UpdateStatus {
 }
 $timer.Interval = 350
 $timer.Add_Tick({
+    if($script:guardPowerShell){if($script:guardAsync.IsCompleted){Complete-GuardedOperation};return}
     if (-not $script:busy) { Read-UpdateStatus }
     if (-not $script:process) { return }
     try {
@@ -490,12 +527,9 @@ $timer.Add_Tick({
             if ($update.state -ne 'downloaded' -or -not (Test-Path -LiteralPath (Join-Path $update.packageRoot 'Install-Warfare.ps1'))) { throw (L 'Обновление ещё не готово. Повтори попытку.' 'The update is not ready. Please try again.') }
             $script:packageRoot = $update.packageRoot
             $script:remoteRelease = $null
-            Start-Install
+            Start-GuardedOperation 'install'
         } elseif ($mode -eq 'install') {
-            $script:needsUpdate = $false; $script:localNeedsUpdate = $false
-            if ($script:packageRoot) { [IO.File]::WriteAllText($sourcePath, (@{path=$script:packageRoot}|ConvertTo-Json),[Text.UTF8Encoding]::new($false)) }
-            $status.Text = L 'Подготовка подключения…' 'Preparing connection…'
-            Start-Worker 'prepare' (Join-Path $InstallRoot 'Play-Warfare.ps1') @('-Prepare','-StatusFile',$script:statusPath)
+            Start-GuardedOperation 'postInstall'
         } elseif ($mode -eq 'prepare') {
             Check-Install
         } elseif ($mode -eq 'controller') {
@@ -538,5 +572,5 @@ if ($PreviewPath) {
     try { $form.DrawToBitmap($bitmap,[Drawing.Rectangle]::new(0,0,$form.Width,$form.Height)); $bitmap.Save($PreviewPath,[Drawing.Imaging.ImageFormat]::Png) } finally { $bitmap.Dispose(); $form.Dispose() }
     exit 0
 }
-$form.Add_Shown({ $form.WindowState = 'Maximized'; Update-Layout; Start-VmUpdateCheck $InstallRoot $PSScriptRoot; Check-Install; $timer.Start(); $nickname.Focus() })
+$form.Add_Shown({ $form.WindowState = 'Maximized'; Update-Layout; Start-GuardedOperation 'startup'; $timer.Start(); $nickname.Focus() })
 try { [void]$form.ShowDialog() } finally { $timer.Stop(); $timer.Dispose(); $form.Dispose() }

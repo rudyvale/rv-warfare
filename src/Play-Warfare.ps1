@@ -5,7 +5,6 @@ $gameRoot = $PSScriptRoot
 . (Join-Path $gameRoot 'Warfare-Performance.ps1')
 if(Test-Path -LiteralPath (Join-Path $gameRoot 'Warfare-ClientControls.ps1')){. (Join-Path $gameRoot 'Warfare-ClientControls.ps1')}
 . (Join-Path $gameRoot 'Warfare-Updates.ps1')
-if (-not $Check -and -not $Prepare) { Start-VmUpdateCheck $gameRoot $gameRoot }
 $script:language = 'ru'
 $tunnelStarted = $null
 $launchLock = $null
@@ -175,7 +174,9 @@ function Test-GameServer([string]$Address, [int]$ServerPort) {
 }
 try {
     if (-not $Check) {
-        try { $installGuard = [IO.File]::Open((Join-Path $gameRoot '.install.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw (Text 'Идёт установка или другой запуск. Дождись завершения.' 'An installation or another launch is in progress. Please wait.') }
+        $activeGame = @(Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-WarfareGameProcess $_.CommandLine $gameRoot })
+        if ($activeGame) { Set-Status 'running' (Text 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'); exit 0 }
+        $installGuard=Enter-WarfareClientOperation $gameRoot 8000
     }
     $settings = Get-Content -LiteralPath (Join-Path $gameRoot 'warfare-settings.json') -Raw -Encoding UTF8 | ConvertFrom-Json
     $script:language = $settings.language
@@ -201,6 +202,7 @@ try {
         }
         Set-Status 'ready' 'Launch files OK'; exit 0
     }
+    if (-not $Prepare) { Start-VmUpdateCheck $gameRoot $gameRoot }
     try { $launchLock = [IO.File]::Open((Join-Path $gameRoot '.launch.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw (Text 'Запуск уже выполняется. Подожди.' 'A launch is already in progress. Please wait.') }
     $activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-WarfareGameProcess $_.CommandLine $gameRoot }
     if ($activeGame) { Set-Status 'running' (Text 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'); exit 0 }

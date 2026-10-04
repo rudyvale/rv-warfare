@@ -15,7 +15,6 @@ $clientPreferencesExisted = Test-Path -LiteralPath (Join-Path $InstallRoot 'conf
 $initialPerformance = -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'installed-manifest.json')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'options.txt')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'config\rv-client.properties')) -and -not (Test-Path -LiteralPath (Join-Path $InstallRoot 'optionsshaders.txt'))
 if ($InstallRoot.TrimEnd('\') -eq [IO.Path]::GetFullPath($packageRoot).TrimEnd('\')) { throw 'Choose an installation directory outside the package folder.' }
 . (Join-Path $packageRoot 'Warfare-Updates.ps1')
-Start-VmUpdateCheck $InstallRoot $packageRoot
 Assert-VmUpgrade $packageRoot $InstallRoot
 function Resolve-Inside([string]$Root, [string]$Relative) {
     if ([IO.Path]::IsPathRooted($Relative)) { throw 'Absolute package path is not allowed.' }
@@ -51,12 +50,10 @@ if (-not $Nickname) {
     }
 }
 if ($Nickname -notmatch '^[A-Za-z0-9_]{3,16}$') { throw 'Nickname must contain 3–16 letters, numbers or _.' }
-$activeGame = Get-CimInstance Win32_Process -Filter "Name='java.exe' OR Name='javaw.exe'" -ErrorAction SilentlyContinue | Where-Object { Test-WarfareGameProcess $_.CommandLine $InstallRoot }
-if ($activeGame) { throw 'Close RV before installing an update / Закрой RV перед обновлением.' }
-New-Item -ItemType Directory -Path $InstallRoot -Force | Out-Null
 $installLock = $null
-try { $installLock = [IO.File]::Open((Join-Path $InstallRoot '.install.lock'), 'OpenOrCreate', 'ReadWrite', 'None') } catch { throw 'Installation is already running / Установка уже запущена.' }
+try { $installLock = Enter-WarfareClientOperation $InstallRoot 8000 } catch { throw (Get-WarfarePreferenceError $_.Exception.Message 'ru') }
 try {
+Start-VmUpdateCheck $InstallRoot $packageRoot
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $stage = Join-Path $InstallRoot ('.update-' + $stamp)
 $backup = Join-Path $InstallRoot ('backups\' + $stamp)
@@ -360,7 +357,7 @@ Remove-Item -LiteralPath $stageAbsolute -Recurse -Force
 Say ('Готово. Запуск: ' + (Join-Path $InstallRoot 'Play.cmd')) ('Ready. Start: ' + (Join-Path $InstallRoot 'Play.cmd'))
 Say 'Обновления доступны в окне RV. Миры и настройки сохраняются.' 'Updates are available in RV. Worlds and settings are preserved.'
 } finally {
-    if ($installLock) { $installLock.Dispose() }
+    if ($installLock) { Exit-WarfareClientOperation $installLock }
 }
 if (-not $NoSteam) {
     & (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') -NoProfile -ExecutionPolicy Bypass -File (Join-Path $InstallRoot 'Play-Warfare.ps1') -Prepare
