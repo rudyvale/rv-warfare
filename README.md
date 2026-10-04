@@ -60,11 +60,11 @@ RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with e
 
 ![RV 2 flight-feel controls for deadzone, expo, turn speed and smoothing](docs/gallery/rv2-controls.png)
 
-![RV 2 session menu after cancelling readiness](docs/gallery/rv201-session.png)
+![RV 2 session menu during a two-player team round](docs/gallery/rv201-session.png)
 
 </details>
 
-These are original captures from the final preview module, tested with one isolated ordinary player and a dedicated Forge server. Equipment confirmation, readiness cancellation, both guide languages and travel destinations passed native checks. Two-player sessions, physical controllers, full-inventory rollback and new vendor combat remain outside that acceptance. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
+The gear and session captures show the updated menu exercised by two ordinary players and a dedicated Forge server. The controls capture is retained from the original RV 2.0.0 single-player check. Reviewed menu checks cover equipment confirmation and preservation, readiness, cancellation, reconnect and restart; separate zero- and one-free-slot checks preserved inventory. Physical controllers, full-inventory rollback, post-fix combat and the performance matrix remain pending. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
 
 ## In game
 
