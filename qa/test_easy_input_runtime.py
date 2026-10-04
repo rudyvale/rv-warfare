@@ -15,7 +15,13 @@ ROOT=Path(__file__).resolve().parents[1]
 parser=argparse.ArgumentParser()
 parser.add_argument('--mcheli',type=Path,required=True)
 parser.add_argument('--game',type=Path,default=Path(os.environ['LOCALAPPDATA'])/'Warfare-1.12.2')
+parser.add_argument('--expected-horizontal-speed',type=float,default=.38)
+parser.add_argument('--expected-vertical-speed',type=float,default=.22)
+parser.add_argument('--minimum-steady-state-cruise',type=float,default=0.0)
+parser.add_argument('--expected-mcheli-sha256')
 args=parser.parse_args()
+actual_mcheli_sha256=hashlib.sha256(args.mcheli.read_bytes()).hexdigest()
+if args.expected_mcheli_sha256 and actual_mcheli_sha256.lower()!=args.expected_mcheli_sha256.lower():raise AssertionError('MCHeli input does not match the expected candidate SHA-256')
 work=ROOT/'.local/qa-1.1.0'/('easy-input-'+uuid.uuid4().hex);work.mkdir(parents=True)
 java=args.game/'runtime/bin/java.exe';libraries=list((args.game/'libraries').rglob('*.jar'));asm=next(p for p in libraries if p.name=='asm-debug-all-5.2.jar')
 source=work/'RVEasyInputRuntime.java';patch=work/'patch-easy-input-test.js';classes=work/'classes';classes.mkdir()
@@ -87,7 +93,8 @@ try:
         assert not (client/'easy-failed.json').exists() and not (server/'easy-failed.json').exists(),'Native Easy fixture failed'
         wait(server_process,log,lambda text:(server/f'easy-server-{kind}.json').exists(),10,'server Easy report')
         result['cases'][kind]={'server':read(server/f'easy-server-{kind}.json'),'client':read(client/f'easy-client-{kind}.json')}
-    evidence=validate(result)
+    result['speedAcceptance']={'expectedHorizontalSpeed':args.expected_horizontal_speed,'expectedVerticalSpeed':args.expected_vertical_speed,'minimumSteadyStateCruise':args.minimum_steady_state_cruise,'expectedMcheliSha256':args.expected_mcheli_sha256}
+    evidence=validate(result,args.expected_horizontal_speed,args.expected_vertical_speed,args.minimum_steady_state_cruise,args.expected_mcheli_sha256)
     result['nativeInputPipelineTested']=True;result['passed']=True;print(json.dumps({'passed':True,**evidence},indent=2),flush=True)
 finally:
     for process in reversed(processes):

@@ -10,6 +10,7 @@ public final class RVEasyGuardRuntime {
     private static Class<?> type(String name)throws Exception{return Class.forName(name);}
     private static Object call(Object receiver,String name,Object... args)throws Exception{return VMReflect.call(receiver,name,args);}
     private static double number(Object value){return ((Number)value).doubleValue();}
+    private static double speedLimit(String property,double fallback){String raw=System.getProperty(property);if(raw==null)return fallback;double value=Double.parseDouble(raw);if(!Double.isFinite(value)||value<=0)throw new IllegalArgumentException("Invalid speed limit: "+property);return value;}
     private static Map<String,Object> snapshot()throws Exception{
         Map<String,Object> value=new LinkedHashMap<String,Object>();
         for(String field:new String[]{"field_70165_t","field_70163_u","field_70161_v","field_70159_w","field_70181_x","field_70179_y"})value.put(field,VMReflect.get(aircraft,field));
@@ -27,7 +28,7 @@ public final class RVEasyGuardRuntime {
     private static void finiteMotion()throws Exception{
         Map<String,Object> before=snapshot();call(aircraft,"func_70071_h_");Map<String,Object> after=snapshot();
         for(Object value:after.values())if(value instanceof Number&&!Double.isFinite(number(value)))throw new AssertionError("Nonfinite actual aircraft field");
-        double dx=number(after.get("field_70165_t"))-number(before.get("field_70165_t")),dy=number(after.get("field_70163_u"))-number(before.get("field_70163_u")),dz=number(after.get("field_70161_v"))-number(before.get("field_70161_v"));if(Math.hypot(dx,dz)>.380001||dy<-.500001||dy>.220001)throw new AssertionError("Actual native tick exceeds bounded displacement");
+        double dx=number(after.get("field_70165_t"))-number(before.get("field_70165_t")),dy=number(after.get("field_70163_u"))-number(before.get("field_70163_u")),dz=number(after.get("field_70161_v"))-number(before.get("field_70161_v"));double horizontalLimit=speedLimit("rv.easy.guard.maxHorizontalSpeed",.38),verticalLimit=speedLimit("rv.easy.guard.maxVerticalSpeed",.22);if(Math.hypot(dx,dz)>horizontalLimit+.000001||dy<-.500001||dy>verticalLimit+.000001)throw new AssertionError("Actual native tick exceeds bounded displacement");
     }
     private static void foreign(int mode,boolean deep)throws Exception{
         arm();Map<String,Object> before=snapshot();Object incoming=packet(mode,Float.NaN,Float.POSITIVE_INFINITY,2F);

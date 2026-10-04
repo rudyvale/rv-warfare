@@ -15,7 +15,13 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument('--mcheli', type=Path, required=True)
 parser.add_argument('--game', type=Path, default=Path(os.environ['LOCALAPPDATA']) / 'Warfare-1.12.2')
+parser.add_argument('--max-horizontal-speed', type=float, default=0.38)
+parser.add_argument('--max-vertical-speed', type=float, default=0.22)
+parser.add_argument('--expected-mcheli-sha256')
 args = parser.parse_args()
+actual_mcheli_sha256 = hashlib.sha256(args.mcheli.read_bytes()).hexdigest()
+if args.expected_mcheli_sha256 and actual_mcheli_sha256.lower() != args.expected_mcheli_sha256.lower():
+    raise AssertionError('MCHeli input does not match the expected candidate SHA-256')
 work = ROOT / '.local/qa-1.1.0' / ('easy-guards-' + uuid.uuid4().hex)
 work.mkdir(parents=True)
 java = args.game / 'runtime/bin/java.exe'
@@ -112,7 +118,7 @@ try:
     log = server / 'runtime.log'
     stream = log.open('w', encoding='utf-8')
     streams.append(stream)
-    server_process = subprocess.Popen([str(java), '-Xms256M', '-Xmx2G', '-Drv.easy.guard.qa=true', '-jar', 'forge-1.12.2-14.23.5.2860.jar', 'nogui'], cwd=server, stdin=subprocess.PIPE, stdout=stream, stderr=subprocess.STDOUT, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    server_process = subprocess.Popen([str(java), '-Xms256M', '-Xmx2G', '-Drv.easy.guard.qa=true', '-Drv.easy.guard.maxHorizontalSpeed=' + str(args.max_horizontal_speed), '-Drv.easy.guard.maxVerticalSpeed=' + str(args.max_vertical_speed), '-jar', 'forge-1.12.2-14.23.5.2860.jar', 'nogui'], cwd=server, stdin=subprocess.PIPE, stdout=stream, stderr=subprocess.STDOUT, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
     print('Native Easy guard scene: ' + str(work), flush=True)
     wait(server_process, log, lambda text: 'Done (' in text, 180, 'server startup')
     command('gamerule doMobSpawning false')
