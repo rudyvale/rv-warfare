@@ -16,8 +16,12 @@ import soundfile as sf
 parser = argparse.ArgumentParser()
 parser.add_argument('--mcheli', type=Path, required=True)
 parser.add_argument('--audio', type=Path, required=True)
+parser.add_argument('--contentpack', type=Path, action='append', default=[])
 parser.add_argument('--game', type=Path, default=Path(os.environ['LOCALAPPDATA']) / 'Warfare-1.12.2')
 args = parser.parse_args()
+for path in args.contentpack:
+    if not path.is_file():
+        parser.error('Contentpack archive does not exist: ' + str(path))
 work = ROOT / '.local/qa-1.1.0' / ('audio-audit-' + uuid.uuid4().hex)
 work.mkdir(parents=True)
 index_path = args.game / 'assets/indexes/1.12.json'
@@ -58,7 +62,7 @@ for name, entry in index.items():
 
 vendors_root = ROOT / '.local/rv-1.1.0/comfort-mods'
 vendors = json.loads((vendors_root / 'verified-mods.json').read_text())['mods']
-paths = [args.mcheli, ROOT / '.local/controls/final/techguns-1.12.2-rv.jar']
+paths = [args.mcheli, ROOT / '.local/controls/final/techguns-1.12.2-rv.jar'] + args.contentpack
 for vendor in vendors:
     path = vendors_root / vendor['file']
     assert hashlib.sha256(path.read_bytes()).hexdigest() == vendor['sha256'], 'Vendor archive changed'
@@ -128,7 +132,7 @@ for name in pack_files:
     sound = resource_key(name)
     value = next((value for value in decoded if value['sound'] == sound and value['source'] == str(args.audio)), None)
     assert value and value['channels'] == 1, 'RV positional sound unused or not mono: ' + sound
-result = {'passed': True, 'sources': sources, 'assetIndexSha256': hashlib.sha256(index_path.read_bytes()).hexdigest(), 'manifests': manifests, 'mergedEventsByNamespace': {namespace: sum(event.startswith(namespace + ':') for event in events) for namespace in sorted({event.split(':')[0] for event in events})}, 'resolvedFileReferences': file_references, 'resolvedEventReferences': event_links, 'uniqueDecodedSounds': len(decoded), 'rvPackMonoFiles': len(pack_files), 'unreferencedRVFiles': sorted(resource_key(name) for name in pack_files if resource_key(name) not in referenced), 'peaksAboveUnity': [value for value in decoded if value['peak'] > 1.0], 'sounds': decoded, 'nativePlaybackTested': False, 'audibleListeningTested': False}
+result = {'passed': True, 'sources': sources, 'contentpacks': [{'path': str(path.resolve()), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in args.contentpack], 'assetIndexSha256': hashlib.sha256(index_path.read_bytes()).hexdigest(), 'manifests': manifests, 'mergedEventsByNamespace': {namespace: sum(event.startswith(namespace + ':') for event in events) for namespace in sorted({event.split(':')[0] for event in events})}, 'resolvedFileReferences': file_references, 'resolvedEventReferences': event_links, 'uniqueDecodedSounds': len(decoded), 'rvPackMonoFiles': len(pack_files), 'unreferencedRVFiles': sorted(resource_key(name) for name in pack_files if resource_key(name) not in referenced), 'peaksAboveUnity': [value for value in decoded if value['peak'] > 1.0], 'sounds': decoded, 'nativePlaybackTested': False, 'audibleListeningTested': False}
 for archive in archives.values():
     archive.close()
 (work / 'report.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
