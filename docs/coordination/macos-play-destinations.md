@@ -58,3 +58,11 @@ Final Setup SHA-256 3064d7e2c4014ce03ac39c91da2421b411357b2b034121689502736bb581
 The native helper fixture used the exact frozen 3df30a source, reached Forge readiness with ten required mod versions, preserved its PID on duplicate start, saved world chunks and stopped with exit code zero. Independent postmortem found world/level.dat, the installed pinned-world marker, 158 files, no owned processes and a free port. The whole one-off runner did not pass: its map assertion contradicted these saved operands. Keep this distinction in QA and Preview notes rather than claiming complete native acceptance.
 
 The first Intel Mac CI run failed its rebuilt JAR container digest. Build evidence now records every JAR entry digest, and the cross-platform source check requires those complete contents, source digests, Java target and pinned Gson; only ZIP compression differences may vary. Public package verification still requires the exact full JAR digest and entry set. Mac source, launcher and archive bytes did not change. The next gate is the corrected Intel Mac CI and public release download verification.
+
+## Release closure
+
+The final source is c9254a94a79f1d2131f2159a91b3672ca8cd1cbe. Push run 37235905099 and PR run 37235907968 completed successfully on that exact commit; Windows launcher, world and Intel Mac launcher jobs all passed. The Mac job started the bundled Java runtime and passed compilation and headless checks; native Mac GUI and Minecraft acceptance remain unverified.
+
+Public Preview v2.0.4 is available at https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.4, release ID 403217760, with six assets. The release maintainer downloaded all six public files afresh, matched their sizes and SHA-256 against the frozen candidate, GitHub API and SHA256SUMS.txt, and passed verify_release.py --remote --prerelease. The coordinator independently verified the public release state and all six asset digests. Stable/latest remains v1.2.1; v2.0.3 remains unchanged and the broader gameplay PR stays unmerged.
+
+This closes the authorized Mac package and destination-selection release. Native Mac game/GUI operation, physical controllers and an external friend connection remain explicitly unverified. Windows self-hosting shares LAN/direct destinations; automatic Porthole sharing is not included. No further gameplay changes belong to this release.
