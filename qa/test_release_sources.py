@@ -68,6 +68,9 @@ class ReleaseSourceTests(unittest.TestCase):
         files['THIRD-PARTY-NOTICES.md'] = root / 'pack/THIRD-PARTY-NOTICES.md'
         files['code.ico'] = root / 'assets/code.ico'
         metadata = json.loads((root / 'src/release.json').read_text())
+        if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+            files.update({name: root / 'src' / name for name in ('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1')})
+            files['self-host-package.json'] = root / 'pack/self-host-package.json'
         if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 0):
             files.update({name: root / 'src' / name for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1')})
         if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
@@ -83,6 +86,8 @@ class ReleaseSourceTests(unittest.TestCase):
                     continue
                 archive.writestr(name, b'old launcher' if name == changed else file.read_bytes())
             archive.writestr('rv-addon-assets.json', self.MAP)
+            if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+                archive.writestr('self-host-world.zip', b'world fixture checked by the artifact verifier')
             if metadata.get('managedModsSha256'):
                 owned = json.loads((root / 'pack/rv-managed-mods.json').read_text())
                 for entry in owned['mods']:
@@ -97,7 +102,9 @@ class ReleaseSourceTests(unittest.TestCase):
             for name in archive.namelist():
                 if name.startswith('host-owned/') or name == 'rv-addon-assets.json':
                     continue
-                directory = 'assets' if name == 'code.ico' else 'pack' if name in ('THIRD-PARTY-NOTICES.md', 'vendor-catalog.json', 'rv-managed-mods.json') else next(folder for folder in ('host', 'src') if (ROOT / folder / name).is_file())
+                if name == 'self-host-world.zip':
+                    continue
+                directory = 'assets' if name == 'code.ico' else 'pack' if name in ('THIRD-PARTY-NOTICES.md', 'vendor-catalog.json', 'rv-managed-mods.json', 'self-host-package.json') else next(folder for folder in ('host', 'src') if (ROOT / folder / name).is_file())
                 target = root / directory / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(archive.read(name))
@@ -161,7 +168,7 @@ class ReleaseSourceTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='rv-publisher-private-') as temporary:
             output = Path(temporary)
             lines = []
-            for name in ('RV-Setup.zip', 'RV-Host-Tools.zip', 'RV-Third-Party-Sources.zip'):
+            for name in ('RV-Setup.zip', 'RV-Mac-Setup.zip', 'RV-Host-Tools.zip', 'RV-Third-Party-Sources.zip'):
                 data = name.encode()
                 (output / name).write_bytes(data)
                 lines.append(hashlib.sha256(data).hexdigest() + '  ' + name)

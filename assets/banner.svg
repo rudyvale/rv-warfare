@@ -1,15 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-label="RV Warfare — Minecraft 1.12.2, Windows launcher, FPV and multiplayer">
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title description">
+  <title id="title">RV Warfare</title>
+  <desc id="description">A Minecraft 1.12.2 battlefield modpack for Windows and an experimental Intel Mac Preview.</desc>
   <defs>
-    <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101a2b"/><stop offset="1" stop-color="#172e38"/></linearGradient>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#87d7c3" stroke-opacity=".07"/></pattern>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#101827"/>
+      <stop offset="1" stop-color="#192f3c"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#a9f4db"/>
+      <stop offset="1" stop-color="#58c5b3"/>
+    </linearGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="#a9f4db" stroke-opacity=".055"/>
+    </pattern>
+    <pattern id="terrain" width="180" height="180" patternUnits="userSpaceOnUse" patternTransform="rotate(-18)">
+      <path d="M-25 42C15 12 54 69 98 42s75-1 107-28M-15 100c36-32 73 25 113 0s77-2 103-27M-15 155c42-30 72 22 113-2s75-4 103-28" fill="none" stroke="#8ce3cf" stroke-opacity=".09" stroke-width="2"/>
+    </pattern>
+    <filter id="glow" x="-.5" y="-.5" width="2" height="2">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
   </defs>
-  <rect width="1280" height="400" rx="24" fill="url(#bg)"/>
-  <rect width="1280" height="400" rx="24" fill="url(#grid)"/>
-  <circle cx="1120" cy="170" r="224" fill="none" stroke="#97eed6" stroke-opacity=".07" stroke-width="60"/>
-  <g transform="translate(1010 124)" fill="none" stroke="#97eed6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><path d="M26 22L-8 56 26 90M112 22L146 56 112 90M84 7L55 106"/></g>
-  <text x="76" y="87" fill="#97eed6" font-family="Segoe UI,Arial,sans-serif" font-size="14" letter-spacing="4">MINECRAFT 1.12.2 · WINDOWS</text>
-  <text x="70" y="206" fill="#f2f5f8" font-family="Segoe UI,Arial,sans-serif" font-size="104" font-weight="700" letter-spacing="-5">RV Warfare</text>
-  <text x="76" y="264" fill="#b6c6d6" font-family="Segoe UI,Arial,sans-serif" font-size="25">One launcher. Your server. Ready to play.</text>
-  <path d="M76 308H158" stroke="#97eed6" stroke-width="4" stroke-linecap="round"/>
-  <text x="182" y="315" fill="#c0cfdc" font-family="Segoe UI,Arial,sans-serif" font-size="16" letter-spacing="2">FPV · MULTIPLAYER · RU / EN</text>
+  <rect width="1280" height="420" rx="26" fill="url(#background)"/>
+  <rect width="1280" height="420" rx="26" fill="url(#grid)"/>
+  <path d="M745 0h535v420H704c91-91 75-151 139-221S823 78 745 0" fill="url(#terrain)"/>
+  <circle cx="1025" cy="211" r="168" fill="#67d2bd" opacity=".09" filter="url(#glow)"/>
+  <circle cx="1025" cy="211" r="150" fill="none" stroke="#8ce3cf" stroke-opacity=".13" stroke-width="1.5"/>
+  <circle cx="1025" cy="211" r="111" fill="none" stroke="#8ce3cf" stroke-opacity=".19" stroke-width="1.5" stroke-dasharray="5 10"/>
+  <g fill="none" stroke="url(#accent)" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1025 210L930 154M1025 210L1120 154M1025 210L930 266M1025 210L1120 266" stroke-width="9"/>
+    <path d="M997 194h56v32h-56z" fill="#192f3c" stroke-width="5"/>
+    <path d="M930 154l-38-4m38 4 10-34m-10 34-29 24m219-24 38-4m-38 4-10-34m10 34 29 24M930 266l-38 4m38-4 10 34m-10-34-29-24m219 24 38 4m-38-4-10 34m10-34 29-24" stroke-width="4"/>
+    <circle cx="892" cy="150" r="20" stroke-width="4"/>
+    <circle cx="1158" cy="150" r="20" stroke-width="4"/>
+    <circle cx="892" cy="270" r="20" stroke-width="4"/>
+    <circle cx="1158" cy="270" r="20" stroke-width="4"/>
+    <path d="M1015 202h20v16h-20z" fill="#f28d72" stroke="none"/>
+  </g>
+  <path d="M1019 42v-18m12 18v-18M1019 388v-18m12 18v-18M856 211h18m302 0h18" stroke="#a9f4db" stroke-opacity=".55" stroke-width="2"/>
+  <text x="76" y="84" fill="#a9f4db" font-family="Segoe UI,Arial,sans-serif" font-size="15" font-weight="600" letter-spacing="3.5">MINECRAFT 1.12.2  ·  WINDOWS + MAC PREVIEW</text>
+  <text x="70" y="213" fill="#f4f7fa" font-family="Segoe UI,Arial,sans-serif" font-size="91" font-weight="750" letter-spacing="-4">RV Warfare</text>
+  <text x="78" y="267" fill="#c0ccda" font-family="Segoe UI,Arial,sans-serif" font-size="24">Aircraft. Combat. Your world.</text>
+  <rect x="78" y="310" width="5" height="40" rx="2.5" fill="url(#accent)"/>
+  <text x="101" y="326" fill="#d4e1e6" font-family="Segoe UI,Arial,sans-serif" font-size="16" font-weight="600" letter-spacing="1.8">PLAY LOCAL OR TOGETHER</text>
+  <text x="101" y="349" fill="#93aab5" font-family="Segoe UI,Arial,sans-serif" font-size="13" letter-spacing="1.1">FPV  ·  VEHICLES  ·  EN / RU</text>
+  <g transform="translate(1183 47)" fill="none" stroke="#a9f4db" stroke-opacity=".75" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 0L0 12l12 12M27 0l12 12-12 12M24 1L14 23"/>
+  </g>
 </svg>

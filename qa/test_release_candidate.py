@@ -27,6 +27,22 @@ class ReleaseCandidateTests(unittest.TestCase):
         self.assertEqual(candidate['state'], 'candidate')
         self.assertEqual(set(candidate['assets']), {'RV-Setup.zip', 'RV-Host-Tools.zip', 'RV-Third-Party-Sources.zip', 'SHA256SUMS.txt'})
 
+    def test_204_cannot_publish_without_mac_package(self):
+        with self.assertRaisesRegex(ValueError, 'Mac package'):
+            write_candidate(self.root, '2.0.4')
+        self.assertFalse((self.root / '.release-candidate.json').exists())
+
+    def test_204_binds_mac_package_bytes(self):
+        data = b'Mac package fixture'
+        (self.root / 'RV-Mac-Setup.zip').write_bytes(data)
+        checksum = self.root / 'SHA256SUMS.txt'
+        checksum.write_text(checksum.read_text() + hashlib.sha256(data).hexdigest() + '  RV-Mac-Setup.zip\n')
+        write_candidate(self.root, '2.0.4')
+        self.assertIn('RV-Mac-Setup.zip', validate_candidate(self.root, '2.0.4')['assets'])
+        (self.root / 'RV-Mac-Setup.zip').write_bytes(b'changed Mac package')
+        with self.assertRaisesRegex(ValueError, 'Candidate checksum mismatch'):
+            validate_candidate(self.root, '2.0.4')
+
     def test_new_candidate_cannot_omit_source_asset(self):
         checksum_file = self.root / 'SHA256SUMS.txt'
         checksum_file.write_text('\n'.join(line for line in checksum_file.read_text().splitlines() if 'RV-Third-Party-Sources.zip' not in line) + '\n')

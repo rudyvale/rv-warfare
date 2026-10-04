@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 import re
 
-ASSETS = {'RV-Setup.zip', 'RV-Host-Tools.zip', 'RV-World-Template.zip', 'RV-Third-Party-Sources.zip', 'SHA256SUMS.txt'}
+ASSETS = {'RV-Setup.zip', 'RV-Mac-Setup.zip', 'RV-Host-Tools.zip', 'RV-World-Template.zip', 'RV-Third-Party-Sources.zip', 'SHA256SUMS.txt'}
 
 
 def client_source_names(version):
@@ -17,10 +17,14 @@ def client_source_names(version):
         names.extend(('Warfare-VendorDownloads.ps1', 'Warfare-Ambience.ps1', 'Warfare-ClientMods.ps1'))
     if number >= (2, 0, 0):
         names.extend(('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'))
+    if number >= (2, 0, 4):
+        names.extend(('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1'))
     return tuple(names)
 
 
 def require_source_asset(assets, version):
+    if tuple(map(int, version.split('.'))) >= (2, 0, 4) and 'RV-Mac-Setup.zip' not in assets:
+        raise ValueError('RV 2.0.4 requires the Mac package')
     if tuple(map(int, version.split('.'))) >= (1, 1, 0) and 'RV-Third-Party-Sources.zip' not in assets:
         raise ValueError('RV 1.1.0 requires the original third-party source asset')
 

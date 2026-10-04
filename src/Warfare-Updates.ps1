@@ -13,6 +13,7 @@ function Get-VmPackageFiles([string]$Version) {
     if($parsed -ge [version]'1.1.0'){$names+=@('Warfare-Performance.ps1','Warfare-Onboarding.ps1','Configure-FirstPlay.ps1','THIRD-PARTY-NOTICES.md')}
     if($parsed -ge [version]'1.2.0'){$names+=@('Warfare-Ambience.ps1','Warfare-ClientMods.ps1','Warfare-VendorDownloads.ps1','vendor-catalog.json','rv-managed-mods.json')}
     if($parsed -ge [version]'2.0.0'){$names+=@('Warfare-ClientControls.ps1','Warfare-ConnectionProfiles.ps1','READ-ME.md')}
+    if($parsed -ge [version]'2.0.4'){$names+=@('Warfare-PlayModes.ps1','Warfare-SelfHost.ps1','self-host-package.json','self-host-world.zip')}
     return $names
 }
 function Get-VmLocalVersion([string]$Root) {

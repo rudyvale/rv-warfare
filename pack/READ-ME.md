@@ -1,10 +1,10 @@
 # RV 2 Preview player guide
 
-This preview requires an RV 2 client and matching RV 2 server. The stable download and automatic update target remain RV 1.2.1. Multiplayer sessions, physical controllers and combat with the new vendor content still need broader testing.
+Local play does not require a server. Multiplayer requires an RV 2 client and matching RV 2 server. The stable download and automatic update target remain RV 1.2.1. Multiplayer sessions, physical controllers and combat with the new vendor content still need broader testing.
 
-For this menu, download **RV-Setup.zip** from [RV 2.0.3 Preview](https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.3). Extract the entire archive, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation. The host and all players need matching RV versions.
+For this menu, download **RV-Setup.zip** from [RV 2.0.4 Preview](https://github.com/rudyvale/rv-warfare/releases/tag/v2.0.4). Extract the entire archive, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation. The host and all players need matching RV versions.
 
-On the first **Play**, RV configures missing keyboard controls automatically. Choose a server or import the host's `.rvinvite` file. For an FPV radio or gamepad, select the actual connected device, check its axes and complete calibration in setup. Saved choices remain available in the launcher.
+On the first **Play**, RV configures missing keyboard controls automatically. Choose Local, Friends, Owner or Host my server. Friends and Owner keep separate addresses; Local needs no server or Steam. Host my server creates your own persistent server after the first EULA confirmation. For an FPV radio or gamepad, select the actual connected device, check its axes and complete calibration in setup. Saved choices remain available in the launcher.
 
 ## Connect and update
 

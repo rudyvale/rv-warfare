@@ -27,8 +27,13 @@ def verify_sources(archive, tracked_root, client):
         sources['invitations.py'] = tracked_root / 'host/invitations.py'
         sources.update({name: tracked_root / 'src' / name for name in ('Check-WarfareUpdate.ps1', 'Warfare-Updates.ps1', 'Warfare-Connection.ps1', 'Warfare-Performance.ps1', 'Warfare-Onboarding.ps1', 'Configure-FirstPlay.ps1', 'Configure-Controller.ps1', 'release.json')})
     sources['THIRD-PARTY-NOTICES.md'] = tracked_root / 'pack/THIRD-PARTY-NOTICES.md'
+    if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        sources['self-host-package.json'] = tracked_root / 'pack/self-host-package.json'
     if not client and tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 0):
         for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            sources[name] = tracked_root / 'src' / name
+    if not client and tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        for name in ('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1'):
             sources[name] = tracked_root / 'src' / name
     if tuple(map(int, metadata['version'].split('.'))) >= (1, 2, 0):
         sources['vendor-catalog.json'] = tracked_root / 'pack/vendor-catalog.json'
@@ -48,6 +53,8 @@ def verify_sources(archive, tracked_root, client):
         require(data == source.read_text(encoding='utf-8-sig'), 'Packaged source differs from the frozen checkout: ' + name)
     require(archive.read(prefix + 'code.ico') == (tracked_root / 'assets/code.ico').read_bytes(), 'Packaged icon differs from source')
     allowed = set(sources) | {'code.ico'}
+    if tuple(map(int, metadata['version'].split('.'))) >= (2, 0, 4):
+        allowed.add('self-host-world.zip')
     if client:
         allowed |= {'package-manifest.json', 'installer-files.json', 'payload.zip', 'runtime.zip', 'INSTALL.cmd', '\u0423\u0421\u0422\u0410\u041d\u041e\u0412\u0418\u0422\u042c.cmd', 'Play.cmd'}
     else:
@@ -103,11 +110,17 @@ def verify(directory, tag=None, remote=False, prerelease=False):
         from vendor_catalog import first_party_proof_path, load_catalog, sha256_file, validate_release_catalog, verify_first_party_proof, verify_managed_delivery
         catalog_path = tracked_root / 'pack/vendor-catalog.json'
         vendor_catalog = load_catalog(catalog_path)
+        guide_digest = hashlib.sha256((tracked_root / 'pack/READ-ME.md').read_bytes()).hexdigest()
+        delivery_manifest = {**tracked, 'managedFiles': [{**entry, 'sha256': guide_digest} if entry['path'] == 'READ-ME.md' else entry for entry in tracked['managedFiles']]}
         with zipfile.ZipFile(root / 'RV-Setup.zip') as setup:
             with zipfile.ZipFile(io.BytesIO(setup.read('RV-Setup/payload.zip'))) as payload:
-                first_party = verify_first_party_proof(first_party_proof_path(source_metadata, tracked_root), vendor_catalog, tracked, payload, tracked_root)
+                first_party = verify_first_party_proof(first_party_proof_path(source_metadata, tracked_root), vendor_catalog, delivery_manifest, payload, tracked_root)
         validate_release_catalog(vendor_catalog, source_metadata, sha256_file(catalog_path), first_party)
     for name, digest in expected.items():
+        if name == 'RV-Mac-Setup.zip':
+            from verify_macos import verify as verify_macos
+            verify_macos(root / name, version=source_metadata['version'])
+            continue
         with zipfile.ZipFile(root / name) as archive:
             safe_entries(archive)
             names = archive.namelist()
@@ -122,6 +135,11 @@ def verify(directory, tag=None, remote=False, prerelease=False):
             path = 'RV-Setup/release.json' if name == 'RV-Setup.zip' else 'release.json'
             metadata = json.loads(archive.read(path).decode('utf-8-sig'))
             version = metadata['version']
+            if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+                prefix = 'RV-Setup/' if name == 'RV-Setup.zip' else ''
+                world = archive.read(prefix + 'self-host-world.zip')
+                descriptor = json.loads((tracked_root / 'pack/self-host-package.json').read_text())
+                require(hashlib.sha256(world).hexdigest() == descriptor['worldTemplate']['sha256'] and len(world) == descriptor['worldTemplate']['size'], 'Self-host world differs from frozen clean template')
             required_mods(metadata)
             if vendor_catalog is not None:
                 require(len(archive.read(path)) <= 4096, 'Packaged metadata exceeds the immutable older updater limit')

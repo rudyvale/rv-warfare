@@ -1,8 +1,10 @@
-﻿param([string]$Server, [int]$Port, [switch]$SkipTunnel, [switch]$Check, [switch]$Prepare, [string]$StatusFile)
+﻿param([string]$Server, [int]$Port, [switch]$SkipTunnel, [switch]$Check, [switch]$Prepare, [string]$StatusFile, [ValidateSet('local','friends','owner','host')][string]$PlayMode, [switch]$AcceptEula)
 $ErrorActionPreference = 'Stop'
+$script:playModeExplicit = $PSBoundParameters.ContainsKey('PlayMode')
 $gameRoot = $PSScriptRoot
 . (Join-Path $gameRoot 'Warfare-Connection.ps1')
 . (Join-Path $gameRoot 'Warfare-Performance.ps1')
+if (Test-Path -LiteralPath (Join-Path $gameRoot 'Warfare-PlayModes.ps1')) { . (Join-Path $gameRoot 'Warfare-PlayModes.ps1') }
 if(Test-Path -LiteralPath (Join-Path $gameRoot 'Warfare-ClientControls.ps1')){. (Join-Path $gameRoot 'Warfare-ClientControls.ps1')}
 . (Join-Path $gameRoot 'Warfare-Updates.ps1')
 $script:language = 'ru'
@@ -10,11 +12,19 @@ $tunnelStarted = $null
 $launchLock = $null
 $installGuard = $null
 $script:failureReason = 'failed'
+$script:hostLaunchResult = $null
 function Text([string]$Ru, [string]$En) { if ($script:language -eq 'en') { return $En }; return $Ru }
 function Set-Status([string]$State, [string]$Message, [string]$Reason) {
     Write-Output $Message
     if ($StatusFile) {
-        $data = @{state=$State; reason=$Reason; message=$Message; time=[DateTime]::UtcNow.ToString('o')} | ConvertTo-Json -Compress
+        $data = @{state=$State; reason=$Reason; message=$Message; time=[DateTime]::UtcNow.ToString('o')}
+        if ($script:hostLaunchResult) {
+            $data.server = [string](Get-WarfareModeValue $script:hostLaunchResult 'server')
+            $data.port = [int](Get-WarfareModeValue $script:hostLaunchResult 'port')
+            $shareCode = Get-WarfareModeValue $script:hostLaunchResult 'shareCode'
+            if ($shareCode) { $data.shareCode = [string]$shareCode }
+        }
+        $data = $data | ConvertTo-Json -Compress
         $temp = $StatusFile + '.tmp'
         [IO.File]::WriteAllText($temp, $data, [Text.UTF8Encoding]::new($false))
         Move-Item -LiteralPath $temp -Destination $StatusFile -Force
@@ -208,15 +218,49 @@ try {
     if ($activeGame) { Set-Status 'running' (Text 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'); exit 0 }
     if(Get-Command Initialize-WarfareClientControls -ErrorAction SilentlyContinue){$null=Initialize-WarfareClientControls -Root $gameRoot}
     $requiredMods=if(-not $Prepare){Get-WarfareRequiredMods $gameRoot}else{$null}
-    $defaults = $null
-    $defaultsFile = Join-Path $gameRoot 'server-defaults.json'
-    if (Test-Path -LiteralPath $defaultsFile) { $defaults = Get-Content -LiteralPath $defaultsFile -Raw -Encoding UTF8 | ConvertFrom-Json }
-    $connection = Get-WarfareConnection $settings $defaults
-    if (-not $SkipTunnel -and (-not $Prepare -or $connection.connectionTarget)) { $connection = ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget $connection.serverPort }
-    if (-not $Server) { $Server = if ($SkipTunnel) { '127.0.0.1' } else { $connection.connectionTarget } }
-    if (-not $Port) { $Port = [int]$connection.serverPort }
-    if ($Port -lt 1 -or $Port -gt 65535) { throw (Text 'Неверный порт сервера.' 'Invalid server port.') }
-    if (-not $SkipTunnel -and $connection.connectionMode -eq 'porthole') {
+    $playRoute = if ($script:playModeExplicit) { $PlayMode } elseif ($SkipTunnel -or $Prepare -or -not (Get-Command Get-WarfarePlayModeState -ErrorAction SilentlyContinue)) { 'legacy' } else { (Get-WarfarePlayModeState $settings).mode }
+    $connection = $null
+    if ($playRoute -eq 'legacy') {
+        $defaults = $null
+        $defaultsFile = Join-Path $gameRoot 'server-defaults.json'
+        if (Test-Path -LiteralPath $defaultsFile) { $defaults = Get-Content -LiteralPath $defaultsFile -Raw -Encoding UTF8 | ConvertFrom-Json }
+        $connection = Get-WarfareConnection $settings $defaults
+        if (-not $SkipTunnel -and (-not $Prepare -or $connection.connectionTarget)) { $connection = ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget $connection.serverPort }
+        if (-not $Server) { $Server = if ($SkipTunnel) { '127.0.0.1' } else { $connection.connectionTarget } }
+        if (-not $Port) { $Port = [int]$connection.serverPort }
+        if ($Port -lt 1 -or $Port -gt 65535) { throw (Text 'Неверный порт сервера.' 'Invalid server port.') }
+    } elseif ($playRoute -in @('friends','owner')) {
+        $playState = Get-WarfarePlayModeState $settings
+        $connection = Get-WarfarePlayModeConnection $playState $playRoute
+        if ($Prepare -and -not $connection.connectionTarget) { Set-Status 'ready' (Text 'Готово к запуску.' 'Ready to play.'); exit 0 }
+        $connection = ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget $connection.serverPort
+        $Server = $connection.connectionTarget
+        $Port = [int]$connection.serverPort
+    } elseif ($playRoute -eq 'host') {
+        if ($Prepare) { Set-Status 'ready' (Text 'Готово к запуску.' 'Ready to play.'); exit 0 }
+        $selfHostPath = Join-Path $gameRoot 'Warfare-SelfHost.ps1'
+        if (-not (Test-Path -LiteralPath $selfHostPath -PathType Leaf)) { throw 'self_host_helper_missing' }
+        . $selfHostPath
+        $eulaAccepted = Get-WarfareSelfHostEulaAccepted -GameRoot $gameRoot
+        if (-not $eulaAccepted -and -not $AcceptEula) { throw 'self_host_eula_required' }
+        $modeState = Get-WarfarePlayModeState $settings
+        $hostPort = [int]$modeState.hostPort
+        $hostParameters = @{GameRoot=$gameRoot;Port=$hostPort;Nickname=[string]$settings.nickname}
+        if (-not $eulaAccepted -and $AcceptEula) { $hostParameters.AcceptEula = $true }
+        Set-Status 'preparing' (Text 'Подготовка своего сервера…' 'Preparing your server…') 'host_starting'
+        $hostResult = Start-WarfareSelfHost @hostParameters
+        $script:hostLaunchResult = $hostResult
+        $Server = [string](Get-WarfareModeValue $hostResult 'server')
+        $hostPort = 0
+        if ($Server -ne '127.0.0.1' -or -not [int]::TryParse([string](Get-WarfareModeValue $hostResult 'port'),[ref]$hostPort) -or $hostPort -lt 1 -or $hostPort -gt 65535) { throw 'self_host_result' }
+        $Port = $hostPort
+        $connection = [PSCustomObject]@{connectionMode='direct';connectionTarget=$Server;serverPort=$Port}
+    } elseif ($playRoute -eq 'local') {
+        $Server = $null
+        $Port = 0
+        if ($Prepare) { Set-Status 'ready' (Text 'Готово к запуску.' 'Ready to play.'); exit 0 }
+    } else { throw 'play_mode' }
+    if ($playRoute -in @('legacy','friends','owner') -and -not $SkipTunnel -and $connection.connectionMode -eq 'porthole') {
         $remotePort = [int]$connection.serverPort
         $target = $connection.connectionTarget
         $porthole = Initialize-WarfareSteam
@@ -279,7 +323,7 @@ try {
             if($reason -in @('same_account','steam_offline') -or $attempt -eq 2 -or [DateTime]::UtcNow -ge $deadline){throw $reason}
         }
         if(-not $response){throw 'timeout'}
-    } elseif (-not $Prepare) {
+    } elseif ($playRoute -ne 'local' -and -not $Prepare) {
         Set-Status 'connecting' (Text 'Проверка адреса сервера…' 'Checking server address…')
         $directDeadline=[DateTime]::UtcNow.AddSeconds(45)
         do{
@@ -290,7 +334,7 @@ try {
         if (-not $response) { throw 'server_offline' }
     }
     if ($Prepare) { Set-Status 'ready' (Text 'Готово к запуску.' 'Ready to play.'); exit 0 }
-    Assert-WarfareServerCompatibility $response $requiredMods
+    if($playRoute -ne 'local'){Assert-WarfareServerCompatibility $response $requiredMods}
     $md5 = [Security.Cryptography.MD5]::Create()
     try { $digest = $md5.ComputeHash([Text.Encoding]::UTF8.GetBytes('OfflinePlayer:' + $settings.nickname)) } finally { $md5.Dispose() }
     $digest[6] = ($digest[6] -band 15) -bor 48
@@ -298,7 +342,8 @@ try {
     $uuid = -join ($digest | ForEach-Object { $_.ToString('x2') })
     $memoryMB = Get-WarfareHeapMB $settings
     $classpath = @($downloads.classpath | ForEach-Object { Join-Path $gameRoot $_ }) -join ';'
-    $arguments = @('-Dfile.encoding=UTF-8','-Dlog4j2.formatMsgNoLookups=true','-Dsun.net.client.defaultConnectTimeout=10000','-Dsun.net.client.defaultReadTimeout=10000','-Xms512M',('-Xmx' + $memoryMB + 'M'),('-Djava.library.path=' + (Join-Path $gameRoot 'natives')),'-Dminecraft.launcher.brand=Warfare','-Dminecraft.launcher.version=1.1','-cp',$classpath,$downloads.mainClass,'--username',$settings.nickname,'--version','Warfare-1.12.2','--gameDir',$gameRoot,'--assetsDir',(Join-Path $gameRoot 'assets'),'--assetIndex',$downloads.assetIndex,'--uuid',$uuid,'--accessToken','0','--userType','legacy','--tweakClass','net.minecraftforge.fml.common.launcher.FMLTweaker','--versionType','Forge','--server',$Server,'--port',$Port.ToString())
+    $arguments = @('-Dfile.encoding=UTF-8','-Dlog4j2.formatMsgNoLookups=true','-Dsun.net.client.defaultConnectTimeout=10000','-Dsun.net.client.defaultReadTimeout=10000','-Xms512M',('-Xmx' + $memoryMB + 'M'),('-Djava.library.path=' + (Join-Path $gameRoot 'natives')),'-Dminecraft.launcher.brand=Warfare','-Dminecraft.launcher.version=1.1','-cp',$classpath,$downloads.mainClass,'--username',$settings.nickname,'--version','Warfare-1.12.2','--gameDir',$gameRoot,'--assetsDir',(Join-Path $gameRoot 'assets'),'--assetIndex',$downloads.assetIndex,'--uuid',$uuid,'--accessToken','0','--userType','legacy','--tweakClass','net.minecraftforge.fml.common.launcher.FMLTweaker','--versionType','Forge')
+    if($playRoute -ne 'local'){$arguments+=@('--server',$Server,'--port',$Port.ToString())}
     $logging = Join-Path $gameRoot 'assets\log_configs\client-1.12.xml'
     if (Test-Path -LiteralPath $logging) { $arguments = @('-Dlog4j.configurationFile=' + $logging) + $arguments }
     $argumentLine = ($arguments | ForEach-Object { Quote-Argument $_ }) -join ' '
@@ -310,7 +355,7 @@ try {
 } catch {
     if ($tunnelStarted) { [void](Stop-WarfareOwnedTunnel $tunnelStarted $porthole $tunnelStamp) }
     $code=$_.Exception.Message
-    if($code -in @('same_account','steam_offline','steam_changed','timeout','failed','server_offline','incompatible_version','incompatible_mods','incompatible_mod_version','connection_package')){$script:failureReason=$code}
+    if($code -in @('same_account','steam_offline','steam_changed','timeout','failed','server_offline','incompatible_version','incompatible_mods','incompatible_mod_version','connection_package','self_host_eula_required')){$script:failureReason=$code}
     if($code -like 'RV_MEMORY_*'){$script:failureReason=$code.Substring(3).ToLowerInvariant()}
     if($code.StartsWith('duplicate_mods:')){$script:failureReason='duplicate_mods'}
     Set-Status 'error' (Get-WarfareConnectionError (Get-WarfarePreferenceError $code $script:language) $script:language) $script:failureReason

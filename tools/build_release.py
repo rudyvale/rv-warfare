@@ -14,6 +14,7 @@ parser.add_argument('--output', type=Path)
 parser.add_argument('--private', action='store_true')
 parser.add_argument('--defaults', type=Path)
 parser.add_argument('--world-template', type=Path)
+parser.add_argument('--macos-package', type=Path)
 parser.add_argument('--third-party-sources', type=Path)
 parser.add_argument('--replace-candidate', action='store_true')
 args = parser.parse_args()
@@ -26,6 +27,8 @@ output = (args.output or root / ('dist-private' if args.private else 'dist')).re
 metadata = json.loads((root / 'src/release.json').read_text())
 required_mods(metadata)
 version = metadata['version']
+if tuple(map(int, version.split('.'))) >= (2, 0, 4) and not args.macos_package:
+    raise ValueError('RV 2.0.4 requires its verified Mac package')
 validate_output(output, version, args.private, args.replace_candidate)
 vendor_catalog = None
 first_party = {}
@@ -93,6 +96,11 @@ for name in scripts:
     data = source.read_text(encoding='utf-8-sig')
     (package / name).write_text(data, encoding='utf-8-sig' if source.suffix == '.ps1' else 'utf-8')
 pack_files = ['READ-ME.md']
+if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+    if not args.world_template:
+        raise ValueError('RV 2.0.4 requires its clean self-host world template')
+    pack_files.append('self-host-package.json')
+    shutil.copyfile(args.world_template, package / 'self-host-world.zip')
 if vendor_catalog is not None:
     pack_files.append('vendor-catalog.json')
     if metadata.get('managedModsSha256'):
@@ -127,7 +135,7 @@ play = '@echo off\r\nif exist "%~dp0payload.zip" (\r\n  start "" powershell.exe 
 (package / 'Play.cmd').write_bytes(play.encode('ascii'))
 archive_path = output / 'RV-Setup.zip'
 with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as archive:
-    for name in sorted(scripts + pack_files + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
+    for name in sorted(scripts + pack_files + (['self-host-world.zip'] if tuple(map(int, version.split('.'))) >= (2, 0, 4) else []) + ['payload.zip', 'runtime.zip', 'installer-files.json', 'server-defaults.json', 'package-manifest.json', 'code.ico', 'INSTALL.cmd', 'УСТАНОВИТЬ.cmd', 'Play.cmd']):
         archive.write(package / name, 'RV-Setup/' + name)
 with archive_path.open('rb') as stream:
     digest = hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -153,6 +161,11 @@ with zipfile.ZipFile(host_path, 'w', zipfile.ZIP_DEFLATED, compresslevel=5) as a
             archive.write(package / name, name)
     if tuple(map(int, version.split('.'))) >= (2, 0, 0):
         for name in ('Warfare-ClientControls.ps1', 'Warfare-ConnectionProfiles.ps1'):
+            archive.write(package / name, name)
+    if tuple(map(int, version.split('.'))) >= (2, 0, 4):
+        for name in ('Warfare-PlayModes.ps1', 'Warfare-SelfHost.ps1'):
+            archive.write(package / name, name)
+        for name in ('self-host-package.json', 'self-host-world.zip'):
             archive.write(package / name, name)
     if tuple(map(int, version.split('.'))) >= (1, 1, 0):
         archive.write(package / 'Warfare-Connection.ps1', 'Warfare-Connection.ps1')
@@ -183,6 +196,14 @@ if args.world_template:
                 raise SystemExit('Private or unsafe world template entry: ' + name)
     with world.open('rb') as stream:
         checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-World-Template.zip\n'
+if args.macos_package:
+    from verify_macos import verify as verify_macos
+    verify_macos(args.macos_package, version=version)
+    mac = output / 'RV-Mac-Setup.zip'
+    if args.macos_package.resolve() != mac.resolve():
+        shutil.copyfile(args.macos_package, mac)
+    with mac.open('rb') as stream:
+        checksums += hashlib.file_digest(stream, 'sha256').hexdigest() + '  RV-Mac-Setup.zip\n'
 (output / 'SHA256SUMS.txt').write_text(checksums, encoding='ascii')
 if vendor_catalog is not None:
     from audit_public_archives import audit_archives

@@ -1,0 +1,8 @@
+{
+  "javaTarget": 8,
+  "sourceHashes": {
+    "RVLauncher.java": "9d020afd3e6e493fd62bec0ed5fc14165feb79b5abb5f16e924cd757db664b8d"
+  },
+  "gsonSha256": "c6221763bd79c4f1c3dc7f750b5f29a0bb38b367b81314c4f71896e340c40825",
+  "jarSha256": "4135c219580daad8d0456ed07698cf4eab3b0005f8ee829d43682bfa321cde32"
+}

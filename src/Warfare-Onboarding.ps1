@@ -74,7 +74,7 @@ function Stop-WarfareSetupTask($Process,[string]$Root) {
     $Process.Kill();if(-not $Process.WaitForExit(1500)){throw 'setup_cleanup_failed'}
 }
 function Show-WarfareOnboarding {
-    param([string]$Root,[ValidateSet('ru','en')][string]$Language='ru',$Parent,[switch]$Reconfigure,[switch]$Owner)
+    param([string]$Root,[ValidateSet('ru','en')][string]$Language='ru',$Parent,[switch]$Reconfigure,[switch]$Owner,[ValidateSet('local','friends','owner','host')][string]$PlayMode,[bool]$UseConnectionDefaults=$true)
     $Root=[IO.Path]::GetFullPath($Root)
     $settingsPath=Join-Path $Root 'warfare-settings.json'
     $settings=$null
@@ -82,10 +82,12 @@ function Show-WarfareOnboarding {
         try{$settings=Get-Content -LiteralPath $settingsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{throw (Get-WarfareSetupText $Language 'Не удалось прочитать настройки. Открой журнал.' 'Could not read settings. Open Log.')}
     }
     if(-not $settings){$settings=[PSCustomObject]@{}}
+    $localOnly = $PlayMode -in @('local','host')
     $defaults=$null
     $defaultsPath=Join-Path $Root 'server-defaults.json'
-    if(Test-Path -LiteralPath $defaultsPath){try{$defaults=Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{}}
+    if($UseConnectionDefaults -and (Test-Path -LiteralPath $defaultsPath)){try{$defaults=Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8|ConvertFrom-Json}catch{}}
     $connection=Get-WarfareConnection $settings $defaults
+    if($localOnly){$connection=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}}
     $scope=if($Owner){'owner'}else{'client'}
     $saved=$settings.firstPlay
     if(-not $Reconfigure -and $saved -and $saved.schema -eq 1 -and $saved.completed -eq $true -and $saved.scope -eq $scope -and $saved.inputMode -in @('easy','radio','gamepad') -and ($Owner -or $connection.connectionTarget)){
@@ -213,11 +215,11 @@ function Show-WarfareOnboarding {
         } catch {$errorLabel.Text=Get-WarfareSetupText $Language 'Настройка недоступна. Установи актуальное обновление RV.' 'Control setup is unavailable. Install the current RV update.';& $updateButtons}
     }
     $completeSetup={
-        $chosen=if($Owner){$connection}else{ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString()}
+        $chosen=if($Owner -or $localOnly){$connection}else{ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString()}
         $data=[PSCustomObject]@{schema=1;completed=$true;scope=$scope;inputMode=$state.mode;brand=[string]$brandBox.SelectedItem;device='';deviceName=''}
         if($state.mode -ne 'easy'){$data.device=[string]$state.verified.profile.device;$data.deviceName=[string]$state.devices[$deviceBox.SelectedIndex].name}
         $newSettings=$settings|ConvertTo-Json -Depth 32|ConvertFrom-Json
-        $newSettings=Set-WarfareConnection $newSettings $chosen
+        if(-not $localOnly){$newSettings=Set-WarfareConnection $newSettings $chosen}
         $newSettings|Add-Member NoteProperty firstPlay $data -Force
         $newSettings.PSObject.Properties.Remove('firstPlayDraft')
         Save-WarfareSetupSettings $Root $newSettings
@@ -226,7 +228,7 @@ function Show-WarfareOnboarding {
     $next.Add_Click({try{
         if($state.page -eq 0){
             $state.mode=if($inputChoices[1].Checked){'radio'}elseif($inputChoices[2].Checked){'gamepad'}else{'easy'}
-            if($state.mode -eq 'easy'){if($Owner){if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}}else{$state.page=2;& $showPage};return}
+            if($state.mode -eq 'easy'){if($Owner -or $localOnly){if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}}else{$state.page=2;& $showPage};return}
             $state.page=1;$state.verified=$null;$deviceBox.Items.Clear();$state.devices=@()
             $brandBox.Items.Clear()
             if($state.mode -eq 'radio'){
@@ -241,7 +243,7 @@ function Show-WarfareOnboarding {
             $brandBox.SelectedIndex=$brandBox.Items.Count-1
             if($draft -and $brandBox.Items.Contains([string]$draft.brand)){$brandBox.SelectedItem=[string]$draft.brand}
             & $showPage;& $beginTask 'Probe'
-        }elseif($state.page -eq 1){if($Owner){& $completeSetup}else{$state.page=2;& $showPage}}
+        }elseif($state.page -eq 1){if($Owner -or $localOnly){& $completeSetup}else{$state.page=2;& $showPage}}
         elseif($state.mode -eq 'easy'){
             [void](ConvertTo-WarfareConnection $(if($modeBox.SelectedIndex -eq 1){'direct'}else{'porthole'}) $targetInput.Text $portInput.Value.ToString())
             if(Test-WarfareKeyboardDefaultsReady $Root){& $completeSetup}else{& $beginTask 'Keyboard'}

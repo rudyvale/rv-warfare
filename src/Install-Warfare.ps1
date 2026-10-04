@@ -6,6 +6,7 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $packageRoot = $PSScriptRoot
 . (Join-Path $packageRoot 'Warfare-Connection.ps1')
 . (Join-Path $packageRoot 'Warfare-Performance.ps1')
+if(Test-Path -LiteralPath (Join-Path $packageRoot 'Warfare-PlayModes.ps1')){. (Join-Path $packageRoot 'Warfare-PlayModes.ps1')}
 if(Test-Path -LiteralPath (Join-Path $packageRoot 'Warfare-ClientControls.ps1')){. (Join-Path $packageRoot 'Warfare-ClientControls.ps1')}
 $defaultsPath = Join-Path $packageRoot 'server-defaults.json'
 $connectionDefaults = if (Test-Path -LiteralPath $defaultsPath) { Get-Content -LiteralPath $defaultsPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
@@ -209,6 +210,7 @@ function Backup-File([string]$Path, [string]$Relative, [switch]$Remove) {
     $rollback.Add([PSCustomObject]@{target=$Path;backup=$destination;existed=$exists})
     if ($Remove -and $exists) { Remove-Item -LiteralPath $absolute }
 }
+
 $oldManifestPath = Join-Path $InstallRoot 'installed-manifest.json'
 $oldManifest = if (Test-Path -LiteralPath $oldManifestPath) { Get-Content -LiteralPath $oldManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json } else { $null }
 $currentModNames = @($manifest.managedFiles | Where-Object { $_.path -like 'mods/*' } | ForEach-Object { Split-Path -Leaf $_.path })
@@ -287,6 +289,16 @@ if(Get-Command Initialize-WarfareClientControls -ErrorAction SilentlyContinue){$
 $settings = if ($previousSettings) { $previousSettings } else { [PSCustomObject]@{} }
 $connection = Get-WarfareConnection -Settings $settings -Defaults $connectionDefaults
 $settings = Set-WarfareConnection -Settings $settings -Connection $connection
+if(-not $previousSettings -and [version]$release.version -ge [version]'2.0.4'){
+    $friendsConnection=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}
+    if($connection.connectionTarget){try{$friendsConnection=ConvertTo-WarfareConnection $connection.connectionMode $connection.connectionTarget ([string]$connection.serverPort)}catch{}}
+    $settings|Add-Member -MemberType NoteProperty -Name playMode -Value 'local' -Force
+    $settings|Add-Member -MemberType NoteProperty -Name playProfiles -Value ([PSCustomObject]@{
+        friends=$friendsConnection
+        owner=[PSCustomObject]@{connectionMode='porthole';connectionTarget='';serverPort=25565}
+        host=[PSCustomObject]@{port=25565}
+    }) -Force
+}
 $settings | Add-Member -MemberType NoteProperty -Name language -Value $Language -Force
 $settings | Add-Member -MemberType NoteProperty -Name nickname -Value $Nickname -Force
 Backup-File $settingsPath 'warfare-settings.json'
@@ -312,6 +324,16 @@ if([version]$release.version -ge [version]'2.0.0'){
         Copy-Item -LiteralPath (Join-Path $packageRoot $name) -Destination (Join-Path $InstallRoot $name) -Force
     }
 }
+if([version]$release.version -ge [version]'2.0.4'){
+    foreach($name in @('Warfare-PlayModes.ps1','Warfare-SelfHost.ps1','self-host-package.json','self-host-world.zip')){
+        $source=Join-Path $packageRoot $name
+        if(-not(Test-Path -LiteralPath $source -PathType Leaf)){throw ('Required host file is missing: '+$name)}
+        $target=Join-Path $InstallRoot $name
+        Backup-File $target $name
+        Copy-Item -LiteralPath $source -Destination $target -Force
+    }
+}
+if(-not $previousSettings -and [version]$release.version -ge [version]'2.0.4'){$null=Install-WarfareWorldTemplate $packageRoot $InstallRoot}
 Copy-Item -LiteralPath (Join-Path $packageRoot 'package-manifest.json') -Destination $oldManifestPath -Force
 } catch {
     for ($index=$rollback.Count-1; $index -ge 0; $index--) {

@@ -24,3 +24,7 @@ qa/evidence/rv-compat-server.json -text whitespace=cr-at-eol
 qa/evidence/rv-native-vehicle-weapons.json -text whitespace=cr-at-eol
 pack/third-party-sources.json -text whitespace=cr-at-eol
 patches/controls/resources/** -text whitespace=cr-at-eol
+*.sh text eol=lf
+*.command text eol=lf
+platform/macos/GSON-LICENSE.txt text eol=lf
+src/Warfare-SelfHost.ps1 -text whitespace=cr-at-eol

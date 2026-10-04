@@ -1,0 +1,735 @@
+{
+  "archiveSha256": "f06abadad0fa97e04866d7229a2baad53261579ab5d44875ffa8846a28f28d86",
+  "files": {
+    "Contents/_CodeSignature/CodeResources": {
+      "sha256": "9393eef418feccc03afbbf1f47481dcdcd41cce1588ded269c11443071730d3b",
+      "size": 23488,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/jjs.1": {
+      "sha256": "af6584b5783423a54b1b4e89242609e71a3afce7eea63258bdf2a35d595ea803",
+      "size": 5921,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/java.1": {
+      "sha256": "1443c5d618241577fd7206fa9a8b9a1ab3e063856cb1b789a6635b70efdc357c",
+      "size": 107134,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/keytool.1": {
+      "sha256": "c81a223792eb2ed517c3071b328d303ad23ca261ea5b98e68c1126111bf53347",
+      "size": 87894,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/pack200.1": {
+      "sha256": "97ba9e8c99179a88316b1b65ba0f00e1b783c0da5743b5f62d215329307fd508",
+      "size": 12592,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/orbd.1": {
+      "sha256": "7ea11655e44ca7543300241dfcaa1e43fd798a8591e8b37dab151e9d503b3a04",
+      "size": 13149,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/tnameserv.1": {
+      "sha256": "0e04bb82e06e1fbc40e00d48fd93baebb46010a6280d54fd5ef78d7bf74a74d5",
+      "size": 16716,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/policytool.1": {
+      "sha256": "02851ab5580964594002ae85313952b5df12c91a7ea1e4ea4418ed92174ada93",
+      "size": 4204,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/servertool.1": {
+      "sha256": "43ec4799288f615e530bba2f81286b56c242adcf978d8549ff8e28a7ff6f3ff1",
+      "size": 8206,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/unpack200.1": {
+      "sha256": "cf27f93112e69d045f15cb7592c41b306cc555f8a625802c6d80f579bd87de50",
+      "size": 5213,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/rmid.1": {
+      "sha256": "c91e0d0ba24d9c2b39ab330bb1ec2e26a4476548e571ec5107c5959fde107c5d",
+      "size": 16948,
+      "mode": 420
+    },
+    "Contents/Home/man/man1/rmiregistry.1": {
+      "sha256": "b9e0e608e31c8c5eb07e2b442bb155592cdff9547e2554669f54092a7b10505d",
+      "size": 4418,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/jjs.1": {
+      "sha256": "4d08111f193c99e975235754d2e2851848a497f2b207d9f3666bd1e2c30c17c9",
+      "size": 1076,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/java.1": {
+      "sha256": "be6035779a60a49e8d3924c616db02371c1dfb2d378ef5f0d69189a19f1e9e72",
+      "size": 1083,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/keytool.1": {
+      "sha256": "42d015458097f523590396a663567963f57d70b38bc31bf5197875ad31b4d9d4",
+      "size": 1086,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/pack200.1": {
+      "sha256": "4b5a7135c3fd4634c0efed12cd2d1e579cc00bc5d4b8821a99f279faeee70fe0",
+      "size": 1086,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/orbd.1": {
+      "sha256": "3035427a84bee29b9fedcf1ed794d0890fdb0b712e1b34f253644384c65695bd",
+      "size": 1083,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/tnameserv.1": {
+      "sha256": "e14d439e13167c131cc259c555e84e6aacbcf8ea55f3c7369906a1ad9ab27d90",
+      "size": 1088,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/policytool.1": {
+      "sha256": "729d63970c628f7ced7df9f5861bfd9dd378ddb3b252ef7362875395140251ee",
+      "size": 1089,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/servertool.1": {
+      "sha256": "b2bad405aa709214bf32dd5344de90390922ff58b5709316d49c0f71fd9209cb",
+      "size": 1089,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/unpack200.1": {
+      "sha256": "a1c30d962b52c98f8cab7960b251ec287236f5168760c04475c6996e27987db4",
+      "size": 1088,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/rmid.1": {
+      "sha256": "198b8a27e2cd924e75e9f4e03d0b87e929492cc387c2dab6b0eda88b2c87ee60",
+      "size": 1083,
+      "mode": 420
+    },
+    "Contents/Home/man/ja_JP.UTF-8/man1/rmiregistry.1": {
+      "sha256": "0ad69faf18c2cb4143c61051dc7368703bbe9c01a1ed34883bca55e681fa85cd",
+      "size": 1090,
+      "mode": 420
+    },
+    "Contents/Home/LICENSE": {
+      "sha256": "4b9abebc4338048a7c2dc184e9f800deb349366bdf28eb23c2677a77b4c87726",
+      "size": 19274,
+      "mode": 292
+    },
+    "Contents/Home/bin/unpack200": {
+      "sha256": "e7a9bbcaed4e237755cb560de69dc1f99a22ad5995bb3c252e48d30f568de06a",
+      "size": 231056,
+      "mode": 493
+    },
+    "Contents/Home/bin/rmid": {
+      "sha256": "ba057eea2d3f28c01d4623f3bc3d4ddd8ad7333cd75fd6ed8cce68927dd22d5a",
+      "size": 167344,
+      "mode": 493
+    },
+    "Contents/Home/bin/rmiregistry": {
+      "sha256": "8b4fa8814720e6ccc2e44f5e2144987fd600e702a303c958c7090060847de20d",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/bin/java": {
+      "sha256": "fe5b393077ae06f1b4ffc2241a74ed930585da745f3f1b09ad81ee12e7a401c0",
+      "size": 167248,
+      "mode": 493
+    },
+    "Contents/Home/bin/servertool": {
+      "sha256": "499ce17a617ec53b517cbab468af14579939f654c27e5e1bee54f2fe899344cd",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/bin/orbd": {
+      "sha256": "bc26ae583ebaf3c8def23b1ac7922309520bdb4db34a94ab0da7820d290a0faf",
+      "size": 167344,
+      "mode": 493
+    },
+    "Contents/Home/bin/keytool": {
+      "sha256": "8524b225f54d69ed803c00a28ef2a05182b0fdef6c0564fcc5dd470b710cad5d",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/bin/policytool": {
+      "sha256": "eec8b1167017bfb1f76de906eb6425ab522635fc66031192f357d205f638b57a",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/bin/pack200": {
+      "sha256": "a38a4ed625c0d24072ac1e72dc5f0a024acb9e7394cf80799f2e4fcca0ac5cd9",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/bin/jjs": {
+      "sha256": "73f32135da53164bfc3b85bcd2a4a4a121cf2bc7e262315c77f7321ef7283bfc",
+      "size": 167344,
+      "mode": 493
+    },
+    "Contents/Home/bin/tnameserv": {
+      "sha256": "a8c9d63cdce8b5b1ee012ca07b47d0e40ad38ec93e3e84fcdb28f921ba3abb8a",
+      "size": 167360,
+      "mode": 493
+    },
+    "Contents/Home/ASSEMBLY_EXCEPTION": {
+      "sha256": "a44eb7b5caf5534c6ef536b21edb40b4d6babf91bf97d9d45596868618b2c6fb",
+      "size": 1522,
+      "mode": 292
+    },
+    "Contents/Home/bundle/Libraries/libserver.dylib": {
+      "sha256": "b0ffaac7be274ae277a355ea91cfa687079176da4baceb70b86eeb172c02b3a8",
+      "size": 12469136,
+      "mode": 493
+    },
+    "Contents/Home/release": {
+      "sha256": "b8fe6e08cc83aee327fa990f4524f7916d21393c62bd3a1e01fd4c9bb8486394",
+      "size": 480,
+      "mode": 420
+    },
+    "Contents/Home/NOTICE": {
+      "sha256": "c02756bcd9fa8191bf0fda4451bc018414dd44ee35bf09922c24377a475e4b5a",
+      "size": 2400,
+      "mode": 420
+    },
+    "Contents/Home/THIRD_PARTY_README": {
+      "sha256": "6e8a224193a89759f9fe936ed405c91753f849640f7e8a8e5813f492a865bcbe",
+      "size": 191611,
+      "mode": 292
+    },
+    "Contents/Home/lib/libnet.dylib": {
+      "sha256": "3e8bc757fa2a59d5639a506ed243c62fd5d7887ae49fd3e2087b0d77cc87462c",
+      "size": 163792,
+      "mode": 493
+    },
+    "Contents/Home/lib/libnio.dylib": {
+      "sha256": "556b3052f813cd1ea7d0758093bce5c9a69532cfc3ae2a24130637d8f5e4d3a4",
+      "size": 128544,
+      "mode": 493
+    },
+    "Contents/Home/lib/libinstrument.dylib": {
+      "sha256": "e729107f98e99918e511974ab0621e9e6420743f1b8a79d72ea728ee3f819ea0",
+      "size": 203888,
+      "mode": 493
+    },
+    "Contents/Home/lib/libzip.dylib": {
+      "sha256": "5342fc232213044e6b44c737d3be0adee700e6a29fc4dc0dd7f3133554a008ab",
+      "size": 190160,
+      "mode": 493
+    },
+    "Contents/Home/lib/cmm/sRGB.pf": {
+      "sha256": "87e382b9336e6a0417a4d860173109ab319a029cf2972e19833a3327c65bd7e4",
+      "size": 6876,
+      "mode": 292
+    },
+    "Contents/Home/lib/cmm/CIEXYZ.pf": {
+      "sha256": "98cf012f6122c833b1ff4fbbe37f43a808d769d9b10ba43f3411728e7bb58bea",
+      "size": 784,
+      "mode": 292
+    },
+    "Contents/Home/lib/cmm/PYCC.pf": {
+      "sha256": "0031aa2b8b4d490369a2a601ae0d95505df0cb86c0504f080c02ed87e84b3ddc",
+      "size": 234080,
+      "mode": 292
+    },
+    "Contents/Home/lib/cmm/GRAY.pf": {
+      "sha256": "d3fd8cb41b7ef8c5ea53bfecb1ad6d4762197c8eab04444545e083dff6f86fa9",
+      "size": 556,
+      "mode": 292
+    },
+    "Contents/Home/lib/cmm/LINEAR_RGB.pf": {
+      "sha256": "790da58ccc79d03658283652716ec9896ed31e0392d818e60f6832815ee79f4c",
+      "size": 488,
+      "mode": 292
+    },
+    "Contents/Home/lib/psfontj2d.properties": {
+      "sha256": "780c565d5af3ee6f68b887b75c041cdf46a0592f67012f12eeb691283e92630a",
+      "size": 11390,
+      "mode": 420
+    },
+    "Contents/Home/lib/fontconfig.properties.src": {
+      "sha256": "60a996d628499f42a997a4833dca1a1a0b1cf76e9334c98ee44cd2b59c0ee125",
+      "size": 9084,
+      "mode": 420
+    },
+    "Contents/Home/lib/logging.properties": {
+      "sha256": "ce1688fe641099954572ea856953035b5188e2ca228705001368250337b9b232",
+      "size": 2455,
+      "mode": 420
+    },
+    "Contents/Home/lib/sound.properties": {
+      "sha256": "299c2360b6155eb28990ec49cd21753f97e43442fe8fab03e04f3e213df43a66",
+      "size": 1210,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjava_crw_demo.dylib": {
+      "sha256": "8ab3efc19a3f77c6cc59f3f5bdf384e2d3cfed0fa7818f22b1d73e331f1645e1",
+      "size": 89440,
+      "mode": 493
+    },
+    "Contents/Home/lib/libfreetype.dylib": {
+      "sha256": "5496c7405c8d6b4029d8d1cfd88af50eed3ba256221454966ff1d6734e1e6828",
+      "size": 721104,
+      "mode": 493
+    },
+    "Contents/Home/lib/currency.data": {
+      "sha256": "a840a4b4ef284287697cb2496a208c4d95e0c59cb4759e3ba49bf443a1012e38",
+      "size": 4289,
+      "mode": 292
+    },
+    "Contents/Home/lib/libsplashscreen.dylib": {
+      "sha256": "f695ea4338392f2f445a6c012e819035d06a04f2b1ca3ea423dbcc9dab3a1365",
+      "size": 512880,
+      "mode": 493
+    },
+    "Contents/Home/lib/libdt_socket.dylib": {
+      "sha256": "88c365441300dc0bf268d3a29386f940c02d3c5f2fd68784207f7152896666ba",
+      "size": 77872,
+      "mode": 493
+    },
+    "Contents/Home/lib/libj2pkcs11.dylib": {
+      "sha256": "e2b65b03a711fad15d4c150d4363e91569baa272dc6c0d6f28da2c3b4f01b4e7",
+      "size": 150096,
+      "mode": 493
+    },
+    "Contents/Home/lib/calendars.properties": {
+      "sha256": "9b72cfad9723c8b33eed3e18bda69be3f50740f8c11456487d3098e288359bfa",
+      "size": 2479,
+      "mode": 420
+    },
+    "Contents/Home/lib/jvm.cfg": {
+      "sha256": "17c4fe841a825e7cc05f2a32640d6a7e1bb1a5ab18635d5f201e2be9ad0409ce",
+      "size": 1621,
+      "mode": 420
+    },
+    "Contents/Home/lib/hijrah-config-umalqura.properties": {
+      "sha256": "3456982de9eba535337852f02852e26e4ed197ebd9d8356977e6da4ed9075538",
+      "size": 14959,
+      "mode": 420
+    },
+    "Contents/Home/lib/jli/libjli.dylib": {
+      "sha256": "30eb877bc14a76c085f87553f9932b215aa6349cfbfd7c8dd17bc82852993365",
+      "size": 149792,
+      "mode": 493
+    },
+    "Contents/Home/lib/security/blacklisted.certs": {
+      "sha256": "96572f243f31c2ef81a6e627542e596f6a9295cff3c7ae095c1b595cb1457ded",
+      "size": 2488,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/java.security": {
+      "sha256": "ac499a08994804c00c2e34a904faa0fb9e5cb25537e5f62699bfcc9f00c486c2",
+      "size": 59282,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/java.policy": {
+      "sha256": "164dee2520126c729d9bbb80be71bc733720f9f6a6bfe1a40e9d45ea99edbb48",
+      "size": 2665,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/cacerts": {
+      "sha256": "7459370721c3be9b594a7d4feb88e785cedf42bc2ec4a7d08a3d7d85932cf3bf",
+      "size": 136706,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/policy/unlimited/local_policy.jar": {
+      "sha256": "46930571f4fc4076c469bf7eaacc0b83e3388eacc689630a8177875dd2e68427",
+      "size": 629,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/policy/unlimited/US_export_policy.jar": {
+      "sha256": "1206fa3b2ea7340441d4e80d5cec93c4dec7a4b83d851835950b967e47ace294",
+      "size": 611,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/policy/limited/local_policy.jar": {
+      "sha256": "1282fd5f65156eb47384996483da44536a3c98e75a2e3e07ea109ebbe1386d5c",
+      "size": 1031,
+      "mode": 420
+    },
+    "Contents/Home/lib/security/policy/limited/US_export_policy.jar": {
+      "sha256": "1206fa3b2ea7340441d4e80d5cec93c4dec7a4b83d851835950b967e47ace294",
+      "size": 611,
+      "mode": 420
+    },
+    "Contents/Home/lib/jfr/default.jfc": {
+      "sha256": "07905e9fc1be1a17fb74df479bedcf40fdeb0427722b0e2d12af96a4705a5e6a",
+      "size": 29075,
+      "mode": 420
+    },
+    "Contents/Home/lib/jfr/profile.jfc": {
+      "sha256": "0207c7ddbba287366723ecc65641b0e1f03195895d4a39f36d8e1d135df13e84",
+      "size": 29033,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/cursors.properties": {
+      "sha256": "2159cd9e967f6935428bb140ef757d499916e30415afcb93d288da233bafa855",
+      "size": 1274,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_LinkDrop32x32.gif": {
+      "sha256": "397744f8d5bc5158f235b55c62534d59bc437ff57f8bc4fd47917324fa430dd6",
+      "size": 162,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_CopyDrop32x32.gif": {
+      "sha256": "9fc5e00caa9c92e16aa97ecf5f313b3a53712628fabd875512ef59512d27ba35",
+      "size": 158,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_LinkNoDrop32x32.gif": {
+      "sha256": "1a1d3079d49583837662b84e11d8c0870698511d9110e710eb8e7eb20df7ae3b",
+      "size": 153,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/invalid32x32.gif": {
+      "sha256": "1a1d3079d49583837662b84e11d8c0870698511d9110e710eb8e7eb20df7ae3b",
+      "size": 153,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_MoveNoDrop32x32.gif": {
+      "sha256": "1a1d3079d49583837662b84e11d8c0870698511d9110e710eb8e7eb20df7ae3b",
+      "size": 153,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_CopyNoDrop32x32.gif": {
+      "sha256": "1a1d3079d49583837662b84e11d8c0870698511d9110e710eb8e7eb20df7ae3b",
+      "size": 153,
+      "mode": 420
+    },
+    "Contents/Home/lib/images/cursors/motif_MoveDrop32x32.gif": {
+      "sha256": "2592d70a052be96a45bf635ed314d641dd7275ed7976d4cc30027dad26fe65cf",
+      "size": 141,
+      "mode": 420
+    },
+    "Contents/Home/lib/libhprof.dylib": {
+      "sha256": "dea13b9c7e4552f60654b879cdc3bd4672d0ad84a20a25e60635512884f5d2d8",
+      "size": 238800,
+      "mode": 493
+    },
+    "Contents/Home/lib/libosxkrb5.dylib": {
+      "sha256": "b42444c1eff8a7cd7b3bc78c90a063f1f57be6726eecfb0dd06bab627540505d",
+      "size": 73328,
+      "mode": 493
+    },
+    "Contents/Home/lib/net.properties": {
+      "sha256": "f4567500fd182e9912c7ed58633eba1737619ebefc79c52a583df54a0226127a",
+      "size": 6185,
+      "mode": 420
+    },
+    "Contents/Home/lib/rt.jar": {
+      "sha256": "761e886305ea35c92c590cfc0c19946c681ec9a642ecc99a03e42aa1fc6d5c3d",
+      "size": 66297187,
+      "mode": 420
+    },
+    "Contents/Home/lib/libosxui.dylib": {
+      "sha256": "52695d901991ea929791d64a52fcbac4fb5da006f49955ed5082e828c229d929",
+      "size": 106640,
+      "mode": 493
+    },
+    "Contents/Home/lib/tzdb.dat": {
+      "sha256": "8e6c626ad7369887c52e22db4b273851b7682c20fe2d21c743ee9e699410aaea",
+      "size": 102968,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/sunec.jar": {
+      "sha256": "01987a503179781e632ab6a5c47b0f2812c16bade7f112c6e1011446b9ab777c",
+      "size": 38956,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/nashorn.jar": {
+      "sha256": "274beb2832cc383404cbc231d8ec6b886874c7e7dd7009b38fb3a8f52f7f5208",
+      "size": 2034420,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/cldrdata.jar": {
+      "sha256": "6d446bf8c0feb60caff1c37e431e2adb340314c857cb93aa5edfb9e07b09e319",
+      "size": 3862625,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/dnsns.jar": {
+      "sha256": "f1df7e1da25171c2ce845c1dc8fadf661fc505a3671957e0bae04b3429f769d7",
+      "size": 8343,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/localedata.jar": {
+      "sha256": "1399bdb693223ec41135f80bf11f9f329bd5f5838aaf68a2217d98fa5c2402bd",
+      "size": 1183358,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/sunjce_provider.jar": {
+      "sha256": "c720f2de4646cb7f982462ec90eee6c24392dcda0e387443ce81ceed9a22905a",
+      "size": 277733,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/meta-index": {
+      "sha256": "5acc164629cb90b956b872da6c9108f0d822ecc4d3bc4946fdc624963976ab6d",
+      "size": 617,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/sunpkcs11.jar": {
+      "sha256": "745471786a3c2e11268b5e3023553e00fabf74ce82d0ce6079fb57a4bdf8a416",
+      "size": 281873,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/jaccess.jar": {
+      "sha256": "2fea6e4ff2005f25ba3c13422b91990c6ae0f0f1020652be724eed6361b49c98",
+      "size": 44507,
+      "mode": 420
+    },
+    "Contents/Home/lib/ext/zipfs.jar": {
+      "sha256": "7625922e106bda95e8012913223b3b74a0191ea7d406484e95d9a21baa868746",
+      "size": 72052,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjdwp.dylib": {
+      "sha256": "3a4a48db71bbf8fdfc1abc996b48a6ab53d657ec8e3cb25066b0a5c4534c9144",
+      "size": 324080,
+      "mode": 493
+    },
+    "Contents/Home/lib/management/jmxremote.access": {
+      "sha256": "439158eb513525feda19e0e4153ccf36a08fe6a39c0c6ceeb9fcee86899dd33c",
+      "size": 3998,
+      "mode": 420
+    },
+    "Contents/Home/lib/management/snmp.acl.template": {
+      "sha256": "f1dc97da5a5d220ed5d5b71110ce8200b16cac50622b33790bb03e329c751ced",
+      "size": 3376,
+      "mode": 292
+    },
+    "Contents/Home/lib/management/management.properties": {
+      "sha256": "57b2702c8a4158ae72c3616300efdc81d690d617c1d1ce2a66b1c95e0dbe0d57",
+      "size": 14749,
+      "mode": 420
+    },
+    "Contents/Home/lib/management/jmxremote.password.template": {
+      "sha256": "3d83e336c9a24d09a16063ea1355885e07f7a176a37543463596b5db8d82f8fa",
+      "size": 2856,
+      "mode": 292
+    },
+    "Contents/Home/lib/libsunec.dylib": {
+      "sha256": "a3c6fb9f46797b1c25b8201478f8e40e7583d63e85e5e50dbe2e3fb83f3abdfe",
+      "size": 223776,
+      "mode": 493
+    },
+    "Contents/Home/lib/libawt_lwawt.dylib": {
+      "sha256": "26bf1afc5f1abac91413dc8ad22dcccf5109ad6142a7014251ca6d1dabdf0856",
+      "size": 801264,
+      "mode": 493
+    },
+    "Contents/Home/lib/jfr.jar": {
+      "sha256": "0d4b790a3c7dcaad035b6011be92744858302b2784feedbcfd565ca00fc09114",
+      "size": 889597,
+      "mode": 420
+    },
+    "Contents/Home/lib/libfreetype.6.dylib": {
+      "sha256": "726f60c5cb6eb5a3f177dc23ca4731f47778748c11d8c8adef0ec2b6e8b5e543",
+      "size": 721120,
+      "mode": 493
+    },
+    "Contents/Home/lib/server/libjvm.dylib": {
+      "sha256": "817de581d003f46df16e3ac39d7a482d424495938c90e407aa2d4b3bf509d4f9",
+      "size": 12469136,
+      "mode": 493
+    },
+    "Contents/Home/lib/server/Xusage.txt": {
+      "sha256": "a13b50a87e063d7fa72708e431755ea8821a73276a7291e5702151cc2ccf92a8",
+      "size": 1423,
+      "mode": 420
+    },
+    "Contents/Home/lib/server/libjsig.dylib": {
+      "sha256": "85ca77f3ca2c5149b8baa5eba55ef07d9484b4eb4b21d6c525ff7c587a0decbd",
+      "size": 72144,
+      "mode": 493
+    },
+    "Contents/Home/lib/jsse.jar": {
+      "sha256": "0659f6b11e3a2297b5239df80cd1286eb016e2a67d89509a3feb0feb5accdcd3",
+      "size": 1923929,
+      "mode": 420
+    },
+    "Contents/Home/lib/libmlib_image.dylib": {
+      "sha256": "77061d512e9dcc48663f4fe373307a2ab5ce850bad7d078f79d8bb03b9b66eaf",
+      "size": 827696,
+      "mode": 493
+    },
+    "Contents/Home/lib/libmanagement.dylib": {
+      "sha256": "d28cb10d3ad699eb8a131e081e3923dd0f3df7b4353825ac6ed09c071848e7ba",
+      "size": 96880,
+      "mode": 493
+    },
+    "Contents/Home/lib/libjaas_unix.dylib": {
+      "sha256": "97a2f443a7dcd26a352faa2f33131513a0ba634d30b27717d8ac3e0c2b217ed3",
+      "size": 70496,
+      "mode": 493
+    },
+    "Contents/Home/lib/libjsound.dylib": {
+      "sha256": "92fe646d05794b74ae9accbdfa73d33184ec24759c867a2eda2c65a30367097c",
+      "size": 143360,
+      "mode": 493
+    },
+    "Contents/Home/lib/charsets.jar": {
+      "sha256": "1928f54d451bf5e287b85ccf65bf65832c380f56e4b27b8412a051be1c545028",
+      "size": 3138899,
+      "mode": 420
+    },
+    "Contents/Home/lib/resources.jar": {
+      "sha256": "57496cb0b0a3e7e955679aaf3794b60925a840e28b0f4b94c237549d44b24d6f",
+      "size": 3530722,
+      "mode": 420
+    },
+    "Contents/Home/lib/libnpt.dylib": {
+      "sha256": "e8e861f6d10058d96f0b932e710aea49e2b99afd86265cdff065352f0e3b295d",
+      "size": 74272,
+      "mode": 493
+    },
+    "Contents/Home/lib/libj2pcsc.dylib": {
+      "sha256": "4f4bf63dd7f305b6c17b702403fb301bb38880d888a201967c0ca94a98e9ea0c",
+      "size": 74560,
+      "mode": 493
+    },
+    "Contents/Home/lib/libjsig.dylib": {
+      "sha256": "446b6158e321aa91fa108ead0ad51642d27db52ab3a0b8044ed2c397862dbf28",
+      "size": 72144,
+      "mode": 493
+    },
+    "Contents/Home/lib/jvm.hprof.txt": {
+      "sha256": "b055bf25b07e5ac70e99b897fb8152f288769065b5b84387362bb9cc2e6c9d38",
+      "size": 4226,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjawt.dylib": {
+      "sha256": "d99fba03a6112107ecb7f0903404d4fc56b7d646aba26806b10109624f25e62a",
+      "size": 53680,
+      "mode": 493
+    },
+    "Contents/Home/lib/libattach.dylib": {
+      "sha256": "fff08688a1a7feedd00b3ba3b513ea6be7505870e959b870fab8d5dce12a9404",
+      "size": 72912,
+      "mode": 493
+    },
+    "Contents/Home/lib/content-types.properties": {
+      "sha256": "ec5a1eb433f210b651c07989aba5ade1b0bf1153d223ebd60626b404645ff892",
+      "size": 5916,
+      "mode": 420
+    },
+    "Contents/Home/lib/libfontmanager.dylib": {
+      "sha256": "d1aaa1988edbcc7b5b7965cd1f7d385d3f89895b74aeaccf6d7d7e354e6d5806",
+      "size": 508272,
+      "mode": 493
+    },
+    "Contents/Home/lib/fontconfig.bfc": {
+      "sha256": "5e2ce5c2c1f27f73e4ffa9ec756dc4ab358bb2a32f723ff7e4a2a9bd768480b4",
+      "size": 3058,
+      "mode": 292
+    },
+    "Contents/Home/lib/jspawnhelper": {
+      "sha256": "25664fad12ffaa6fee4644c737b999d9929612ca44d9597d5b7dc8fb16499a8e",
+      "size": 73568,
+      "mode": 493
+    },
+    "Contents/Home/lib/meta-index": {
+      "sha256": "4d333b9484a38d21e83af41bf26e2730654a85c4b0c31c7536d44e426ad27919",
+      "size": 2028,
+      "mode": 420
+    },
+    "Contents/Home/lib/management-agent.jar": {
+      "sha256": "206de8b9f867f09de95e7924251aa7f4ac17c2c574a0dc0abc7211e1b03b27fa",
+      "size": 371,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjpeg.dylib": {
+      "sha256": "1cef821806ca4e0ec6a05f65f46a8348631f776dd15fe8cd8d84d6957dabce45",
+      "size": 244352,
+      "mode": 493
+    },
+    "Contents/Home/lib/jce.jar": {
+      "sha256": "737d0dcc66aad15d050ce961d79d457625ac29919e4f0aa135d7b272fa46a20c",
+      "size": 96897,
+      "mode": 420
+    },
+    "Contents/Home/lib/flavormap.properties": {
+      "sha256": "9caec8cef7f191ae9cd87fee0422ea1e26dfead060286b26d84cd425dbc6ee6f",
+      "size": 4211,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjsdt.dylib": {
+      "sha256": "74fb22bebd52ff41c348412aecbfb9884ecaba102c6c7f76330b893ff01437f2",
+      "size": 71904,
+      "mode": 493
+    },
+    "Contents/Home/lib/liblcms.dylib": {
+      "sha256": "0777e82f7c479887a0d4b126fe0dcbc833da7df4240d49e25f59b495dc3bf148",
+      "size": 453680,
+      "mode": 493
+    },
+    "Contents/Home/lib/libAppleScriptEngine.dylib": {
+      "sha256": "9027dcbcbaf7feb9f33b4e30122d77b3719f8391eeecef37e8eb12a20e8478ee",
+      "size": 110288,
+      "mode": 493
+    },
+    "Contents/Home/lib/libverify.dylib": {
+      "sha256": "c182fe652bf7a27f3d0a3e51213facaf22002ab489f46cd874376c5ee36d4787",
+      "size": 94128,
+      "mode": 493
+    },
+    "Contents/Home/lib/psfont.properties.ja": {
+      "sha256": "5a4bd51b969bf187ff86d94f4a71fdfbfa602762975fa3c73d264b4575f7c78f",
+      "size": 3793,
+      "mode": 420
+    },
+    "Contents/Home/lib/libj2gss.dylib": {
+      "sha256": "8daf8b08f7b05a393b9aad7d7d32ef70ccbf329f962097e6d99eff5c42f15c7c",
+      "size": 100416,
+      "mode": 493
+    },
+    "Contents/Home/lib/libsaproc.dylib": {
+      "sha256": "4bcb31fcee3b16cc2af193054db573eeb9a2493e355579f0eb97961b1e9f9af0",
+      "size": 119424,
+      "mode": 493
+    },
+    "Contents/Home/lib/classlist": {
+      "sha256": "66c4282e339a86e722025db067011acb42a9560a51c61ea0a3fe571f51e467c3",
+      "size": 72450,
+      "mode": 420
+    },
+    "Contents/Home/lib/libjava.dylib": {
+      "sha256": "ba8a1ed7c7f942d9c0ed5b7832b8e000b6ee536a5ad764f8241b67c39c350b83",
+      "size": 321376,
+      "mode": 493
+    },
+    "Contents/Home/lib/libawt.dylib": {
+      "sha256": "9079d956fc2c7ac6fa0f5f4c6a76411b750f0017df9c99f2576129ccbdc9e67c",
+      "size": 643456,
+      "mode": 493
+    },
+    "Contents/Home/lib/libunpack.dylib": {
+      "sha256": "421e207e3bfefb02d6590b714bb7a7b13fe0333e2d5d9ae80cb176fcfdb55fb3",
+      "size": 148880,
+      "mode": 493
+    },
+    "Contents/Home/lib/libosx.dylib": {
+      "sha256": "2636614eb470c3ed59bf1222b99f33ace75142c5256e6bb895699f8dde6ae18c",
+      "size": 113888,
+      "mode": 493
+    },
+    "Contents/Home/lib/libosxapp.dylib": {
+      "sha256": "fe5e3ce967ed736c88916d6602a0667e64917af50c8ba2cb7e2aecc548174ceb",
+      "size": 189568,
+      "mode": 493
+    },
+    "Contents/MacOS/libjli.dylib": {
+      "sha256": "8e25dba0d1b424ff4f13a02dfec8bd577b9adedb653446e99817d2f60246eb79",
+      "size": 148512,
+      "mode": 493
+    },
+    "Contents/Info.plist": {
+      "sha256": "f8e79ea3f1bf17d640c84173de6ec810fb7c559e9ad2a7eb30a70d7e5d628759",
+      "size": 1303,
+      "mode": 420
+    }
+  }
+}

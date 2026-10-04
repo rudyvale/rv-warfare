@@ -1,0 +1,39 @@
+{
+  "schema": 1,
+  "gameplayBaseVersion": "2.0.3",
+  "minimumSystemVersion": "10.13",
+  "architecture": "x64",
+  "appleSiliconRuntime": "Rosetta 2",
+  "minecraftMetadata": {
+    "url": "https://piston-meta.mojang.com/v1/packages/832d95b9f40699d4961394dcf6cf549e65f15dc5/1.12.2.json",
+    "sha1": "832d95b9f40699d4961394dcf6cf549e65f15dc5"
+  },
+  "runtime": {
+    "url": "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u504-b01/OpenJDK8U-jre_x64_mac_hotspot_8u504b01.tar.gz",
+    "sha256": "f06abadad0fa97e04866d7229a2baad53261579ab5d44875ffa8846a28f28d86",
+    "size": 44361038,
+    "version": "1.8.0_504",
+    "prefix": "jdk8u504-b01-jre/",
+    "javaHome": "Contents/Home"
+  },
+  "server": {
+    "path": "minecraft_server.1.12.2.jar",
+    "url": "https://piston-data.mojang.com/v1/objects/886945bfb2b978778c3a0288fd7fab09d315b25f/server.jar",
+    "sha1": "886945bfb2b978778c3a0288fd7fab09d315b25f",
+    "size": 30222121
+  },
+  "worldTemplate": {
+    "sha256": "4dc49272c62b281d96e06d82814e34a9d6b93ed0a320699b42946914af18d75c",
+    "size": 6093117
+  },
+  "compiler": {
+    "url": "https://archive.eclipse.org/eclipse/downloads/drops4/R-4.6.1-201609071200/ecj-4.6.1.jar",
+    "sha256": "9cddda75f4a1b4469e73f44e7b61a3e897d0f657df4797f9106ffe88c4eeade0",
+    "size": 2440899
+  },
+  "gson": {
+    "url": "https://libraries.minecraft.net/com/google/code/gson/gson/2.8.0/gson-2.8.0.jar",
+    "sha256": "c6221763bd79c4f1c3dc7f750b5f29a0bb38b367b81314c4f71896e340c40825",
+    "size": 231952
+  }
+}
