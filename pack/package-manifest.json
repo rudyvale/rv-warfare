@@ -1,9 +1,9 @@
 {
-  "version": "2.0.2",
+  "version": "2.0.3",
   "archives": [
     {
       "path": "payload.zip",
-      "sha256": "fde0c71bce20151a6b49ab5a4a4afa486cf851943164328262f2ab1daed6bbc2"
+      "sha256": "c3da0344e97b764510b66aaeb7b591750de1c9e1aea6e4baa86d3cab678a3594"
     },
     {
       "path": "runtime.zip",
@@ -290,7 +290,7 @@
     },
     {
       "path": "mods/mcheli-ce-1.5.1-rv.jar",
-      "sha256": "d6b305e11c0ecc0cdf599039e888af96bd9911ca90e82979c671f5a641b16f60"
+      "sha256": "3b35d78725238c9d0c5107ce185a2cec2e06ba030e376a66485a93906f665efb"
     },
     {
       "path": "mods/modularui-3.1.6.jar",

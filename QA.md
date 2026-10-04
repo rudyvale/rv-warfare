@@ -2,11 +2,21 @@
 
 ## RV 2 Preview verification
 
-The final preview module `7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969` was loaded by both an actual Forge client and dedicated server. Their public projections contain only owned module identities and loaded JAR digests. All 21 build source digests match the committed bytes; the compilation-only GUI API is excluded from the production JAR.
+The selected player menu module `a665f1fae8e738a91dc87423288aaa7b443b3160a424fd0b09632d22ba586007` was loaded by an actual Forge client and dedicated server. Public projections contain only owned module identities and loaded artifact digests. All 21 build source digests match the frozen source, and the compilation-only GUI API is excluded from the production JAR.
 
-Native checks with one ordinary isolated player confirmed equipment preview versus delivery, existing-item preservation, readiness then cancellation, RU and EN edition-4 guides with 30 pages each, and training/lobby travel. The accepted captures have readable native buttons at 960 × 600 and GUI scale 2. Controller screens were opened without a physical USB device.
+Two ordinary players exercised the reviewed equipment and session flow, including confirmation, preservation, readiness, cancellation, disconnect and restart persistence. Native zero- and one-free-slot capacity denials preserved all 41 inventory slots, cursor, selection and equipment choices, with no dropped items. These checks do not complete the fault-injection rollback or third-player matrix. Original menu captures show 960 by 600 with shaders disabled.
 
-Packaging checks include 91 targeted cases, recursive vendor and invitation privacy inspection, source agreement, ZIP paths/CRC, immutable outputs and preview publication policy. Nine world package regressions verify that server authority guards survive staging. Component and fixture results do not establish native multiplayer behavior. Two-player voting, full-inventory rollback, physical controllers, new vendor combat and a full performance matrix remain unverified for RV 2. Historical acceptance below applies to its named earlier releases.
+The earlier RV 2.0.0 module `7f4368fa7906bcd71d1fe65f04a5e18ceef3e30394f6289e55c7837875666969` had separate single-player checks for equipment, guides and training. Its controls capture remains historical evidence; it does not prove the later menu or controls binaries.
+
+Eight native WinForms message-loop cases exercised isolated launcher workers, action completion and cancellation. They do not establish a fresh installation or physical device compatibility. The configured two-contentpack sound registry resolved 2,257 file references and 33 event links; 1,673 clips decoded. The corrected silent cue reuses an existing valid silence sample, and all 106 RV sound files remain byte-identical. Audible playback remains unverified.
+
+Packaging checks cover exact source and artifact closure, managed files, recursive vendor and invitation privacy inspection, ZIP paths and CRC, checksums, immutable outputs and preview publication policy. The third-party source registry is pinned as raw bytes so a fresh checkout agrees with the frozen source bundle. These checks do not establish Minecraft combat or multiplayer acceptance.
+
+RV 2.0.1 and 2.0.2 candidates remain unpublished. Actual projectile impact exposed incompatible hook descriptors in the first candidate. The 2.0.2 correction then exposed a dedicated-server fire error when reflection resolved an unrelated client-only tooltip class.
+
+The selected 2.0.3 controls JAR `3b35d78725238c9d0c5107ce185a2cec2e06ba030e376a66485a93906f665efb` calls the two Forge protection hooks through exact cached method handles. Its 39 captured controls inputs match the frozen source. All five VMProps classes and the transformer are byte-identical to those loaded by the isolated server and client test. That instrumented fixture completed 25 impact checks and 75 combat assertions with zero failures, including projectile stopping, tank HP changes, glass, wooden props and managed fire. No ITooltipFlag or helper-descriptor error was observed. Quota-sensitive groups explicitly advance the WorldInfo total-time counter; these checks do not establish elapsed server ticks, real-time fire expiry or performance. Test helpers are excluded from the public JAR. This is a scoped regression result, not full-modpack combat acceptance.
+
+Physical controllers, an external friend's connection, cross-mod damage, full-inventory rollback, audible playback and the final TPS/FPS/RAM matrix remain open. The experimental MTS damage bridge and acceptance-test helpers are excluded from public packages. Historical results below apply to their named earlier releases.
 
 RV is developed on Windows using Windows PowerShell 5.1. Automated checks live in `qa`; the [Windows checks workflow](https://github.com/rudyvale/rv-warfare/actions/workflows/ci.yml) shows the result for each pushed source revision.
 
@@ -29,7 +39,7 @@ RV is developed on Windows using Windows PowerShell 5.1. Automated checks live i
 | Combat runtime | Dedicated server and client loading, rotated tank hulls, turret hits, projectile stopping, wall obstruction, FPV impact and prop damage |
 | Owner access | Actual owner connection receives permissions; ordinary clients and a matching nickname from an untrusted directory are denied |
 
-The frozen gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
+The historical RV 1.1.0 gameplay candidate was checked on actual Forge server and client runtimes. Independent combat checks covered damage and entity state, including tank destruction and a single FPV detonation. The final audio pack was decoded and audited against the combined sound registry. Production JARs exclude the acceptance-test classes.
 
 The 1.1.0 component checks also exercised Easy flight and lost-focus input, malformed network input, current tank bindings, First Aid wounds and healing, and actual Low/Balanced effect values. Both 24-page books were parsed by Minecraft and checked against the native font renderer. The new Apache burst event was resolved through the actual loaded sound registry; codec and byte comparisons covered the updated audio archive.
 

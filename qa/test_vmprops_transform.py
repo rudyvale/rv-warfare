@@ -121,38 +121,47 @@ public class Blocks { public static final Block field_150350_a=new Block(0); pub
 import net.minecraft.world.World;
 import net.minecraft.util.math.BlockPos;
 public class BlockSnapshot { public final World world; public final BlockPos pos; private BlockSnapshot(World world,BlockPos pos){this.world=world;this.pos=pos;} public static BlockSnapshot getBlockSnapshot(World world,BlockPos pos){return new BlockSnapshot(world,pos);} }""",
+    "net/minecraftforge/event/world/BlockEvent.java": """package net.minecraftforge.event.world;
+public class BlockEvent { public static class EntityPlaceEvent { private final boolean canceled; public EntityPlaceEvent(boolean canceled){this.canceled=canceled;} public boolean isCanceled(){return canceled;} } }""",
     "net/minecraftforge/event/ForgeEventFactory.java": """package net.minecraftforge.event;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraftforge.event.world.BlockEvent;
 public class ForgeEventFactory {
     public static boolean canceled;
     public static boolean throwEvent;
     public static boolean replace;
-    public static EntityPlayer lastPlayer;
-    public static final class PlaceEvent { private final boolean canceled; public PlaceEvent(boolean canceled){this.canceled=canceled;} public boolean isCanceled(){return canceled;} }
-    public static PlaceEvent onBlockPlace(EntityPlayer player,BlockSnapshot snapshot,EnumFacing side){
+    public static Entity lastPlayer;
+    public static BlockEvent.EntityPlaceEvent onBlockPlace(Entity player,BlockSnapshot snapshot,EnumFacing side){
         lastPlayer=player;
         if(throwEvent)throw new IllegalStateException("event bus unavailable");
         if(replace)snapshot.world.func_175656_a(snapshot.pos,new IBlockState(new Block(0)));
-        return new PlaceEvent(canceled);
+        return new BlockEvent.EntityPlaceEvent(canceled);
     }
 }""",
+    "net/minecraft/entity/Entity.java": """package net.minecraft.entity;
+public class Entity {}""",
     "net/minecraft/entity/player/EntityPlayer.java": """package net.minecraft.entity.player;
-public class EntityPlayer {}""",
+import net.minecraft.entity.Entity;
+public class EntityPlayer extends Entity {}""",
     "net/minecraft/entity/player/PlayerInteractionManager.java": """package net.minecraft.entity.player;
-public class PlayerInteractionManager { public Object func_73081_b(){return this;} }""",
+import net.minecraft.world.GameType;
+public class PlayerInteractionManager { public GameType func_73081_b(){return new GameType();} }""",
+    "net/minecraft/world/GameType.java": """package net.minecraft.world;
+public class GameType {}""",
     "net/minecraft/entity/player/EntityPlayerMP.java": """package net.minecraft.entity.player;
 public class EntityPlayerMP extends EntityPlayer { public final PlayerInteractionManager field_71134_c=new PlayerInteractionManager(); }""",
     "net/minecraftforge/common/ForgeHooks.java": """package net.minecraftforge.common;
 import net.minecraft.world.World;
+import net.minecraft.world.GameType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.entity.player.EntityPlayerMP;
 public class ForgeHooks {
     public static boolean allowed=true;
-    public static int onBlockBreakEvent(World world,Object mode,EntityPlayerMP player,BlockPos pos){return allowed?1:-1;}
+    public static int onBlockBreakEvent(World world,GameType mode,EntityPlayerMP player,BlockPos pos){return allowed?1:-1;}
 }""",
     "com/norwood/mcheli/wrapper/W_WorldFunc.java": """package com.norwood.mcheli.wrapper;
 import net.minecraft.world.World;

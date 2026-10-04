@@ -40,6 +40,12 @@ public final class RVCombatAcceptance {
         Object value=call(call(world,"func_180495_p",pos(x,y,z)),"func_177230_c");
         return String.valueOf(call(VMReflect.get(type("net.minecraft.block.Block"),"field_149771_c"),"func_177774_c",value));
     }
+    private static void advanceBudgetClock() throws Exception {
+        long time=((Number)call(world,"func_82737_E")).longValue();
+        Object info=call(world,"func_72912_H");
+        call(info,"func_82572_b",Long.valueOf(time+1));
+        if(((Number)call(world,"func_82737_E")).longValue()!=time+1)throw new IllegalStateException("private QA world-time advance failed");
+    }
     private static Object spawn(Object entity,double x,double y,double z) throws Exception {
         call(entity,"func_70107_b",x,y,z);
         call(world,"func_72964_e",(int)Math.floor(x)>>4,(int)Math.floor(z)>>4);
@@ -187,20 +193,26 @@ public final class RVCombatAcceptance {
     private static long propsStarted;
     private static void props() throws Exception {
         propsStarted=System.nanoTime();
+        advanceBudgetClock();
         block(576,81,8,"minecraft:glass");fire("GenericProjectile",576.5,81.5,0,8F);
+        advanceBudgetClock();
         block(608,81,8,"minecraft:planks");
         fire("GenericProjectile",608.5,81.5,0,8F);
         check(blockName(608,81,8).equals("minecraft:planks") && !blockName(608,81,7).equals("minecraft:fire"),"weak ordinary round cannot ignite or erase solid wood");
         for(int i=0;i<12;i++)fire("GenericProjectile",608.5,81.5,0,80F);
+        advanceBudgetClock();
         block(640,81,8,"minecraft:bedrock");fire("GenericProjectile",640.5,81.5,0,80F);
+        advanceBudgetClock();
         drop=type("net.minecraft.entity.item.EntityItem").getConstructor(type("net.minecraft.world.World"),double.class,double.class,double.class,type("net.minecraft.item.ItemStack")).newInstance(world,672.5,81D,8.5,stack());
         spawn(drop,672.5,81,8.5);fire("GenericProjectile",672.5,81.125,0,8F);
+        advanceBudgetClock();
         block(704,81,9,"minecraft:stone");
         frame=type("net.minecraft.entity.item.EntityItemFrame").getConstructor(type("net.minecraft.world.World"),type("net.minecraft.util.math.BlockPos"),type("net.minecraft.util.EnumFacing")).newInstance(world,pos(704,81,8),VMReflect.get(type("net.minecraft.util.EnumFacing"),"NORTH"));
         call(frame,"func_82334_a",stack());call(world,"func_72838_d",frame);entities.add(frame);
         fire("GenericProjectile",704.5,81.5,0,8F);
         for(int x=735;x<=737;x++)for(int y=80;y<=82;y++)for(int z=0;z<=9;z++)block(x,y,z,"minecraft:air");
         block(736,81,8,"minecraft:planks");
+        advanceBudgetClock();
         run("incendiary",new RunnableCheck(){public void run() throws Exception{
             Object flame=bullet("FlamethrowerProjectile",736.5,81.5,0,8F);
             VMReflect.set(flame,"field_70159_w",0D);VMReflect.set(flame,"field_70181_x",0D);

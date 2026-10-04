@@ -37,7 +37,7 @@ Porthole connections require Steam. If Porthole is missing, RV opens its install
 | **Aircraft** | A quadcopter, combat FPV, Geran and FP-1 with distinct models and flight behaviour |
 | **Combat** | Techguns and MC Heli CE, tank controls, server-confirmed damage feedback and combat audio |
 | **Medical care** | First Aid wounds and timed healing, with configurable visual effects |
-| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, roads and buildings; a 28-page guide in stable RV 1.2.1 and a 30-page guide in RV 2.0.2 Preview, in each language |
+| **World and guide** | A separate 2560 × 2560 battlefield with destructible props, roads and buildings; a 28-page guide in stable RV 1.2.1 and a 30-page guide in RV 2.0.3 Preview, in each language |
 | **First-play setup** | Actual device selection, calibration and server selection; cancelled setup preserves saved choices |
 | **Graphics profiles** | Low, Balanced and Quality applied explicitly; language changes preserve graphics settings |
 | **Connections** | Porthole code, Steam peer or lobby; direct IP or hostname and port |
@@ -49,7 +49,7 @@ RV 1.2 adds AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles wi
 
 The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content: cross-mod damage, cannon firing and physical audio direction are not fully verified.
 
-## RV 2.0.2 Preview
+## RV 2.0.3 Preview
 
 RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with equipment previews, explicit confirmation, readiness and server validation. The installer configures missing keyboard controls automatically and can import a host's local invitation. Use matching RV 2 client and server versions. Stable RV 1.2.1 remains the automatic update target.
 
@@ -64,7 +64,7 @@ RV 2 introduces a player menu for **Session**, **Gear** and **Controls**, with e
 
 </details>
 
-The gear and session captures show the updated menu exercised by two ordinary players and a dedicated Forge server. The controls capture is retained from the original RV 2.0.0 single-player check. Reviewed menu checks cover equipment confirmation and preservation, readiness, cancellation, reconnect and restart; separate zero- and one-free-slot checks preserved inventory. Physical controllers, full-inventory rollback, post-fix combat and the performance matrix remain pending. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
+The gear and session captures show the updated menu exercised by two ordinary players and a dedicated Forge server. The controls capture is retained from the original RV 2.0.0 single-player check. Reviewed menu checks cover equipment confirmation and preservation, readiness, cancellation, reconnect and restart; separate zero- and one-free-slot checks preserved inventory. Dedicated-server fire and prop regressions passed in an isolated game fixture. Physical controllers, full-inventory rollback and the complete performance matrix remain pending. See [capture provenance](docs/gallery/README.md), the [preview changes](https://github.com/rudyvale/rv-warfare/pull/1) and [release contract](docs/RELEASE-CONTRACT.md).
 
 ## In game
 

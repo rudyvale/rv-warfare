@@ -174,7 +174,7 @@ public final class VMProps {
             }
             synchronized (VMProps.class) { fires.get(world).put(pos, new FireRecord(state, expiry)); }
             Object actor = placementActor(source);
-            Object event = VMReflect.call(Class.forName("net.minecraftforge.event.ForgeEventFactory"), "onBlockPlace", actor, snapshot, side);
+            Object event = invokeForgeStatic(blockPlaceEvent(), actor, snapshot, side);
             if ((Boolean) VMReflect.call(event, "isCanceled")) {
                 rollbackFire(world, pos, state, prior, expiry);
                 return false;
@@ -240,7 +240,42 @@ public final class VMProps {
     }
     private static boolean breakAllowed(Object world, Object player, Object pos) throws Exception {
         Object mode = VMReflect.call(VMReflect.get(player, "field_71134_c"), "func_73081_b");
-        return ((Number) VMReflect.call(Class.forName("net.minecraftforge.common.ForgeHooks"), "onBlockBreakEvent", world, mode, player, pos)).intValue() >= 0;
+        return ((Number) invokeForgeStatic(blockBreakEvent(), world, mode, player, pos)).intValue() >= 0;
+    }
+    private static java.lang.invoke.MethodHandle blockPlaceEvent() throws Exception {
+        java.lang.invoke.MethodHandle value = blockPlaceEvent;
+        if (value != null) return value;
+        synchronized (VMProps.class) {
+            value = blockPlaceEvent;
+            if (value == null) {
+                Class<?>[] parameters = {Class.forName("net.minecraft.entity.Entity"), Class.forName("net.minecraftforge.common.util.BlockSnapshot"), Class.forName("net.minecraft.util.EnumFacing")};
+                Class<?> result = Class.forName("net.minecraftforge.event.world.BlockEvent$EntityPlaceEvent");
+                value = java.lang.invoke.MethodHandles.publicLookup().findStatic(Class.forName("net.minecraftforge.event.ForgeEventFactory"), "onBlockPlace", java.lang.invoke.MethodType.methodType(result, parameters));
+                blockPlaceEvent = value;
+            }
+        }
+        return value;
+    }
+    private static java.lang.invoke.MethodHandle blockBreakEvent() throws Exception {
+        java.lang.invoke.MethodHandle value = blockBreakEvent;
+        if (value != null) return value;
+        synchronized (VMProps.class) {
+            value = blockBreakEvent;
+            if (value == null) {
+                Class<?>[] parameters = {Class.forName("net.minecraft.world.World"), Class.forName("net.minecraft.world.GameType"), Class.forName("net.minecraft.entity.player.EntityPlayerMP"), Class.forName("net.minecraft.util.math.BlockPos")};
+                value = java.lang.invoke.MethodHandles.publicLookup().findStatic(Class.forName("net.minecraftforge.common.ForgeHooks"), "onBlockBreakEvent", java.lang.invoke.MethodType.methodType(int.class, parameters));
+                blockBreakEvent = value;
+            }
+        }
+        return value;
+    }
+    private static Object invokeForgeStatic(java.lang.invoke.MethodHandle method, Object... args) throws Exception {
+        try { return method.invokeWithArguments(args); }
+        catch (Throwable error) {
+            if (error instanceof Exception) throw (Exception) error;
+            if (error instanceof LinkageError) throw (LinkageError) error;
+            throw new RuntimeException(error);
+        }
     }
     private static boolean reserve(Object world, boolean block) throws Exception {
         WorldBudget budget = budget(world);
@@ -260,4 +295,6 @@ public final class VMProps {
     private static Object enumFacing(String name) throws Exception { return Enum.valueOf((Class) Class.forName("net.minecraft.util.EnumFacing"), name); }
     private static void forget(Object world, Object pos) { synchronized (VMProps.class) { LinkedHashMap<Object, FireRecord> entries = fires.get(world); if (entries != null) entries.remove(pos); } }
     private static boolean finite(double value) { return !Double.isNaN(value) && !Double.isInfinite(value); }
+    private static volatile java.lang.invoke.MethodHandle blockPlaceEvent;
+    private static volatile java.lang.invoke.MethodHandle blockBreakEvent;
 }
