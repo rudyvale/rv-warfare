@@ -6,6 +6,8 @@ import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.Display;
 
 public final class VMEasy {
+    private static final double HORIZONTAL_SPEED=.60;
+    private static final double VERTICAL_SPEED=.30;
     private static final Map<Object,double[]> states=Collections.synchronizedMap(new WeakHashMap<Object,double[]>());
     private static Object localAircraft;
     private static boolean localArmed;
@@ -67,8 +69,8 @@ public final class VMEasy {
             double magnitude=Math.max(1,Math.sqrt(state[0]*state[0]+state[1]*state[1])),f=armed?state[0]/magnitude:0,s=armed?state[1]/magnitude:0;
             double vx=VMReflect.num(VMReflect.get(aircraft,"field_70159_w")),vy=VMReflect.num(VMReflect.get(aircraft,"field_70181_x")),vz=VMReflect.num(VMReflect.get(aircraft,"field_70179_y"));
             if(!Double.isFinite(vx))vx=0;if(!Double.isFinite(vy))vy=0;if(!Double.isFinite(vz))vz=0;
-            vx=VMControlMath.smooth(vx,(-Math.sin(yaw)*f+Math.cos(yaw)*s)*.38,.05,.10);vz=VMControlMath.smooth(vz,(Math.cos(yaw)*f+Math.sin(yaw)*s)*.38,.05,.10);vy=armed?VMControlMath.smooth(vy,state[2]*.22,.05,.10):Math.max(-.5,vy-.04);
-            double horizontal=Math.hypot(vx,vz);if(horizontal>.38){vx*=.38/horizontal;vz*=.38/horizontal;}vy=VMControlMath.clamp(vy,-.5,.22);
+            vx=VMControlMath.smooth(vx,(-Math.sin(yaw)*f+Math.cos(yaw)*s)*HORIZONTAL_SPEED,.05,.10);vz=VMControlMath.smooth(vz,(Math.cos(yaw)*f+Math.sin(yaw)*s)*HORIZONTAL_SPEED,.05,.10);vy=armed?VMControlMath.smooth(vy,state[2]*VERTICAL_SPEED,.05,.10):Math.max(-.5,vy-.04);
+            double horizontal=Math.hypot(vx,vz);if(horizontal>HORIZONTAL_SPEED){vx*=HORIZONTAL_SPEED/horizontal;vz*=HORIZONTAL_SPEED/horizontal;}vy=VMControlMath.clamp(vy,-.5,VERTICAL_SPEED);
             VMReflect.set(aircraft,"field_70159_w",vx);VMReflect.set(aircraft,"field_70181_x",vy);VMReflect.set(aircraft,"field_70179_y",vz);
             VMReflect.call(aircraft,"setRotPitch",(float)(f*10));VMReflect.call(aircraft,"setRotRoll",(float)(-s*12));VMReflect.call(aircraft,"resyncOrientationFromEuler");
             if(VMImpact.droneMotion(aircraft))return true;

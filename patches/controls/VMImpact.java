@@ -58,7 +58,8 @@ public final class VMImpact {
             Object weapon=VMReflect.call(Class.forName("com.norwood.mcheli.weapon.MCH_WeaponCreator"),"createWeapon",world,"plastic_bomb",hit,0F,0F,null,false);
             Object bomb=Class.forName("com.norwood.mcheli.weapon.MCH_EntityBomb").getConstructor(Class.forName("net.minecraft.world.World")).newInstance(world);
             VMReflect.call(bomb,"setName","plastic_bomb");VMReflect.call(bomb,"setParameterFromWeapon",weapon,aircraft,pilot);
-            Object info=VMReflect.call(weapon,"getInfo");VMReflect.call(bomb,"setPower",Math.max(((Number)VMReflect.get(info,"power")).intValue(),(int)(8*VMReflect.num(VMReflect.get(info,"explosion"))+1)));
+            Object info=VMReflect.call(weapon,"getInfo");int power=Math.max(((Number)VMReflect.get(info,"power")).intValue(),(int)(8*VMReflect.num(VMReflect.get(info,"explosion"))+1));
+            if(VMFlight.drone(aircraft))power=(int)Math.min(1000D,Math.ceil(power*1.5D));VMReflect.call(bomb,"setPower",power);
             VMReflect.call(bomb,"func_70107_b",coordinate(hit,"field_72450_a"),coordinate(hit,"field_72448_b"),coordinate(hit,"field_72449_c"));
             if(!detonated.add(aircraft))return true;
             armed.remove(aircraft);
