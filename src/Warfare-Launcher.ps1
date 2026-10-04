@@ -299,6 +299,7 @@ function Start-GuardedOperation([string]$Kind) {
 }
 function Complete-GuardedOperation {
     $lease=$null
+    $kind=$script:guardKind
     try {
         $result=@($script:guardPowerShell.EndInvoke($script:guardAsync))
         if($script:guardPowerShell.Streams.Error.Count -gt 0 -or $result.Count -ne 1){throw 'RV_OPERATION_BUSY'}
@@ -323,10 +324,16 @@ function Complete-GuardedOperation {
         }
     }catch{
         $failure=$_.Exception.Message
-        if($failure -eq 'RV_GAME_RUNNING' -and $script:guardKind -eq 'play'){$status.Text=L 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'}
+        $inner=$_.Exception
+        while($inner){
+            if($inner.Message -in @('RV_GAME_RUNNING','RV_OPERATION_BUSY','RV_PROCESS_CHECK_FAILED')){$failure=$inner.Message;break}
+            $inner=$inner.InnerException
+        }
+        if($failure -eq 'RV_GAME_RUNNING' -and $kind -eq 'play'){$status.Text=L 'RV уже запущен. Переключись в окно игры.' 'RV is already running. Switch to the game window.'}
         elseif($failure -like 'RV_GAME_RUNNING' -or $failure -like 'RV_OPERATION_BUSY' -or $failure -eq 'RV_PROCESS_CHECK_FAILED'){$status.Text=Get-WarfarePreferenceError $failure $script:language}
         else{$status.Text=Get-WarfareConnectionError $failure $script:language}
         if($script:guardPowerShell){try{$script:guardPowerShell.Dispose()}catch{};$script:guardPowerShell=$null;$script:guardAsync=$null;$script:guardKind=''}
+        if($failure -eq 'RV_GAME_RUNNING' -and $kind -eq 'startup'){Check-Install}
     }finally{
         if($lease){Exit-WarfareClientOperation $lease}
         if(-not $script:process){Set-Busy $false}
