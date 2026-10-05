@@ -14,6 +14,10 @@ RV 2.0.4 закрепляет MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 
 
 Официальное описание [MC Heli CE](https://www.curseforge.com/minecraft/mc-mods/mchce) документирует папку `mcheli_addons/<имя>/assets/mcheli/` для наборов техники. Отдельный набор не становится частью меню RV автоматически: способ получения техники (рецепт, творческий инвентарь или команда) определяет автор набора и настройки сервера. Не выдавай игрокам неизвестный ID предмета — сначала проверь его на установленной версии.
 
+### Наборы Immersive Vehicles
+
+Для Immersive Vehicles (MTS/IV) формат другой: авторские наборы идут отдельными файлами `.jar` в папку `mods` — так же, как указано в [описании самого мода](https://www.curseforge.com/minecraft/mc-mods/minecraft-transport-simulator). Нужна сборка набора для Minecraft 1.12.2. Установи одинаковый файл на клиент и сервер и проверь указанные автором зависимости. RV уже закрепляет Immersive Vehicles 24.0.0 и IAV/VEB 1.1.11, поэтому дополнение проверь именно с этими версиями; перед заменой сборки сделай копию мира.
+
 Если хочешь включить новую машину в стандартную сборку RV, потребуются совместимые файлы для сервера и клиентов, разрешение на распространение, подтверждённая загрузка модели и проверка посадки, управления, оружия и сохранения мира. До такой проверки машина не должна рекламироваться как часть стандартного набора.
 
 ## English
@@ -29,5 +33,9 @@ RV 2.0.4 pins MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.
 5. For multiplayer, install the same pack version on the dedicated server and every player's game, then restart the game and server. Test in a separate world before using it in an existing save.
 
 The official [MC Heli CE description](https://www.curseforge.com/minecraft/mc-mods/mchce) documents the `mcheli_addons/<name>/assets/mcheli/` folder for content packs. An add-on does not automatically appear in RV's menus: the pack author and server configuration define how to obtain a vehicle (recipe, creative inventory or command). Do not give players an unverified item ID; confirm it with the installed version first.
+
+### Immersive Vehicles packs
+
+Immersive Vehicles (MTS/IV) uses a different format: its authors distribute content packs as `.jar` files placed in `mods`, as described on the [mod's project page](https://www.curseforge.com/minecraft/mc-mods/minecraft-transport-simulator). Choose a pack built for Minecraft 1.12.2. Install the same file on the client and server, and include any dependencies required by its author. RV pins Immersive Vehicles 24.0.0 and IAV/VEB 1.1.11, so test an add-on against these exact versions; back up the world before changing the server pack.
 
 Adding a vehicle to RV's standard build requires compatible server and client files, redistribution permission, confirmed loading, and checks for boarding, controls, weapons and world saving. Until those checks pass, do not advertise it as part of the standard pack.
