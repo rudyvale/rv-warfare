@@ -2,7 +2,7 @@
 
 ## Русский
 
-RV 2.0.4 закрепляет MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 и VEB 1.1.11. В архиве VEB 1.1.11 есть моторизованная машина с именем `UBT-70 ShSR`; в её данных она не названа БТР, а её работа в RV отдельно не принималась. В репозитории также есть дополнения RV для FPV-самолётов. CE загружает пользовательские наборы из `mcheli_addons`; формат и поведение зависят от автора. Не делай вывод о модели, управлении, оружии или сетевой игре только по имени машины.
+RV 2.0.4 закрепляет MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 и VEB 1.1.11. В архиве VEB 1.1.11 есть моторизованная машина `UBT-70 ShSR`. Её игровой идентификатор в RV — `mts:auweschvebm.auweschveb_vehicle_obj70_green`. [Опубликованное свидетельство нативной проверки](../qa/evidence/rv-native-vehicle-weapons.json) подтверждает установку машины, сохранение 10 вложенных деталей, автозапуск двигателя, движение с расходом топлива и один выстрел серверного снаряда. Данные VEB не называют её БТР; свидетельство также не проверяет удобный путь получения машины в выживании, урон по всем типам целей или все сетевые сценарии. В репозитории также есть дополнения RV для FPV-самолётов. CE загружает пользовательские наборы из `mcheli_addons`; формат и поведение зависят от автора.
 
 ### Установка набора MC Heli CE
 
@@ -22,7 +22,7 @@ RV 2.0.4 закрепляет MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 
 
 ## English
 
-RV 2.0.4 pins MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 and VEB 1.1.11. The VEB 1.1.11 archive contains a motorized vehicle definition named `UBT-70 ShSR`; its data does not identify it as a BTR, and RV has not published runtime acceptance for it. The repository also contains RV add-ons for FPV aircraft. CE loads user content packs from `mcheli_addons`; supported files and behavior depend on the pack author. Do not infer a vehicle's model, controls, weapons or multiplayer behavior from its name alone.
+RV 2.0.4 pins MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 and VEB 1.1.11. The VEB 1.1.11 archive contains the motorized vehicle `UBT-70 ShSR`, with RV item ID `mts:auweschvebm.auweschveb_vehicle_obj70_green`. The [published native acceptance evidence](../qa/evidence/rv-native-vehicle-weapons.json) confirms vehicle placement, 10 retained nested parts, engine autostart, movement with fuel use, and one server-fired projectile. VEB's data does not identify it as a BTR; the evidence does not verify how players acquire it in survival, damage against every target type, or all multiplayer scenarios. The repository also contains RV add-ons for FPV aircraft. CE loads user content packs from `mcheli_addons`; supported files and behavior depend on the pack author.
 
 ### Install an MC Heli CE content pack
 

@@ -93,7 +93,7 @@ The separate [RV 2.0.3 Preview menu captures](https://github.com/rudyvale/rv-war
 - Low, Balanced and Quality graphics profiles.
 - The RV 2 player menu for sessions, equipment and controls.
 
-The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content; cross-mod damage, cannon firing and physical audio direction are not fully verified.
+The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content; cross-mod damage, damage balance across vehicle types and physical audio direction are not fully verified. The native test evidence covers driving and one server-fired projectile for the VEB UBT-70 ShSR; that name does not establish it as a BTR. See the [vehicle guide](docs/VEHICLES.md) and [test evidence](qa/evidence/rv-native-vehicle-weapons.json).
 
 Want to add a BTR or another vehicle? MC Heli CE supports separate content packs, but RV does not currently include a verified BTR model. See the [vehicle add-on guide](docs/VEHICLES.md) for the supported folder layout, multiplayer requirements and licensing notes. Vehicle files must be installed on both the server and every player's client.
 
