@@ -14,7 +14,7 @@
   <a href="https://github.com/rudyvale/rv-warfare/releases/latest/download/RV-Setup.zip"><strong>Download stable for Windows</strong></a> ·
   <a href="https://github.com/rudyvale/rv-warfare/releases/download/v2.0.4/RV-Setup.zip"><strong>Windows 2.0.4 Preview</strong></a> ·
   <a href="https://github.com/rudyvale/rv-warfare/releases/download/v2.0.4/RV-Mac-Setup.zip"><strong>Mac 2.0.4 Preview</strong></a> ·
-  <a href="https://github.com/rudyvale/rv-warfare/blob/v2.0.4/pack/READ-ME.md">Player guide</a> ·
+  <a href="https://github.com/rudyvale/rv-warfare/blob/main/pack/READ-ME.md">Player guide</a> ·
   <a href="https://github.com/rudyvale/rv-warfare/releases">All releases</a> ·
   <a href="https://github.com/rudyvale/rv-warfare/issues">Report an issue</a> ·
   <a href="README-RU.md">Русский</a>
