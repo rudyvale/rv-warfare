@@ -2,6 +2,8 @@
 
 Extract the entire **RV-Setup.zip**, open **INSTALL.cmd**, enter a nickname and click **Install**. RV sets up Java, Minecraft, Forge and the mods. Internet access is needed for installation.
 
+Русская страница проекта: [README-RU.md](https://github.com/rudyvale/rv-warfare/blob/main/README-RU.md). Instructions for optional vehicle add-ons: [VEHICLES.md](https://github.com/rudyvale/rv-warfare/blob/main/docs/VEHICLES.md).
+
 On the first **Play**, choose **Mouse and keyboard**, **FPV radio** or **Gamepad**. For a controller, select the actual connected device, check its axes and complete calibration. Then choose your server. RV saves your choice; setup remains available in the launcher.
 
 ## Connect and update

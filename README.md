@@ -16,10 +16,15 @@
   <a href="https://github.com/rudyvale/rv-warfare/releases/download/v2.0.4/RV-Mac-Setup.zip"><strong>Mac 2.0.4 Preview</strong></a> ·
   <a href="https://github.com/rudyvale/rv-warfare/blob/v2.0.4/pack/READ-ME.md">Player guide</a> ·
   <a href="https://github.com/rudyvale/rv-warfare/releases">All releases</a> ·
-  <a href="https://github.com/rudyvale/rv-warfare/issues">Report an issue</a>
+  <a href="https://github.com/rudyvale/rv-warfare/issues">Report an issue</a> ·
+  <a href="README-RU.md">Русский</a>
 </p>
 
-## Choose how to play
+## A shared battlefield
+
+RV Warfare is a Minecraft 1.12.2 co-op combat pack built around a shared battlefield, vehicles and player-run sessions. Choose a side, learn the controls in the training area, then take equipment and aircraft into the field. The built-in field guide and menus are available in English and Russian.
+
+Players receive their starter kit automatically on their first server join. They can choose and replenish equipment themselves from the in-game menu; the host does not need to issue every kit by hand. If an inventory is full, free a slot and request the kit again from **Menu → Kit**.
 
 | Mode | Use it to |
 | :--- | :--- |
@@ -89,6 +94,8 @@ The separate [RV 2.0.3 Preview menu captures](https://github.com/rudyvale/rv-war
 - The RV 2 player menu for sessions, equipment and controls.
 
 The standard equipment menus retain the tested MC Heli, Techguns and FPV sets. New vehicle and ModularWarfare combat remains advanced content; cross-mod damage, cannon firing and physical audio direction are not fully verified.
+
+Want to add a BTR or another vehicle? MC Heli CE supports separate content packs, but RV does not currently include a verified BTR model. See the [vehicle add-on guide](docs/VEHICLES.md) for the supported folder layout, multiplayer requirements and licensing notes. Vehicle files must be installed on both the server and every player's client.
 
 RV 1.2 includes AmbientSounds, Mouse Tweaks, Biomes O' Plenty, Immersive Vehicles with IAV and VEB, ModularWarfare and MCglTF. The installer downloads the pinned vendor files from their official sources and checks their SHA-256 hashes. They are not rehosted in this repository or its releases. See [compatibility and distribution rights](docs/COMPATIBILITY.md).
 
