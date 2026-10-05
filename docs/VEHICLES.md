@@ -2,7 +2,7 @@
 
 ## Русский
 
-RV Warfare использует MC Heli CE для части техники. В моде CE пользовательские наборы загружаются из папки `mcheli_addons`; формат и содержимое зависят от автора дополнения. В текущем репозитории есть собственные дополнения RV для FPV и самолётов, но нет подтверждённого набора с БТР. Поэтому конкретную модель, вооружение и характеристики БТР нужно проверять по самому дополнению и его автору.
+RV 2.0.4 закрепляет MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 и VEB 1.1.11. В архиве VEB 1.1.11 есть моторизованная машина с именем `UBT-70 ShSR`; в её данных она не названа БТР, а её работа в RV отдельно не принималась. В репозитории также есть дополнения RV для FPV-самолётов. CE загружает пользовательские наборы из `mcheli_addons`; формат и поведение зависят от автора. Не делай вывод о модели, управлении, оружии или сетевой игре только по имени машины.
 
 ### Установка набора MC Heli CE
 
@@ -18,7 +18,7 @@ RV Warfare использует MC Heli CE для части техники. В 
 
 ## English
 
-RV Warfare uses MC Heli CE for some vehicles. CE loads user content packs from `mcheli_addons`; supported files and behavior depend on the pack author. This repository contains RV add-ons for FPV aircraft, but it does not contain a verified BTR pack. Check a specific vehicle and its claimed features in the add-on itself and with its author.
+RV 2.0.4 pins MC Heli CE 1.5.1-rv-controls3, Immersive Vehicles 24.0.0, IAV 1.1.11 and VEB 1.1.11. The VEB 1.1.11 archive contains a motorized vehicle definition named `UBT-70 ShSR`; its data does not identify it as a BTR, and RV has not published runtime acceptance for it. The repository also contains RV add-ons for FPV aircraft. CE loads user content packs from `mcheli_addons`; supported files and behavior depend on the pack author. Do not infer a vehicle's model, controls, weapons or multiplayer behavior from its name alone.
 
 ### Install an MC Heli CE content pack
 
